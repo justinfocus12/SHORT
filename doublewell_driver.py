@@ -15,7 +15,8 @@ import pickle
 import sys
 import subprocess
 import os
-codefolder = "/home/jf4241/dgaf2"
+from shutil import copyfile
+codefolder = "/home/jf4241/SHORT"
 os.chdir(codefolder)
 from os import mkdir
 from os.path import join,exists
@@ -37,7 +38,7 @@ resultfolder = join(datafolder,"results")
 if not exists(resultfolder): mkdir(resultfolder)
 dayfolder = join(resultfolder,"2021-05-30")
 if not exists(dayfolder): mkdir(dayfolder)
-expfolder = join(dayfolder,"1")
+expfolder = join(dayfolder,"3")
 if not exists(expfolder): mkdir(expfolder)
 
 asymb = r"$\mathbf{a}$"
@@ -60,6 +61,7 @@ physical_param_folder = join(expfolder,physical_param_string)
 if not exists(physical_param_folder): mkdir(physical_param_folder)
 savefolder = join(physical_param_folder,algo_param_string)
 if not exists(savefolder): mkdir(savefolder)
+copyfile(join(codefolder,"doublewell_params.py"),join(savefolder,"doublewell_params.py"))
 # ------------------------
 # 1. Initialize the model
 model = DoubleWellModel(physical_params)
@@ -87,7 +89,7 @@ data = tpt.compile_data(model)
 # Initialize function approximator as MSM basis
 function = function_obj.MSMBasis(algo_params) #(basis_size,max_clust_per_level=max_clust_per_level,min_clust_size=min_clust_size)
 # ----------------------------
-# Computations
+# Perform DGA
 if compute_tpt_flag:
     tpt.label_x_long(model)
     tpt.compute_change_of_measure(model,data,function)
@@ -108,18 +110,19 @@ tpt = pickle.load(open(join(savefolder,"tpt"),"rb"))
 funlib = model.observable_function_library()
 
 # ------------------------------------------
-# Long plots
+# Long trajectory plots
 # 1D
 long_fun = funlib["x0"]
-tpt.plot_field_long(model,data,long_fun['fun'](data.X[:,0]),long_fun['name'],'x0',field_fun=long_fun['fun'],units=long_fun['units'],tmax=500)
+tpt.plot_field_long(model,data,long_fun['fun'](data.X[:,0]),long_fun['name'],'x0',field_fun=long_fun['fun'],units=long_fun['units'],tmax=150)
 # 2D
 field_abbs = ["x0","x1"]
 fieldnames = [funlib[f]["name"] for f in field_abbs]
 field_funs = [funlib[f]["fun"] for f in field_abbs]
 field_units = [funlib[f]["units"] for f in field_abbs]
 field_unit_symbols = [funlib[f]["unit_symbol"] for f in field_abbs]
-tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,units=field_units,tmax=500,field_unit_symbols=field_unit_symbols)
-sys.exit()
+tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,units=field_units,tmax=150,field_unit_symbols=field_unit_symbols)
+# -------------------------------------------
+
 # -------------------------------------------
 # Casts and currents
 theta_2d_abbs = [["x0","x1"]]
@@ -127,9 +130,9 @@ print("About to start displaying casts")
 for i in range(len(theta_2d_abbs)):
     tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
     tpt.display_2d_currents(model,data,theta_2d_abbs[i:i+1])
-sys.exit()
+# -------------------------------------------
 
-
+# -------------------------------------------
 # Validation
 theta_1d_fun = lambda x: x[:,:1]
 theta_1d_name = r"$x_0$"
@@ -143,30 +146,4 @@ tpt.display_change_of_measure_current(model,data,theta_2d_fun,theta_2d_names,the
 tpt.display_change_of_measure_validation(model,data,theta_1d_fun,theta_2d_fun,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units)
 tpt.display_dam_moments_abba_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs)
 tpt.display_dam_moments_abba_validation(model,data,theta_1d_fun,theta_2d_fun,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units)
-sys.exit()
 # ----------------------------
-# Displays
-# Load long trajectory to compare to reality
-t_long,x_long = model.load_long_traj(long_simfolder)
-x1_fun = lambda x: x[:,0]
-tpt.plot_field_long(model,data,data.X[:,0,0],r"$x_1$","x1",field_fun=x1_fun,units=1.0)
-theta_2d_short = data.X[:,0,:2]
-theta_2d_long = x_long[:,:2] 
-theta_1d_short = data.X[:,0,:1]
-theta_1d_long = x_long[:,:1]
-theta_1d_units = np.ones(1)
-# Damage
-tpt.display_dam_moments_ab(theta_1d_short,theta_1d_long,theta_2d_short,theta_2d_long,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units)
-# Change of measure 
-tpt.display_change_of_measure(theta_1d_short,theta_1d_long,theta_2d_short,theta_2d_long,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units)
-# Committors
-tpt.display_comm_ab(theta_1d_short,theta_1d_long,theta_2d_short,theta_2d_long,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units)
-# Forward and backward MFPTs
-# Regular method
-tpt.display_mfpt_ab(theta_1d_short,theta_1d_long,theta_2d_short,theta_2d_long,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units,method=0)
-# Now with the moments
-tpt.display_mfpt_ab(theta_1d_short,theta_1d_long,theta_2d_short,theta_2d_long,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units,method=2)
-# Conditional
-tpt.display_conditional_mfpt_ab_moments(theta_1d_short,theta_1d_long,theta_2d_short,theta_2d_long,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units)
-
-

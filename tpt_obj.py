@@ -2464,7 +2464,7 @@ class TPT:
         for k in range(len(keys)):
             qp = self.dam_moments[keys[k]]['xb'][0,:,0]
             print("committor for %s: %s"%(keys[k],describe(qp)))
-        print("max diff between committors for %s and %s: %s"%(keys[0],keys[1],describe(self.dam_moments[keys[0]]['xb'][0,:,0] - self.dam_moments[keys[1]]['xb'][0,:,0])))
+        if len(keys) > 1: print("max diff between committors for %s and %s: %s"%(keys[0],keys[1],describe(self.dam_moments[keys[0]]['xb'][0,:,0] - self.dam_moments[keys[1]]['xb'][0,:,0])))
         num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
         t_long,x_long = model.load_long_traj(self.long_simfolder)
         nlong = len(x_long)
