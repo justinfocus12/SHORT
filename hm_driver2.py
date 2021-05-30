@@ -142,9 +142,8 @@ data = tpt.compile_data(model)
 print("Finished loading data")
 function = function_obj.MSMBasis(basis_size,max_clust_per_level=100,min_clust_size=10)
 
-
 if compute_tpt_flag:
-# Define the TPT object
+    # Define the TPT object
     tpt.label_x_long(model)
     tpt.compute_change_of_measure(model,data,function)
     tpt.compute_dam_moments_abba(model,data,function,num_moments=4)

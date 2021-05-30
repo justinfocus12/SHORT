@@ -252,7 +252,7 @@ class HoltonMassModel(Model):
         wmin = load(join(physical_param_folder,"wmin_dirn1.npy"))
         xmin = load(join(physical_param_folder,"xmin_dirn1.npy"))
         tmin = load(join(physical_param_folder,"tmin_dirn1.npy"))
-        obs = funlib[fun_name]["fun"](xmin)
+        obs = funlib[fun_name]["fun"](self.tpt_observables(xmin))
         dU = (sig.dot(wmin.T)).T[:,2*n:3*n] # This part is specific to U
         z = q['z_d'][1:-1]/1000
         tz,zt = np.meshgrid(tmin,z,indexing='ij')
@@ -265,7 +265,7 @@ class HoltonMassModel(Model):
         wmin = load(join(physical_param_folder,"wmin_dirn-1.npy"))
         xmin = load(join(physical_param_folder,"xmin_dirn-1.npy"))
         tmin = load(join(physical_param_folder,"tmin_dirn-1.npy"))
-        obs = funlib[fun_name]["fun"](xmin)
+        obs = funlib[fun_name]["fun"](self.tpt_observables(xmin))
         dU = (sig.dot(wmin.T)).T[:,2*n:3*n]
         z = q['z_d'][1:-1]/1000
         tz,zt = np.meshgrid(tmin,z,indexing='ij')

@@ -48,16 +48,14 @@ asymb = r"$\mathbf{a}$"
 bsymb = r"$\mathbf{b}$"
 
 class TPT:
-    def __init__(self,nshort,lag_time_current,lag_time_seq,physical_param_folder,long_simfolder,short_simfolder,savefolder,lag_time_current_display=None):
+    def __init__(self,algo_params,physical_param_folder,long_simfolder,short_simfolder,savefolder):
         # adist, bdist, etc. will come from the model object only
         # type of function: should only come from the function object
         self.physical_param_folder = physical_param_folder
-        self.nshort = nshort
-        self.lag_time_current = lag_time_current
-        if lag_time_current_display is None: lag_time_current_display = lag_time_current
-        self.lag_time_current_display = lag_time_current_display
-
-        self.lag_time_seq = lag_time_seq
+        self.nshort = algo_params['nshort']
+        self.lag_time_current = algo_params['lag_time_current']
+        self.lag_time_current_display = algo_params['lag_time_current_display']
+        self.lag_time_seq = algo_params['lag_time_seq']
         self.long_simfolder = long_simfolder
         self.short_simfolder = short_simfolder
         self.savefolder = savefolder
@@ -80,24 +78,11 @@ class TPT:
             self.dam_emp[keys[k]]['ab'] = []
             self.dam_emp[keys[k]]['ba'] = []
             dam_long[keys[k]] = model.dam_dict[keys[k]]['pay'](x_long)
-        #tau_a_fwd = np.nan*np.ones(len(t_long))
-        #tau_a_bwd = np.nan*np.ones(len(t_long))
-        #tau_b_fwd = np.nan*np.ones(len(t_long))
-        #tau_b_bwd = np.nan*np.ones(len(t_long))
-        #print("x_long.shape={}".format(x_long.shape))
         ina_long = (model.adist(x_long)==0)
         #print("ina_long.shape={}".format(ina_long.shape))
         inb_long = (model.bdist(x_long)==0)
         self.long_from_label[0] = 1*inb_long[0] - 1*ina_long[0]
         self.long_to_label[-1] = 1*inb_long[-1] - 1*ina_long[-1]
-        #if inb_long[0]:
-        #    tau_b_bwd[0] = 0.0
-        #if inb_long[-1]:
-        #    tau_b_fwd[-1] = 0.0
-        #if ina_long[0]:
-        #    tau_a_bwd[0] = 0.0
-        #if ina_long[-1]:
-        #    tau_a_fwd[-1] = 0.0
         case = np.nan
         for ti in range(1,Nt):
             # Logic for committor
@@ -144,35 +129,6 @@ class TPT:
                 self.dam_emp[keys[k]]['ba'] += [0.5*dt*(dam_long[keys[k]][ba_starts[ri]] + 2*np.sum(dam_long[keys[k]][ba_starts[ri]:ba_ends[ri]]) + dam_long[keys[k]][ba_ends[ri]])]
             self.dam_emp[keys[k]]['ab'] = np.array(self.dam_emp[keys[k]]['ab'])
             self.dam_emp[keys[k]]['ba'] = np.array(self.dam_emp[keys[k]]['ba'])
-        # Compute transit times 
-        #save(join(self.savefolder,"long_to_label"),long_to_label)
-        #save(join(self.savefolder,"long_from_label"),long_from_label)
-        #save(join(self.savefolder,"long_tau_a_bwd"),tau_a_bwd)
-        #save(join(self.savefolder,"long_tau_a_fwd"),tau_a_fwd)
-        #save(join(self.savefolder,"long_tau_b_bwd"),tau_b_bwd)
-        #save(join(self.savefolder,"long_tau_b_fwd"),tau_b_fwd)
-        # Now put data onto the short trajectories too
-        #t_short,x_short,sfli = model.load_short_traj(self.short_simfolder,self.nshort)
-        #self.short_from_label = long_from_label[sfli]
-        #self.short_to_label = long_to_label[sfli]
-        #self.short_tau_a_fwd = tau_a_fwd[sfli]
-        #self.short_tau_a_bwd = tau_a_bwd[sfli]
-        #self.short_tau_b_fwd = tau_b_fwd[sfli]
-        #self.short_tau_b_bwd = tau_b_bwd[sfli]
-        #save(join(self.savefolder,"short_from_label"),long_from_label[sfli])
-        #save(join(self.savefolder,"short_to_label"),long_to_label[sfli])
-        #save(join(self.savefolder,"short_tauAfwd"),tau_a_fwd[sfli])
-        #save(join(self.savefolder,"short_tauAbwd"),tau_a_bwd[sfli])
-        #save(join(self.savefolder,"short_tauBfwd"),tau_b_fwd[sfli])
-        #save(join(self.savefolder,"short_tauBbwd"),tau_b_bwd[sfli])
-        #self.long_from_label = long_from_label
-        #self.long_to_label = long_to_label
-        #self.long_tau_a_fwd = tau_a_fwd
-        #self.long_tau_a_bwd = tau_a_bwd
-        #self.long_tau_b_fwd = tau_b_fwd
-        #self.long_tau_b_bwd = tau_b_bwd
-        #self.ina_long = ina_long
-        #self.inb_long = inb_long
         return
     def compile_data(self,model):
         print("In TPT: self.nshort = {}".format(self.nshort))
@@ -505,6 +461,7 @@ class TPT:
     def plot_field_long(self,model,data,field,fieldname,field_abb,field_fun=None,units=1.0,tmax=70,field_unit_symbol=None,time_unit_symbol=None,include_reactive=True):
         print("Beginning plot field long")
         t_long,x_long = model.load_long_traj(self.long_simfolder)
+        tmax = min(tmax,t_long[-1])
         ab_reactive_flag = 1*(self.long_from_label==-1)*(self.long_to_label==1)
         ba_reactive_flag = 1*(self.long_from_label==1)*(self.long_to_label==-1)
         # Identify the transitions
@@ -563,6 +520,7 @@ class TPT:
         return
     def plot_field_long_2d(self,model,data,fieldnames,field_funs,field_abbs,units=[1.0,1.0],tmax=70,field_unit_symbols=["",""],orientation=None):
         t_long,x_long = model.load_long_traj(self.long_simfolder)
+        tmax = min(tmax,t_long[-1])
         ab_reactive_flag = 1*(self.long_from_label==-1)*(self.long_to_label==1)
         ba_reactive_flag = 1*(self.long_from_label==1)*(self.long_to_label==-1)
         # Identify the transitions
@@ -575,8 +533,8 @@ class TPT:
         if ab_starts[-1] > ab_ends[-1]: ab_starts = ab_starts[:-1]
         if ba_starts[0] > ba_ends[0]: ba_ends = ba_ends[1:]
         if ba_starts[-1] > ba_ends[-1]: ba_starts = ba_starts[:-1]
-        tmax = min(t_long[-1],4000)
         timax = np.argmin(np.abs(t_long-tmax))
+        print("t_long[timax] = {}".format(t_long[timax]))
         tsubset = np.linspace(0,timax-1,min(timax,15000)).astype(int)
         # Plot the two fields vs. each other, marking transitions
         field0 = field_funs[0](x_long[tsubset]).flatten()
@@ -588,11 +546,11 @@ class TPT:
         for i in range(len(ab_starts)):
             if ab_ends[i] < timax:
                 tss = np.where((t_long[tsubset]>t_long[ab_starts[i]])*(t_long[tsubset]<t_long[ab_ends[i]]))[0]
-                ax.plot(field0[tsubset[tss]]*units[0],field1[tsubset[tss]]*units[1],color='darkorange',linewidth=3,zorder=3)
+                ax.plot(field0[tss]*units[0],field1[tss]*units[1],color='darkorange',linewidth=3,zorder=3)
         for i in range(len(ba_starts)):
             if ba_ends[i] < timax:
                 tss = np.where((t_long[tsubset]>t_long[ba_starts[i]])*(t_long[tsubset]<t_long[ba_ends[i]]))[0]
-                ax.plot(field0[tsubset[tss]]*units[0],field1[tsubset[tss]]*units[1],color='springgreen',linewidth=3,zorder=2)
+                ax.plot(field0[tss]*units[0],field1[tss]*units[1],color='springgreen',linewidth=3,zorder=2)
         ax.text(ab0[0]*units[0],ab1[0]*units[1],asymb,bbox=dict(facecolor='white',alpha=1.0),color='black',fontsize=25,horizontalalignment='center',verticalalignment='center',zorder=10)
         ax.text(ab0[1]*units[0],ab1[1]*units[1],bsymb,bbox=dict(facecolor='white',alpha=1.0),color='black',fontsize=25,horizontalalignment='center',verticalalignment='center',zorder=10)
         ax.set_xlabel(r"%s (%s)"%(fieldnames[0],field_unit_symbols[0]),fontdict=ffont)
@@ -1958,8 +1916,6 @@ class TPT:
             theta_2d_unit_symbols = [fun0["unit_symbol"],fun1["unit_symbol"]]
             weight = self.chom
             theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
-
-
             # Plot unconditional MFPT
             fig,ax = self.plot_field_2d(model,data,self.mfpt_b,weight,theta_x,shp=[20,20],fieldname=r"$E[\tau_B^+]$",fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
             fsuff = 'mfpt_xb_th0%s_th1%s'%(theta_2d_abbs[i][0],theta_2d_abbs[i][1])

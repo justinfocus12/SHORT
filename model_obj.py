@@ -180,11 +180,13 @@ class Model(ABC):
             save(t_savefile,t_short)
         print("Process {} finishing with seed {}".format(name,short_suffix))
         return #x_short,t_short #,idx
-    def generate_data_long(self,simfolder,tmax_long,dt_save,run_long_flag=True):
+    def generate_data_long(self,simfolder,algo_params,run_long_flag=True):
         self.set_param_folder()
         if not exists(join(simfolder,self.param_foldername)): mkdir(join(simfolder,self.param_foldername))
         # -----------------------------------
         # Long simulation
+        tmax_long = algo_params['tmax_long']
+        dt_save = algo_params['dt_save']
         long_simfolder = (join(simfolder,self.param_foldername,"long_t{}".format(tmax_long))).replace(".","p")
         if run_long_flag:
             if not exists(long_simfolder): mkdir(long_simfolder)
@@ -224,7 +226,6 @@ class Model(ABC):
         x_short_filelist_new = []
         idx0 = 0
         print("x_short_filelist_existing = {}".format(x_short_filelist_existing))
-        print("Am I going insane?")
         short_suffix_list = np.arange(num_files) + len(x_short_filelist_existing)
         num_traj_list = np.zeros(num_files, dtype=int)
         for i in range(num_files):
@@ -307,6 +308,7 @@ class Model(ABC):
         x = np.zeros((K,self.state_dim))
         x[0] = x_init
         sqrtdt = np.sqrt(self.dt_sim)
+        print("self.xst[:1] = {}".format(self.xst[:1]))
         sig_mat = self.diffusion_mat(self.xst[:1])
         for i in range(K-1):
             x[i+1] = x[i] + self.drift_fun(x[i:i+1]).flatten()*self.dt_sim + sig_mat.dot(w[i])*sqrtdt

@@ -324,10 +324,10 @@ class LinearBasis(Function):
 
 # Now subclasses of LinearBasis
 class MSMBasis(LinearBasis):
-    def __init__(self,basis_size,max_clust_per_level=200,min_clust_size=10):
-        self.max_clust_per_level = max_clust_per_level
-        self.min_clust_size = min_clust_size
-        return super().__init__(basis_size,'MSM')
+    def __init__(self,algo_params): #,basis_size,max_clust_per_level=200,min_clust_size=10):
+        self.max_clust_per_level = algo_params['max_clust_per_level']
+        self.min_clust_size = algo_params['min_clust_size']
+        return super().__init__(algo_params['basis_size'],'MSM')
     def feynman_kac_rhs(self,*args,**kwargs):
         return super().feynman_kac_rhs(*args,**kwargs)
     def feynman_kac_lhs(self,*args,**kwargs):

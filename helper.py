@@ -372,7 +372,7 @@ def compare_plot_fields_2d(theta0,theta1,u0,u1,weights0,weights1,theta_names=[""
     shp,dth,thaxes,cgrid,u0_grid,u1_grid = compare_fields(theta0,theta1,u0,u1,weights0,weights1,shp=shp,avg_flag=avg_flag)
     # Get the weights for each grid box
     _,_,_,_,w0_grid,w1_grid = compare_fields(theta0,theta1,np.ones(N0),np.ones(N1),weights0,weights1,shp=shp,avg_flag=False)
-    fig,ax = plt.subplots(ncols=3,figsize=(18,6),constrained_layout=True,sharey=False)
+    fig,ax = plt.subplots(ncols=3,figsize=(18,6),sharey=False)
     scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
     total_error = np.sqrt(np.nansum((u0_grid-u1_grid)**2*w1_grid)/np.nansum(w1_grid))
     h = ax[0].scatter(u0_grid[scatter_subset],u1_grid[scatter_subset],marker='o',color='black',s=50*w1_grid[scatter_subset]/np.max(w1_grid[scatter_subset]),label=r"Avg. Error = %3.3e"%(total_error))
