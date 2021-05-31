@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "hm_bothcast_driver.py", line 102, in <module>
-    tpt = TPT(algo_params,physical_param_folder,long_simfolder,short_simfolder,savefolder)
-NameError: name 'nshort' is not defined

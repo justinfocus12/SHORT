@@ -6,7 +6,7 @@ def get_algo_params():
     tmax_long = 1000000.0
     tmax_short = 20.0
     dt_save = 0.5
-    nshort = 1000000 
+    nshort = 500000 
     basis_type = 'MSM'
     basis_size = 1500 
     lag_time = 20.0 

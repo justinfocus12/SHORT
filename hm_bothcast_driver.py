@@ -48,7 +48,7 @@ bsymb = r"$\mathbf{b}$"
 # Decide what to do
 least_action_flag = 0
 run_long_flag =     0
-run_short_flag =    1
+run_short_flag =    0
 compute_tpt_flag =  1
 # ------------------------
 
@@ -125,8 +125,8 @@ tpt = pickle.load(open(join(savefolder,"tpt"),"rb"))
 # ---------------------------------------------
 # Starting displays
 print("Loaded TPT")
+funlib = model.observable_function_library()
 tpt.plot_transition_states(model,data)
-sys.exit()
 # Plot long trajectory in 2D
 field_abbs = ["magref","Uref"]
 fieldnames = [funlib[f]["name"] for f in field_abbs]
@@ -140,21 +140,16 @@ field_funs = [funlib[f]["fun"] for f in field_abbs]
 field_units = [funlib[f]["units"] for f in field_abbs]
 field_unit_symbols = [funlib[f]["unit_symbol"] for f in field_abbs]
 tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
-sys.exit()
 # 2D casts and currents
 theta_2d_abbs = [["magref","Uref"],["vTintref","Uref"]]
 print("About to start displaying casts")
 for i in range(len(theta_2d_abbs)):
     tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
-tpt.lag_time_current_display = lag_time_current_display
 tpt.display_2d_currents(model,data,theta_2d_abbs)
-sys.exit()
 keys=['Uref_ln20','magref_g1e7','heatflux_g5em5']
 tpt.write_compare_lifecycle_correlations(model,data)
 tpt.plot_lifecycle_correlations(model,keys=keys)
-sys.exit()
-tpt.write_compare_generalized_rates(model,data)
-sys.exit()
+#tpt.write_compare_generalized_rates(model,data)
 # Plot the long trajectory in 1D
 field_fun = funlib["vTintref"]
 tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"vTintref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
@@ -171,11 +166,12 @@ tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"
 #tpt.write_compare_generalized_rates(model,data)
 #pdf2png(1)
 # Regression
-lasso_fun = lambda x: x
-tpt.regress_committor_modular(model,data,lasso_fun,method='LASSO')
-model.plot_sparse_regression(tpt.lasso_beta,tpt.lasso_score,tpt.savefolder)
+#lasso_fun = lambda x: x
+#tpt.regress_committor_modular(model,data,lasso_fun,method='LASSO')
+#model.plot_sparse_regression(tpt.lasso_beta,tpt.lasso_score,tpt.savefolder)
 
 # Validation
+q = model.q
 theta_1d_fun = lambda x: x[:,2*n+q['zi']:2*n+q['zi']+1]
 theta_1d_name = r"$U(30 km)$"
 theta_1d_units = q['length']/q['time']
