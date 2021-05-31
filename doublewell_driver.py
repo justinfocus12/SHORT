@@ -1,9 +1,9 @@
 import numpy as np
 import time
 from numpy import save,load
-import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('pdf')
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
 matplotlib.rcParams['font.size'] = 12
 matplotlib.rcParams['font.family'] = 'serif'
 matplotlib.rcParams['savefig.bbox'] = 'tight'
@@ -15,11 +15,11 @@ import pickle
 import sys
 import subprocess
 import os
+from os import mkdir
+from os.path import join,exists
 from shutil import copyfile
 codefolder = "/home/jf4241/SHORT"
 os.chdir(codefolder)
-from os import mkdir
-from os.path import join,exists
 from model_obj import Model
 from doublewell_model import DoubleWellModel
 import doublewell_params
@@ -62,12 +62,14 @@ if not exists(physical_param_folder): mkdir(physical_param_folder)
 savefolder = join(physical_param_folder,algo_param_string)
 if not exists(savefolder): mkdir(savefolder)
 copyfile(join(codefolder,"doublewell_params.py"),join(savefolder,"doublewell_params.py"))
+# -------------------------
+np.random.seed(0)
+# -------------------------
+
 # ------------------------
 # 1. Initialize the model
 model = DoubleWellModel(physical_params)
-# 2. Run long and short trajectories
-long_simfolder,t_long,x_long = model.generate_data_long(simfolder,algo_params,run_long_flag=run_long_flag)
-seed_weights = helper.reweight_data(x_long,model.sampling_features,model.sampling_density)
+# ------------------------
 
 # -------------------------------------------
 # 2 Find the least action pathway
@@ -77,9 +79,18 @@ if least_action_flag:
     model_lap.minimize_action(50.0,physical_param_folder,dirn=1,maxiter=100)
 # Plot least action
 model.plot_least_action(physical_param_folder)
-# --------------------------
+# --------------------------------------------
+
+# -------------------------------------------
+# 2. Long simulation
+long_simfolder,t_long,x_long = model.generate_data_long(simfolder,algo_params,run_long_flag=run_long_flag)
+seed_weights = helper.reweight_data(x_long,model.sampling_features,model.sampling_density)
+# -------------------------------------------
+
+# -------------------------------------------
 # Run short trajectories, either with single- or multiprocessor
 short_simfolder = model.generate_data_short_multithreaded(x_long,simfolder,algo_params,seed_weights,run_short_flag=run_short_flag,overwrite_flag=False)
+# ---------------------------------------------
 
 # ---------------------------------------------
 # Initialize TPT
@@ -87,8 +98,10 @@ tpt = TPT(algo_params,physical_param_folder,long_simfolder,short_simfolder,savef
 # Initialize data
 data = tpt.compile_data(model)
 # Initialize function approximator as MSM basis
-function = function_obj.MSMBasis(algo_params) #(basis_size,max_clust_per_level=max_clust_per_level,min_clust_size=min_clust_size)
-# ----------------------------
+function = function_obj.MSMBasis(algo_params)
+# ------------------------------------------------
+
+# -----------------------------------------------
 # Perform DGA
 if compute_tpt_flag:
     tpt.label_x_long(model)

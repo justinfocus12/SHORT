@@ -23,23 +23,21 @@ import sys
 from model_obj import Model
 
 class HoltonMassModel(Model):
-    def __init__(self,hB_d=38.5,du_per_day=1.0,dh_per_day=0.0,ref_alt=30.0,abdefdim=75):
-        self.ref_alt = ref_alt # in kilometers
+    #def __init__(self,hB_d=38.5,du_per_day=1.0,dh_per_day=0.0,ref_alt=30.0,abdefdim=75):
+    def __init__(self,physical_params):
+        self.ref_alt = physical_params['ref_alt'] # in kilometers
         q = {
            'rad': 6370.0e3, 'day': 24*3600.0, 'g': 9.82, 'phi0': np.pi/3, 
            'sx': 2, 'sy': 3, 'zB_d': 0.0, 'zT_d': 70.0e3, 'H': 7.0e3, 
            'Omega': 2*np.pi/(24*3600), 'Nsq_d': 4.0e-4, 'ideal_gas_constant': 8.314,
-           'eps': 8.0/(3*np.pi), 'UR_0_d': 10.0, 'gamma': 1.5, 'hB_d': hB_d, 
+           'eps': 8.0/(3*np.pi), 'UR_0_d': 10.0, 'gamma': 1.5, 'hB_d': physical_params['hB_d'], 
            'nfreq': 3, 'Nz': 26, 'length': 2.5e5, 'time': 24*3600.0,
-           'du_per_day': du_per_day, 'dh_per_day': dh_per_day, 'dt_sim': 0.005,
-           #'sig_u': 0.47, 'sig_h': 0.01, #'sig_ratio': 1e-2, 
+           'du_per_day': physical_params['du_per_day'], 'dt_sim': physical_params['dt_sim'],
         }
         self.q = self.initialize_params(q)
         # E[(dU)^2]/dt = (du_perday m/s)^2/day
         # E[(dpsi)^2]/dt = (g/f0*dh_perday m^2/s)^2/day
-        #sig_h is the strength of forcing on the geopotential height, so 
-        #forcing on the streamfunction is sig_psi = g*sig_h/f0
-        self.abdefdim = abdefdim
+        self.abdefdim = physical_params['abdefdim']
         self.state_dim = 3*(self.q['Nz']-1)
         tpt_obs_dim = self.state_dim # We're dealing with full state here
         self.noise_rank = self.q['nfreq']
@@ -293,6 +291,16 @@ class HoltonMassModel(Model):
         fig.savefig(join(physical_param_folder,"fw_plot_%s"%fun_name))
         plt.close(fig)
         return 
+    def sampling_features(self,x):
+        # x must be the output of tpt_observables
+        funlib = self.observable_function_library()
+        Nx,xdim = x.shape
+        samp_feat = np.zeros((Nx,2))
+        samp_feat[:,0] = funlib["vTintref"]["fun"](x).flatten()
+        samp_feat[:,1] = funlib["Uref"]["fun"](x).flatten()
+        return samp_feat
+    def sampling_density(self,x):
+        return np.ones(len(x))
     def create_tpt_damage_functions(self):
         # A dictionary of lambda functions of interest to be integrated along reactive trajectories (or just forward-reactive or backward-reactive).
         q = self.q

@@ -3,13 +3,13 @@ import numpy as np
 
 def get_algo_params():
     # Algorithm parameters
-    tmax_long = 500.0
-    tmax_short = 0.05
-    dt_save = 0.0002
-    nshort = 100000 #200000
+    tmax_long = 1000000.0
+    tmax_short = 20.0
+    dt_save = 0.5
+    nshort = 1000000 
     basis_type = 'MSM'
-    basis_size = 300 
-    lag_time = 0.2 
+    basis_size = 1500 
+    lag_time = 20.0 
     nlags = 21 
     lag_time_seq = np.linspace(0,lag_time,nlags)
     lag_time_current = lag_time_seq[1] # For computing rates
@@ -38,21 +38,19 @@ def get_algo_params():
     return algo_params,algo_param_string
 
 def get_physical_params():
-    tau = 0.25
-    kappa = 0.0
-    sigma = 1.0
-    state_dim = 2
-    dt_sim = 0.0001
-    obs_dim = 2 # Observable degrees of freedom
+    du_per_day = 1.0
+    hB_d = 38.5
+    abdefdim =               75
+    ref_alt =                30.0 # 21.5 or 26.9 or 29.6
+    dt_sim = 0.005
     physical_params = dict({
-        'tau': tau,
-        'kappa': kappa,
-        'sigma': sigma,
-        'state_dim': state_dim,
-        'obs_dim': obs_dim,
+        'hB_d': hB_d,
+        'du_per_day': du_per_day,
         'dt_sim': dt_sim,
+        'ref_alt': ref_alt,
+        'abdefdim': abdefdim,
         })
-    physical_param_string = ("tau{}_kappa{}_sigma{}".format(tau,kappa,sigma)).replace(".","p")
+    physical_param_string = ("du{}_h{}_abdd{}".format(du_per_day,hB_d,abdefdim)).replace(".","p")
     return physical_params,physical_param_string
 
 

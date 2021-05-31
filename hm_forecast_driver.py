@@ -17,7 +17,7 @@ import subprocess
 import os
 from os import mkdir
 from os.path import join,exists
-codefolder = "/home/jf4241/dgaf2"
+codefolder = "/home/jf4241/SHORT"
 os.chdir(codefolder)
 from model_obj import Model
 from hm_model import HoltonMassModel

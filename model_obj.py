@@ -308,7 +308,6 @@ class Model(ABC):
         x = np.zeros((K,self.state_dim))
         x[0] = x_init
         sqrtdt = np.sqrt(self.dt_sim)
-        print("self.xst[:1] = {}".format(self.xst[:1]))
         sig_mat = self.diffusion_mat(self.xst[:1])
         for i in range(K-1):
             x[i+1] = x[i] + self.drift_fun(x[i:i+1]).flatten()*self.dt_sim + sig_mat.dot(w[i])*sqrtdt
