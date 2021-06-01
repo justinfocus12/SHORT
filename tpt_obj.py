@@ -148,7 +148,7 @@ class TPT:
         #comm_bwd = self.dam_moments[keys[0]]['ax'][0,:,0]
         midrange_idx = np.where((comm_fwd>0.2)*(comm_fwd<0.8)*(np.isnan(tb)==0))[0]
         #weights = (self.chom*comm_fwd*comm_bwd)[midrange_idx]
-        weights = self.chom[midrange_idx]*(comm_fwd[midrange_idx]*(1-comm_fwd[midrange_idx]))**1
+        weights = self.chom[midrange_idx]*(comm_fwd[midrange_idx]*(1-comm_fwd[midrange_idx]))**0
         weights *= 1.0/np.sum(weights)
         idx = np.random.choice(midrange_idx,size=min(100000,len(midrange_idx)),p=weights,replace=False)
         log_time = np.log(tb[idx])
@@ -169,7 +169,7 @@ class TPT:
         #comm_bwd = self.dam_moments[keys[0]]['ax'][0,:,0]
         midrange_idx = np.where((comm_fwd>0.2)*(comm_fwd<0.8))[0]
         #weights = (self.chom*comm_fwd*comm_bwd)[midrange_idx]
-        weights = self.chom[midrange_idx]*(comm_fwd[midrange_idx]*(1-comm_fwd[midrange_idx]))**1
+        weights = self.chom[midrange_idx]*(comm_fwd[midrange_idx]*(1-comm_fwd[midrange_idx]))**0
         weights *= 1.0/np.sum(weights)
         idx = np.random.choice(midrange_idx,size=min(100000,len(midrange_idx)),p=weights,replace=False)
         logit_committor = np.log(comm_fwd[idx]/(1-comm_fwd[idx]))
@@ -2308,16 +2308,16 @@ class TPT:
             ax[j].plot([0,max_length],theta2d_units[1]*theta_ab[0,1]*np.ones(2),color='black',linestyle='-',linewidth=3)
             ax[j].plot([0,max_length],theta2d_units[1]*theta_ab[1,1]*np.ones(2),color='black',linestyle='-',linewidth=3)
             htj_dga, = ax[j].plot(test_tbth[j]*np.ones(2),theta2d_units[1]*theta_ab[:,1],color='black',linestyle='--',linewidth=4,label=r"$\eta^+(\theta_{%d})=%.1f$"%(j,test_tbth[j]))
-            #htj_emp, = ax[j].plot(tb_emp[j]*np.ones(2),theta2d_units[1]*theta_ab[:,1],color='black',linestyle='--',linewidth=4,label=r"$\overline{\tau_B}(\theta_{%d})=%.1f$"%(j,tb_emp[j]))
+            htj_emp, = ax[j].plot(tb_emp[j]*np.ones(2),theta2d_units[1]*theta_ab[:,1],color='black',linestyle='--',linewidth=4,label=r"$\overline{\tau_B}(\theta_{%d})=%.1f$"%(j,tb_emp[j]))
             dthab = np.abs(theta_ab[0,1]-theta_ab[1,1])
             ax[j].text(0,theta2d_units[1]*(theta_ab[0,1]+0.01*dthab),asymb,fontdict=bigfont,color='black',weight='bold')
             ax[j].text(0,theta2d_units[1]*(theta_ab[1,1]+0.01*dthab),bsymb,fontdict=bigfont,color='black',weight='bold')
             ax[j].tick_params(axis='both',labelsize=25)
-            ax[j].legend(handles=handles[j]+[htj_dga],prop={'size':25})
-            #ax[j].text(max_length*4/8,theta2d_units[1]*(theta_ab[0,1]*0.5+theta_ab[1,1]*0.5),r"$E[q^+|\theta_{%d}]=%.2f;\ \frac{N_B}{N}(\theta_{%d})=%.2f$"
-            #"\n"
-            #r"$E[\tau^+|\theta_{%d}\to B]=%.1f;\ \overline{T_B}(\theta_{%d})=%.1f$"
-            #%(j,test_qth[j],j,Nb[j]/num_series,j,test_tbth[j],j,tb_emp[j]),fontdict=font)
+            ax[j].legend(handles=handles[j]+[htj_dga,htj_emp],prop={'size':25})
+            ax[j].text(max_length*4/8,theta2d_units[1]*(theta_ab[0,1]*0.5+theta_ab[1,1]*0.5),r"$E[q^+|\theta_{%d}]=%.2f;\ \frac{N_B}{N}(\theta_{%d})=%.2f$"
+            "\n"
+            r"$E[\tau^+|\theta_{%d}\to B]=%.1f;\ \overline{T_B}(\theta_{%d})=%.1f$"
+            %(j,test_qth[j],j,Nb[j]/num_series,j,test_tbth[j],j,tb_emp[j]),fontdict=font)
         fig.savefig(join(self.savefolder,"committor_demo_timeseries"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
@@ -3010,7 +3010,7 @@ class TPT:
         ax.tick_params(axis='y',labelsize=20)
         ax.set_xlim([units*(thaxes[0][0]-dth[0]/2),units*(thaxes[0][-1]+dth[-1]/2)])
         return fig,ax,handle
-    def plot_zfam(self,model,data):
+    def plot_zfam_committor(self,model,data):
         q = model.q
         funlib = model.observable_function_library()
         ss = np.random.choice(np.arange(self.nshort),size=min(self.nshort,100000),replace=False)

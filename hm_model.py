@@ -357,7 +357,7 @@ class HoltonMassModel(Model):
                     },
                 'heatflux': {
                     'pay': self.fun_at_level(funlib["vT"]["fun"], self.ref_alt),
-                    'name': 'Heat flux (%.0f\\text{ km})'%self.ref_alt,
+                    'name': 'Heat flux (%.0f\\mathrm{ km})'%self.ref_alt,
                     'name_fwd': "\\int_0^{\\tau^+}\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, 
                     'name_bwd': "\\int_{\\tau^-}^0\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, #r"$\tau^-$",
                     'name_full': "\\int_{\\tau^-}^{\\tau^+}\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, #r"$\tau^+-\tau^-$",
@@ -919,7 +919,7 @@ class HoltonMassModel(Model):
         ax[1].set_xlabel(r"$R^2$",fontdict=font)
         ax[1].set_title("{} Correlation$(z)$".format(method),fontdict=font)
         ax[1].tick_params(axis='both', which='major', labelsize=20)
-        fig.savefig(join(savefolder,"lasso_coeffs_zdep_{}_{}".format(method,suffix)))
+        fig.savefig(join(savefolder,"lasso_coeffs_zdep_{}{}".format(method,suffix)))
         plt.close(fig)
         return
     def plot_sparse_regression_allz(self,beta,score,savefolder,suffix=""):
@@ -945,7 +945,7 @@ class HoltonMassModel(Model):
         plt.close(fig)
         print("R2 = {}".format(score))
         reg_coeffs = np.concatenate((z.reshape((n,1)),beta.reshape((Nth,n)).T),axis=1)
-        np.savetxt(join(savefolder,"reg_coeffs{}.txt".format(suffix)), reg_coeffs, fmt='%.3e')
+        np.savetxt(join(savefolder,"lasso_coeffs{}.txt".format(suffix)), reg_coeffs, fmt='%.3e')
         print("savefolder = {}".format(savefolder))
         return
     def fun_at_level(self,fun,z):
