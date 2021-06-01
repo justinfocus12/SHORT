@@ -37,7 +37,7 @@ resultfolder = join(datafolder,"results")
 if not exists(resultfolder): mkdir(resultfolder)
 dayfolder = join(resultfolder,"2021-05-31")
 if not exists(dayfolder): mkdir(dayfolder)
-expfolder = join(dayfolder,"0")
+expfolder = join(dayfolder,"1")
 if not exists(expfolder): mkdir(expfolder)
 # -----------------------------------
 
@@ -45,10 +45,10 @@ asymb = r"$\mathbf{a}$"
 bsymb = r"$\mathbf{b}$"
 
 # ---------- Decide what to do ----------
-least_action_flag = 0
+least_action_flag = 1
 run_long_flag =     0
 run_short_flag =    0
-compute_tpt_flag =  0
+compute_tpt_flag =  1
 # ---------------------------------------
 
 # ---------- Set parameters --------------------------
