@@ -129,7 +129,7 @@ class TPT:
                 self.dam_emp[keys[k]]['ba'] += [0.5*dt*(dam_long[keys[k]][ba_starts[ri]] + 2*np.sum(dam_long[keys[k]][ba_starts[ri]:ba_ends[ri]]) + dam_long[keys[k]][ba_ends[ri]])]
             self.dam_emp[keys[k]]['ab'] = np.array(self.dam_emp[keys[k]]['ab'])
             self.dam_emp[keys[k]]['ba'] = np.array(self.dam_emp[keys[k]]['ba'])
-        return
+        return ab_starts,ab_ends,ba_starts,ba_ends,self.dam_emp
     def compile_data(self,model):
         print("In TPT: self.nshort = {}".format(self.nshort))
         t_short,x_short = model.load_short_traj(self.short_simfolder,self.nshort)

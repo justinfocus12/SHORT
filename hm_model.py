@@ -24,7 +24,7 @@ from model_obj import Model
 
 class HoltonMassModel(Model):
     #def __init__(self,hB_d=38.5,du_per_day=1.0,dh_per_day=0.0,ref_alt=30.0,abdefdim=75):
-    def __init__(self,physical_params):
+    def __init__(self,physical_params,xst=None):
         self.ref_alt = physical_params['ref_alt'] # in kilometers
         q = {
            'rad': 6370.0e3, 'day': 24*3600.0, 'g': 9.82, 'phi0': np.pi/3, 
@@ -46,7 +46,10 @@ class HoltonMassModel(Model):
         nshort_per_file_limit = 100000
         super().__init__(3*(self.q['Nz']-1),q['nfreq'],q['dt_sim'],tpt_obs_dim,parallel_sim_limit,nshort_per_file_limit)
         x0_list = self.approximate_fixed_points()
-        self.find_fixed_points(tmax=600)
+        if xst is None:
+            self.find_fixed_points(tmax=600)
+        else:
+            self.xst = xst
         self.tpt_obs_xst = self.tpt_observables(self.xst)
         return
     def initialize_params(self,q):

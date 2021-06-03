@@ -118,7 +118,6 @@ class Model(ABC):
             print("WARNING! Not converged to fixed points")
             print("Gradient magnitudes: {}".format(np.sqrt(np.sum((self.drift_fun(x[-1]))**2, 1))))
         self.xst = x[-1]
-        self.xst_cv = self.tpt_observables(self.xst)
         return 
     @abstractmethod
     def set_param_folder(self):
