@@ -1,0 +1,117 @@
+WARNING! Not converged to fixed points
+Gradient magnitudes: [1.84848074e-06 1.81010217e-03]
+Done plotting snapshots
+About to run long trajectory
+empirical weights: min=0.0, max=217413.0, mean=48649.89718455141, std=58848.958915626805
+About to run short trajectories
+x_short_filelist_existing = []
+Process Short batch 0 starting with seed 0
+Process Short batch 1 starting with seed 1
+Process Short batch 2 starting with seed 2
+Process Short batch 3 starting with seed 3
+Process Short batch 4 starting with seed 4
+Process Short batch 5 starting with seed 5
+Process Short batch 6 starting with seed 6
+x_seed: min=-2.8060535505576576, max=15.891724912277375, mean=5.490761750662751
+Process Short batch 7 starting with seed 7
+x_seed: min=-2.8060535505576576, max=15.891724912277375, mean=5.490761750662751
+Process Short batch 8 starting with seed 8
+x_seed: min=-2.8060535505576576, max=15.891724912277375, mean=5.490761750662751
+x_seed: min=-2.8060535505576576, max=15.891724912277375, mean=5.490761750662751
+Process Short batch 9 starting with seed 9
+x_seed: min=-2.8060535505576576, max=15.891724912277375, mean=5.490761750662751
+x_seed: min=-2.8060535505576576, max=15.891724912277375, mean=5.490761750662751
+x_seed: min=-2.8060535505576576, max=15.891724912277375, mean=5.490761750662751
+x_seed: min=-2.8060535505576576, max=15.891724912277375, mean=5.490761750662751
+x_seed: min=-2.8060535505576576, max=15.891724912277375, mean=5.490761750662751
+x_seed: min=-2.8060535505576576, max=15.891724912277375, mean=5.490761750662751
+idx: min=16, max=1999914, mean=1001023.04864
+idx: min=25, max=1999929, mean=1000423.08464
+idx: min=30, max=1999988, mean=1004063.84081
+idx: min=34, max=1999924, mean=1000506.5749
+idx: min=5, max=1999961, mean=1001710.8672
+xstart[0]: min=-2.1361536894732116, max=15.395363918837809, mean=4.516384848341921
+Starting trajectories 0-9999 out of 100000
+xstart[0]: min=-1.9810069451123302, max=14.512867583751085, mean=4.508425969030822
+Starting trajectories 0-9999 out of 100000
+idx: min=6, max=1999937, mean=1004919.68211
+idx: min=21, max=1999997, mean=998846.34813
+xstart[0]: min=-2.40185617279745, max=14.750095147132708, mean=4.519194150099973
+Starting trajectories 0-9999 out of 100000
+xstart[0]: min=-1.8011987002851482, max=14.500783375847384, mean=4.502912488237391
+Starting trajectories 0-9999 out of 100000
+idx: min=0, max=1999935, mean=1001864.68728
+idx: min=22, max=1999963, mean=999263.56367
+xstart[0]: min=-2.4726383946060952, max=14.418585279559622, mean=4.504566867590793
+Starting trajectories 0-9999 out of 100000
+xstart[0]: min=-2.6058359861012867, max=15.395363918837809, mean=4.499007374391286
+Starting trajectories 0-9999 out of 100000
+idx: min=21, max=1999950, mean=1001844.69135
+xstart[0]: min=-1.9780030428171111, max=14.599661682842164, mean=4.505083203460355
+Starting trajectories 0-9999 out of 100000
+xstart[0]: min=-2.279695886273667, max=14.40503862795509, mean=4.505396211708282
+Starting trajectories 0-9999 out of 100000
+xstart[0]: min=-2.1361536894732116, max=14.768261213416055, mean=4.502442126515106
+Starting trajectories 0-9999 out of 100000
+xstart[0]: min=-2.1361536894732116, max=15.891724912277375, mean=4.5162757255365795
+Starting trajectories 0-9999 out of 100000
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 10.000 out of 20.000 (50.000% done)
+Time 10.000 out of 20.000 (50.000% done)
+Time 10.000 out of 20.000 (50.000% done)
+Time 10.000 out of 20.000 (50.000% done)
+Time 10.000 out of 20.000 (50.000% done)
+Time 10.000 out of 20.000 (50.000% done)
+Time 10.000 out of 20.000 (50.000% done)
+Time 10.000 out of 20.000 (50.000% done)
+Time 10.000 out of 20.000 (50.000% done)
+Time 10.000 out of 20.000 (50.000% done)
+Time 15.000 out of 20.000 (75.000% done)
+Time 15.000 out of 20.000 (75.000% done)
+Time 15.000 out of 20.000 (75.000% done)
+Time 15.000 out of 20.000 (75.000% done)
+Time 15.000 out of 20.000 (75.000% done)
+Time 15.000 out of 20.000 (75.000% done)
+Time 15.000 out of 20.000 (75.000% done)
+Time 15.000 out of 20.000 (75.000% done)
+Time 15.000 out of 20.000 (75.000% done)
+Time 15.000 out of 20.000 (75.000% done)
+Time 20.000 out of 20.000 (100.000% done)
+Starting trajectories 10000-19999 out of 100000
+Time 20.000 out of 20.000 (100.000% done)
+Time 20.000 out of 20.000 (100.000% done)
+Starting trajectories 10000-19999 out of 100000
+Starting trajectories 10000-19999 out of 100000
+Time 20.000 out of 20.000 (100.000% done)
+Time 20.000 out of 20.000 (100.000% done)
+Starting trajectories 10000-19999 out of 100000
+Time 20.000 out of 20.000 (100.000% done)
+Starting trajectories 10000-19999 out of 100000
+Time 20.000 out of 20.000 (100.000% done)
+Time 20.000 out of 20.000 (100.000% done)
+Starting trajectories 10000-19999 out of 100000
+Starting trajectories 10000-19999 out of 100000
+Starting trajectories 10000-19999 out of 100000
+Time 20.000 out of 20.000 (100.000% done)
+Starting trajectories 10000-19999 out of 100000
+Time 20.000 out of 20.000 (100.000% done)
+Starting trajectories 10000-19999 out of 100000
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)
+Time 5.005 out of 20.000 (25.025% done)

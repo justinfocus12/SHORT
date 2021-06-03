@@ -294,12 +294,12 @@ def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldnam
         ax1.set_xlabel("{}".format(xlab),fontdict=font)
         ax1.set_ylabel("{}".format(ylab),fontdict=font)
     return fig,ax 
-def reweight_data(x,theta_fun,theta_pdf):
+def reweight_data(x,theta_fun,algo_params,theta_pdf):
     # theta_fun is a CV space; theta_pdf is a density function on that CV space (need not be normalized)
     # Given a reference dataset meant to be pi-distributed, resample
     # ref_data could be transformed
     Nx = len(x)
-    theta_x = theta_fun(x)
+    theta_x = theta_fun(x,algo_params)
     theta_weights = theta_pdf(theta_x)
     shp,dth,thaxes,cgrid,field_mean,field_std,field_std_L2,field_std_Linf,bounds = project_field(np.ones(Nx),np.ones(Nx),theta_x,avg_flag=False)
     lower_bounds = np.array([th[0] for th in thaxes])

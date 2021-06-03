@@ -35,7 +35,7 @@ simfolder = join(datafolder,"runs")
 if not exists(simfolder): mkdir(simfolder)
 resultfolder = join(datafolder,"results")
 if not exists(resultfolder): mkdir(resultfolder)
-dayfolder = join(resultfolder,"2021-06-02")
+dayfolder = join(resultfolder,"2021-06-03")
 if not exists(dayfolder): mkdir(dayfolder)
 expfolder = join(dayfolder,"0")
 if not exists(expfolder): mkdir(expfolder)
@@ -45,9 +45,9 @@ asymb = r"$\mathbf{a}$"
 bsymb = r"$\mathbf{b}$"
 
 # ---------- Decide what to do ----------
-least_action_flag = 1
+least_action_flag = 0
 run_long_flag =     0
-run_short_flag =    0
+run_short_flag =    1
 compute_tpt_flag =  1
 # ---------------------------------------
 
@@ -85,14 +85,14 @@ model.plot_least_action(physical_param_folder,"vTint")
 # --------------- Long simulation --------------
 print("About to run long trajectory")
 long_simfolder,t_long,x_long = model.generate_data_long(simfolder,algo_params,run_long_flag=run_long_flag)
-seed_weights = helper.reweight_data(x_long,model.sampling_features,model.sampling_density)
+seed_weights = helper.reweight_data(x_long,model.sampling_features,algo_params,model.sampling_density)
 # ----------------------------------------------
 
 # ---------- Short simulation ----------
 print("About to run short trajectories")
 short_simfolder = model.generate_data_short_multithreaded(x_long,simfolder,algo_params,seed_weights,run_short_flag=run_short_flag,overwrite_flag=False)
 # ---------------------------------------------
-
+sys.exit()
 # ---------- Initialize TPT ----------
 tpt = TPT(algo_params,physical_param_folder,long_simfolder,short_simfolder,savefolder)
 # Initialize data

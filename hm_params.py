@@ -6,7 +6,7 @@ def get_algo_params():
     tmax_long = 1000000.0
     tmax_short = 20.0
     dt_save = 0.5
-    nshort = 300000 
+    nshort = 1000000 
     basis_type = 'MSM'
     basis_size = 1000 
     lag_time = 20.0 
@@ -18,6 +18,7 @@ def get_algo_params():
     min_clust_size = 10
     if min_clust_size*basis_size > nshort:
         sys.exit("ERROR: basis_size*min_clust_size > nshort")
+    sampling_feature_names = ['magref','Uref']
     # Return a dictionary
     algo_params = dict({
         'tmax_long': tmax_long,
@@ -32,9 +33,10 @@ def get_algo_params():
         'lag_time_current_display': lag_time_current_display,
         'min_clust_size': min_clust_size,
         'max_clust_per_level': max_clust_per_level,
+        'sampling_feature_names': sampling_feature_names,
         })
     # Make a string for the corresponding folder
-    algo_param_string = ("tlong{}_N{}_bs{}_lag{}_nlags{}_lagj{}".format(tmax_long,nshort,basis_size,lag_time,nlags,lag_time_current)).replace('.','p')
+    algo_param_string = ("tlong{}_N{}_bs{}_lag{}_nlags{}_lagj{}_sf0{}".format(tmax_long,nshort,basis_size,lag_time,nlags,lag_time_current,sampling_feature_names[0])).replace('.','p')
     return algo_params,algo_param_string
 
 def get_physical_params():

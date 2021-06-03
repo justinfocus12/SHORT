@@ -291,13 +291,16 @@ class HoltonMassModel(Model):
         fig.savefig(join(physical_param_folder,"fw_plot_%s"%fun_name))
         plt.close(fig)
         return 
-    def sampling_features(self,x):
+    def sampling_features(self,x,algo_params):
         # x must be the output of tpt_observables
         funlib = self.observable_function_library()
         Nx,xdim = x.shape
-        samp_feat = np.zeros((Nx,2))
-        samp_feat[:,0] = funlib["vTintref"]["fun"](x).flatten()
-        samp_feat[:,1] = funlib["Uref"]["fun"](x).flatten()
+        names = algo_params['sampling_feature_names']
+        samp_feat = np.zeros((Nx,len(names)))
+        for i in range(len(names)):
+            samp_feat[:,i] = funlib[names[i]]["fun"](x).flatten()
+        #samp_feat[:,0] = funlib["vTintref"]["fun"](x).flatten()
+        #samp_feat[:,1] = funlib["Uref"]["fun"](x).flatten()
         return samp_feat
     def sampling_density(self,x):
         return np.ones(len(x))

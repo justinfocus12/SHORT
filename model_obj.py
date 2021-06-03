@@ -205,7 +205,7 @@ class Model(ABC):
         # Top off the existing data if needed. 
         # -----------------------------------
         # Short simulation
-        short_simfolder = (join(simfolder,self.param_foldername,"short_t{}".format(tmax_short))).replace(".","p")
+        short_simfolder = (join(simfolder,self.param_foldername,"short_t{}_sf0{}".format(tmax_short,algo_params['sampling_feature_names'][0]))).replace(".","p")
         if (not run_short_flag) and exists(short_simfolder): return short_simfolder
         if run_short_flag and not exists(short_simfolder): mkdir(short_simfolder)
         if overwrite_flag:
@@ -251,7 +251,7 @@ class Model(ABC):
         # new paradigm: top off the existing data if needed. 
         # -----------------------------------
         # Short simulation
-        short_simfolder = (join(simfolder,self.param_foldername,"short_t{}".format(tmax_short))).replace(".","p")
+        short_simfolder = (join(simfolder,self.param_foldername,"short_t{}_sf0{}".format(tmax_short,algo_params['sampling_feature_names'][0]))).replace(".","p")
         if run_short_flag and not exists(short_simfolder): mkdir(short_simfolder)
         print("does short_simfolder exist now? {}".format(exists(short_simfolder)))
         print("listdir(short_simfolder) = {}".format(os.listdir(short_simfolder)))
