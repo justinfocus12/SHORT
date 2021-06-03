@@ -6,9 +6,9 @@ def get_algo_params():
     tmax_long = 1000000.0
     tmax_short = 20.0
     dt_save = 0.5
-    nshort = 500000 
+    nshort = 300000 
     basis_type = 'MSM'
-    basis_size = 1500 
+    basis_size = 1000 
     lag_time = 20.0 
     nlags = 21 
     lag_time_seq = np.linspace(0,lag_time,nlags)
@@ -40,7 +40,7 @@ def get_algo_params():
 def get_physical_params():
     du_per_day = 1.0
     hB_d = 38.5
-    abdefdim =               1
+    abdefdim =               75
     ref_alt =                30.0 # 21.5 or 26.9 or 29.6
     dt_sim = 0.005
     physical_params = dict({
