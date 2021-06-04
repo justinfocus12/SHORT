@@ -6,12 +6,12 @@ def get_algo_params():
     tmax_long = 1000000.0
     tmax_short = 20.0
     dt_save = 0.5
-    nshort = 300000 
+    nshort = 500000 
     basis_type = 'MSM'
-    basis_size = 1000 
+    basis_size = 1500 
     lag_time = 20.0 
     nlags = 21 
-    num_moments = 3
+    num_moments = 2
     lag_time_seq = np.linspace(0,lag_time,nlags)
     lag_time_current = lag_time_seq[1] # For computing rates
     lag_time_current_display = lag_time_seq[4] # For displaying current vector fields
@@ -43,7 +43,7 @@ def get_algo_params():
     return algo_params,algo_param_string
 
 def get_physical_params():
-    du_per_day = 1.0
+    du_per_day = 0.8
     hB_d = 38.5
     abdefdim =               75
     radius_a =               0.0
