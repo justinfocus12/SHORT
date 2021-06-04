@@ -56,6 +56,7 @@ class TPT:
         self.lag_time_current = algo_params['lag_time_current']
         self.lag_time_current_display = algo_params['lag_time_current_display']
         self.lag_time_seq = algo_params['lag_time_seq']
+        self.num_moments = algo_params['num_moments']
         self.long_simfolder = long_simfolder
         self.short_simfolder = short_simfolder
         self.savefolder = savefolder
@@ -656,10 +657,11 @@ class TPT:
         fig.savefig(join(self.savefolder,"proj_1d_array"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
-    def compute_dam_moments_abba_finlag(self,model,data,function,num_moments=2):
+    def compute_dam_moments_abba_finlag(self,model,data,function):
         Nx,Nt,xdim = data.X.shape
         dam_keys = list(model.dam_dict.keys())
         num_bvp = len(dam_keys)
+        num_moments = self.num_moments
         bdy_dist = lambda x: np.minimum(model.adist(x),model.bdist(x))
         bdy_fun_b = lambda x: 1.0*(model.bdist(x) == 0)
         bdy_fun_a = lambda x: 1.0*(model.adist(x) == 0)
@@ -776,7 +778,8 @@ class TPT:
         function.fit_data(data.X[:,0],bdy_dist)
         self.mfpt_a = function.solve_boundary_value_problem(data,bdy_dist,bdy_fun,src_fun,pot_fun,dirn=1)
         return
-    def compute_dam_moments_abba(self,model,data,function,num_moments=2):
+    def compute_dam_moments_abba(self,model,data,function):
+        num_moments = self.num_moments
         Nx,Nt,xdim = data.X.shape
         dam_keys = list(model.dam_dict.keys())
         num_bvp = len(dam_keys)

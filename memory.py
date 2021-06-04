@@ -44,7 +44,7 @@ asymb = r"$\mathbf{a}$"
 bsymb = r"$\mathbf{b}$"
 
 # ---------- Decide what to do ----------
-find_fixed_points_flag = 1
+find_fixed_points_flag = 0
 run_long_flag =          0
 least_action_flag =      0
 label_long_flag =        1
@@ -132,9 +132,19 @@ plt.close(fig)
 
 keys = list(dam_emp.keys())
 for k in range(len(keys)):
-    fig,ax = plt.subplots()
-    hab, = ax.plot(ab_offset+np.arange(trans2plot),dam_emp[keys[k]]['ab'][:trans2plot],color='darkorange',label=keys[k])
-    hba, = ax.plot(ba_offset+np.arange(trans2plot),dam_emp[keys[k]]['ba'][:trans2plot],color='mediumspringgreen',label=keys[k])
+    fig,ax = plt.subplots(ncols=3,figsize=(18,6))
+    hab, = ax[0].plot(ab_offset+np.arange(trans2plot),dam_emp[keys[k]]['ab'][:trans2plot],color='darkorange',label=keys[k])
+    hba, = ax[0].plot(ba_offset+np.arange(trans2plot),dam_emp[keys[k]]['ba'][:trans2plot],color='mediumspringgreen',label=keys[k])
+    ax[0].legend(handles=[hab,hba])
+    ax[0].set_title("Transitions %s"%keys[k])
+    ax[1].scatter(dam_emp[keys[k]]['ab'][:-1],dam_emp[keys[k]]['ab'][1:],color='darkorange')
+    ax[1].set_xlabel(r"%s$_k$"%(keys[k]))
+    ax[1].set_ylabel(r"%s$_{k+1}$"%(keys[k]))
+    ax[1].set_title(r"$A\to B$ memory")
+    ax[2].scatter(dam_emp[keys[k]]['ba'][:-1],dam_emp[keys[k]]['ba'][1:],color='mediumspringgreen')
+    ax[2].set_xlabel(r"%s$_k$"%(keys[k]))
+    ax[2].set_ylabel(r"%s$_{k+1}$"%(keys[k]))
+    ax[2].set_title(r"$B\to A$ memory")
     fig.savefig(join(savefolder,"dam{}".format(k)))
     plt.close(fig)
 

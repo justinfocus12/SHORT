@@ -47,7 +47,7 @@ bsymb = r"$\mathbf{b}$"
 # ---------- Decide what to do ----------
 least_action_flag = 0
 run_long_flag =     0
-run_short_flag =    1
+run_short_flag =    0
 compute_tpt_flag =  1
 # ---------------------------------------
 
@@ -92,7 +92,7 @@ seed_weights = helper.reweight_data(x_long,model.sampling_features,algo_params,m
 print("About to run short trajectories")
 short_simfolder = model.generate_data_short_multithreaded(x_long,simfolder,algo_params,seed_weights,run_short_flag=run_short_flag,overwrite_flag=False)
 # ---------------------------------------------
-sys.exit()
+
 # ---------- Initialize TPT ----------
 tpt = TPT(algo_params,physical_param_folder,long_simfolder,short_simfolder,savefolder)
 # Initialize data
@@ -105,7 +105,7 @@ function = function_obj.MSMBasis(algo_params)
 if compute_tpt_flag:
     tpt.label_x_long(model)
     tpt.compute_change_of_measure(model,data,function)
-    tpt.compute_dam_moments_abba(model,data,function,num_moments=4)
+    tpt.compute_dam_moments_abba(model,data,function)
     tpt.compute_mfpt_unconditional(model,data,function)
     pickle.dump(tpt,open(join(savefolder,"tpt"),"wb"))
     tpt.write_compare_generalized_rates(model,data)
