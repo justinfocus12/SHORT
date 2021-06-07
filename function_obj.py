@@ -20,7 +20,7 @@ import queue
 import sys
 import os
 from os.path import join,exists
-codefolder = "/home/jf4241/dgaf2"
+codefolder = "/home/jf4241/SHORT"
 os.chdir(codefolder)
 from hier_cluster_obj import nested_kmeans,nested_kmeans_predict_batch
 
@@ -37,7 +37,6 @@ class Function(ABC):
         # This should be done after the parameters are set, or at least initialized
         # X.shape = (Nx,xdim) (possibly from a flattened array)
         pass
-    @abstractmethod
     def feynman_kac_rhs(self,data,src_fun,dirn=1):
         Nx,Nt,xdim = data.X.shape
         HX = (src_fun(data.X.reshape((Nx*Nt,xdim)))).reshape((Nx,Nt))
@@ -88,7 +87,6 @@ class Function(ABC):
         VX = self.feynman_kac_lhs_VX(data,pot_fun)
         VF = self.feynman_kac_lhs_VF(data,VX,FX,unk_fun_dim,dirn=dirn)
         return LF,VF,FX
-    @abstractmethod
     def fit_data(self,X,bdy_dist):
         # This is implemented differently depending on the type, and may or may not be data-dependent
         # 1. LinearBasis: define basis functions (e.g. form cluster centers for MSM, or axes for PCA)
@@ -134,7 +132,7 @@ class LinearBasis(Function):
         Nx,Nt,xdim = data.X.shape
         F = (self.bdy_fun(data.X.reshape((Nx*Nt,xdim)))).reshape((Nx,Nt))
         F += self.evaluate_basis_functions(data).dot(self.coeffs)
-        return
+        return F
     @abstractmethod
     def fit_data(self,data,bdy_dist):
         return super().fit_data(data,bdy_dist)
@@ -306,7 +304,6 @@ class LinearBasis(Function):
             u[:,i] += phi[:,i].dot(self.coeffs) 
         self.bdy_fun = bdy_fun
         return u
-    @abstractmethod
     def evaluate_basis_functions(self,X,bdy_dist,const_fun_flag=False):
         Nx,xdim = X.shape
         N = Nx
@@ -316,7 +313,6 @@ class LinearBasis(Function):
         bdy_idx = np.where(bdy_dist_x==0)[0]
         iidx = np.setdiff1d(np.arange(N),bdy_idx)
         phi = self.evaluate_basis_functions_flat(X,iidx,bdy_idx,bdy_dist_x)
-        #phi = phi.reshape((Nx,Nt,self.basis_size))
         return phi
     @abstractmethod
     def evaluate_basis_functions_flat(self,X,iidx,bdy_idx,bdy_dist_x):
@@ -328,23 +324,11 @@ class MSMBasis(LinearBasis):
         self.max_clust_per_level = algo_params['max_clust_per_level']
         self.min_clust_size = algo_params['min_clust_size']
         return super().__init__(algo_params['basis_size'],'MSM')
-    def feynman_kac_rhs(self,*args,**kwargs):
-        return super().feynman_kac_rhs(*args,**kwargs)
-    def feynman_kac_lhs(self,*args,**kwargs):
-        return super().feynman_kac_lhs(*args,**kwargs)
-    def evaluate_function(self,*args,**kwargs):
-        return super().evaluate_function(*args,**kwargs)
-    def solve_boundary_value_problem(self,*args,**kwargs):
-        return super().solve_boundary_value_problem(*args,**kwargs)
-    def fit_data(self,*args,**kwargs):
-        return super().fit_data(*args,**kwargs)
     def fit_data_flat(self,X,iidx,bdy_idx,bdy_dist_x):
         N,xdim = X.shape
         Ni = len(iidx)
         _,_,self.kmeans,self.centers = nested_kmeans(X[iidx],self.basis_size,mcpl=self.max_clust_per_level,min_clust_size=self.min_clust_size)
         return
-    def evaluate_basis_functions(self,*args,**kwargs):
-        return super().evaluate_basis_functions(*args,**kwargs)
     def evaluate_basis_functions_flat(self,X,iidx,bdy_idx,bdy_dist_x):
         # The constant function is ALWAYS in the span of MSM
         N,xdim = X.shape
@@ -367,8 +351,6 @@ class PCABasis(LinearBasis):
         return super().feynman_kac_rhs(*args,**kwargs)
     def feynman_kac_lhs(self,*args,**kwargs):
         return super().feynman_kac_lhs(*args,**kwargs)
-    def evaluate_function(self,*args,**kwargs):
-        return super().evaluate_function(*args,**kwargs)
     def solve_boundary_value_problem(self,*args,**kwargs):
         return super().solve_boundary_value_problem(*args,**kwargs)
     def fit_data(self,*args,**kwargs):
