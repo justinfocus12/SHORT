@@ -1,0 +1,36 @@
+/home/jf4241/SHORT/tpt_obj.py:1300: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,fsuff))
+/home/jf4241/SHORT/tpt_obj.py:1304: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,fsuff))
+/home/jf4241/SHORT/tpt_obj.py:1321: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,fsuff))
+/home/jf4241/SHORT/tpt_obj.py:1347: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,fsuff))
+/home/jf4241/SHORT/tpt_obj.py:1374: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,fsuff))
+/home/jf4241/SHORT/tpt_obj.py:1399: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,fsuff))
+/home/jf4241/SHORT/tpt_obj.py:1426: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,fsuff))
+/home/jf4241/SHORT/tpt_obj.py:1451: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,fsuff))
+/home/jf4241/SHORT/tpt_obj.py:1478: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,fsuff))
+/home/jf4241/SHORT/tpt_obj.py:2070: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,"pij_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])))
+/home/jf4241/SHORT/tpt_obj.py:1258: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,"piabj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])))
+/home/jf4241/SHORT/tpt_obj.py:1273: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,"pibaj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])))
+/home/jf4241/SHORT/tpt_obj.py:2070: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,"pij_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])))
+/home/jf4241/SHORT/tpt_obj.py:1258: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,"piabj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])))
+/home/jf4241/SHORT/tpt_obj.py:1273: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.savefig(join(self.savefolder,"pibaj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])))
+Traceback (most recent call last):
+  File "hm_bothcast_driver.py", line 216, in <module>
+    tpt.write_compare_generalized_rates(model,data)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 1084, in write_compare_generalized_rates
+    vg_dga = self.dam_moments[keys[k]]['rate_ba'][2]/dga_rate - eg_dga**2
+IndexError: index 2 is out of bounds for axis 0 with size 2

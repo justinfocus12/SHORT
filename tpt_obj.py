@@ -1021,40 +1021,41 @@ class TPT:
             f.write("\tA->B\n")
             dga_rate = self.dam_moments[keys[k]]['rate_avg'][0] #['rate_ab'][0]
             emp_rate = len(self.dam_emp[keys[k]]['ab'])/(t_long[-1] - t_long[0])
-            # Compute the correlation with T
+            # Compute the correlation with T -- if the moments go up to 2
+            if self.num_moments >= 2:
             # DGA
-            egt_t_dga = np.sum(self.dam_moments[keys[k]]['ab'][1,:,0]*self.chom)/np.sum(self.dam_moments[keys[k]]['ab'][0,:,0]*self.chom)
-            eg_dga = self.dam_moments[keys[k]]['rate_ab'][1]/dga_rate
-            et_dga = self.dam_moments['one']['rate_ab'][1]/dga_rate
-            vg_dga = self.dam_moments[keys[k]]['rate_ab'][2]/dga_rate - eg_dga**2
-            vt_dga = self.dam_moments['one']['rate_ab'][2]/dga_rate - et_dga**2
-            dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
-            # Empirical
-            egt_emp = np.mean(self.dam_emp[keys[k]]['ab'].flatten()*self.dam_emp['one']['ab'].flatten())
-            eg_emp = np.mean(self.dam_emp[keys[k]]['ab'])
-            et_emp = np.mean(self.dam_emp['one']['ab'])
-            vg_emp = np.var(self.dam_emp[keys[k]]['ab'])
-            vt_emp = np.var(self.dam_emp['one']['ab'])
-            emp_corr = (egt_emp - eg_emp*et_emp)/np.sqrt(vg_emp*vt_emp)
-            # Plot them
-            fig,ax = plt.subplots()
-            scat = ax.scatter(units_k*units_t*self.dam_emp[keys[k]]['ab'].flatten(),units_t*self.dam_emp['one']['ab'].flatten(),color='black',marker='.')
-            # Plot two crosses, one empirical and one DGA
-            hemp, = ax.plot(units_k*eg_emp*np.ones(2),units_t*(et_emp + np.sqrt(vt_emp)*np.array([-1,1])), color='black', linestyle='-',label='Empirical')
-            ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='black', linestyle='-',label='Empirical')
-            hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',label='DGA')
-            ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',label='DGA')
-            ax.set_xlabel(r"$%s (%s)$"%(model.dam_dict[keys[k]]['name_full'],unit_symbol_k),fontdict=font)
-            ax.set_ylabel(r"$%s (%s)$"%(model.dam_dict['one']['name_full'],unit_symbol_t),fontdict=font)
-            ax.xaxis.set_major_formatter(ticker.FuncFormatter(sci_fmt))
-            ax.yaxis.set_major_formatter(ticker.FuncFormatter(sci_fmt))
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
-            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
-            ax.set_title(r"Empirical correlations $A\to B$")
-            ax.legend(handles=[hemp,hdga])
-            fig.savefig(join(self.savefolder,"corr{}_ab".format(keys[k])))
-            plt.close(fig)
-            f.write("\t\tCorrelation with T: DGA: %3.3e, EMP: %3.3e\n"%(dga_corr,emp_corr))
+                egt_t_dga = np.sum(self.dam_moments[keys[k]]['ab'][1,:,0]*self.chom)/np.sum(self.dam_moments[keys[k]]['ab'][0,:,0]*self.chom)
+                eg_dga = self.dam_moments[keys[k]]['rate_ab'][1]/dga_rate
+                et_dga = self.dam_moments['one']['rate_ab'][1]/dga_rate
+                vg_dga = self.dam_moments[keys[k]]['rate_ab'][2]/dga_rate - eg_dga**2
+                vt_dga = self.dam_moments['one']['rate_ab'][2]/dga_rate - et_dga**2
+                dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+                # Empirical
+                egt_emp = np.mean(self.dam_emp[keys[k]]['ab'].flatten()*self.dam_emp['one']['ab'].flatten())
+                eg_emp = np.mean(self.dam_emp[keys[k]]['ab'])
+                et_emp = np.mean(self.dam_emp['one']['ab'])
+                vg_emp = np.var(self.dam_emp[keys[k]]['ab'])
+                vt_emp = np.var(self.dam_emp['one']['ab'])
+                emp_corr = (egt_emp - eg_emp*et_emp)/np.sqrt(vg_emp*vt_emp)
+                # Plot them
+                fig,ax = plt.subplots()
+                scat = ax.scatter(units_k*units_t*self.dam_emp[keys[k]]['ab'].flatten(),units_t*self.dam_emp['one']['ab'].flatten(),color='black',marker='.')
+                # Plot two crosses, one empirical and one DGA
+                hemp, = ax.plot(units_k*eg_emp*np.ones(2),units_t*(et_emp + np.sqrt(vt_emp)*np.array([-1,1])), color='black', linestyle='-',label='Empirical')
+                ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='black', linestyle='-',label='Empirical')
+                hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',label='DGA')
+                ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',label='DGA')
+                ax.set_xlabel(r"$%s (%s)$"%(model.dam_dict[keys[k]]['name_full'],unit_symbol_k),fontdict=font)
+                ax.set_ylabel(r"$%s (%s)$"%(model.dam_dict['one']['name_full'],unit_symbol_t),fontdict=font)
+                ax.xaxis.set_major_formatter(ticker.FuncFormatter(sci_fmt))
+                ax.yaxis.set_major_formatter(ticker.FuncFormatter(sci_fmt))
+                ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
+                ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
+                ax.set_title(r"Empirical correlations $A\to B$")
+                ax.legend(handles=[hemp,hdga])
+                fig.savefig(join(self.savefolder,"corr{}_ab".format(keys[k])))
+                plt.close(fig)
+                f.write("\t\tCorrelation with T: DGA: %3.3e, EMP: %3.3e\n"%(dga_corr,emp_corr))
             f.write("\t\tRate: DGA: %3.3e, EMP: %3.3e\n"%(dga_rate,emp_rate))
             for i in range(num_moments+1):
                 #print("self.dam_emp[keys[k]]['ab'].shape = {}".format(self.dam_emp[keys[k]]['ab'].shape))
@@ -1319,12 +1320,12 @@ class TPT:
                 fsuff = '%s_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                 fig.savefig(join(self.savefolder,fsuff))
                 plt.close(fig)
-                for j in range(3):
+                for j in range(min(3,self.num_moments)):
                     # A->B
                     comm_bwd = self.dam_moments[keys[k]]['ax'][0]
                     comm_fwd = self.dam_moments[keys[k]]['xb'][0]
                     if j == 0: 
-                        fieldname = r"$P[A\to B]$"
+                        fieldname = r"$P\{A\to B\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['ab'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
@@ -1350,7 +1351,7 @@ class TPT:
                     comm_bwd = self.dam_moments[keys[k]]['bx'][0]
                     comm_fwd = self.dam_moments[keys[k]]['xa'][0]
                     if j == 0: 
-                        fieldname = r"$P[B\to A]$"
+                        fieldname = r"$P\{B\to A\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['ba'][j] 
                     else:
                         prob = comm_bwd*comm_fwd

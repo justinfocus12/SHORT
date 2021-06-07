@@ -49,16 +49,16 @@ least_action_flag = 0
 run_long_flag =     0
 run_short_flag =    0
 compute_tpt_flag =  0
-regression_flag =   0
-proj_1d_flag =      0
-demo_flag =         0
-qp_tb_coords_flag = 0
-trans_state_flag =  0
-plot_long_2d_flag = 0
-display_cast_flag = 0
-lifecycle_flag =    0
-gen_rates_flag =    0
-plot_long_1d_flag = 0
+regression_flag =   1
+proj_1d_flag =      1
+demo_flag =         1
+qp_tb_coords_flag = 1
+trans_state_flag =  1
+plot_long_2d_flag = 1
+display_cast_flag = 1
+lifecycle_flag =    1
+gen_rates_flag =    1
+plot_long_1d_flag = 1
 validation_flag =   1
 # ---------------------------------------
 
