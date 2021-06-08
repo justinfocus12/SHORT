@@ -669,9 +669,11 @@ class TPT:
         bdy_fun_list_bwd = len(dam_keys)*[bdy_fun_a] + len(dam_keys)*[bdy_fun_b]
         dam_fun_list = 2*[model.dam_dict[k]['pay'] for k in dam_keys] 
         # Forward: x->B and x->A
-        Fp,Pay,resp = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_fwd,dam_fun_list,dirn=1,weights=np.ones(self.nshort)/self.nshort,num_moments=num_moments)
+        #Fp,Pay,resp = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_fwd,dam_fun_list,dirn=1,weights=np.ones(self.nshort)/self.nshort,num_moments=num_moments)
+        Fp_phi,kmeans_p = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_fwd,dam_fun_list,dirn=1,weights=np.ones(self.nshort)/self.nshort,num_moments=num_moments)
         # Backward: A->x and B->x
-        Fm,_,resm = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_bwd,dam_fun_list,dirn=-1,weights=self.chom,num_moments=num_moments)
+        #Fm,_,resm = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_bwd,dam_fun_list,dirn=-1,weights=self.chom,num_moments=num_moments)
+        Fm_phi,kmeans_m = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_bwd,dam_fun_list,dirn=-1,weights=self.chom,num_moments=num_moments)
         # Now combine them to get generalized rates
         Fmp = np.zeros((2*num_bvp,num_moments+1,Nx,Nt))
         Fmp[:,0] = Fm[:,0]*Fp[:,0]
@@ -790,9 +792,11 @@ class TPT:
         bdy_fun_list_bwd = len(dam_keys)*[bdy_fun_a] + len(dam_keys)*[bdy_fun_b]
         dam_fun_list = 2*[model.dam_dict[k]['pay'] for k in dam_keys] 
         # Forward: x->B and x->A
-        Fp,Pay,resp = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_fwd,dam_fun_list,dirn=1,weights=np.ones(self.nshort)/self.nshort,num_moments=num_moments)
+        #Fp,Pay,resp = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_fwd,dam_fun_list,dirn=1,weights=np.ones(self.nshort)/self.nshort,num_moments=num_moments)
+        Fp_phi,kmeans_p = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_fwd,dam_fun_list,dirn=1,weights=np.ones(self.nshort)/self.nshort,num_moments=num_moments)
         # Backward: A->x and B->x
-        Fm,_,resm = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_bwd,dam_fun_list,dirn=-1,weights=self.chom,num_moments=num_moments)
+        #Fm,_,resm = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_bwd,dam_fun_list,dirn=-1,weights=self.chom,num_moments=num_moments)
+        Fm_phi,kmeans_m = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_bwd,dam_fun_list,dirn=-1,weights=self.chom,num_moments=num_moments)
         # Now combine them to get generalized rates
         Fmp = np.zeros((2*num_bvp,num_moments+1,Nx,Nt))
         Fmp[:,0] = Fm[:,0]*Fp[:,0]

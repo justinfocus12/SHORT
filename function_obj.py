@@ -155,6 +155,7 @@ class LinearBasis(Function):
         v_x = phi[:,0].dot(v_phi)
         return v_x
     def solve_damage_function_moments_multiple(self,data,bdy_dist,bdy_fun_list,dam_fun_list,dirn=1,weights=None,num_moments=1):
+        # Every boundary value problem in this list has the same domain (i.e., the same bdy_dist function) but different guess functions and different damage functions
         Nx,Nt,xdim = data.X.shape
         num_bvp = len(bdy_fun_list)
         # No source function
@@ -178,10 +179,10 @@ class LinearBasis(Function):
         Lphi = self.feynman_kac_lhs_LF(data,phi,dirn=dirn)
         A = (phi[:,lag_idx].T*weights).dot(Lphi)
         # TODO: compute a loss function that applies especially to Lphi
-        print("In MOM: \n\tdetA = {}".format(np.linalg.det(A)))
         Ai = np.linalg.inv(A) # Sorrynotsorry
         # That matrix will be used for all the given boundary functions and damage functions.
-        F = np.zeros((num_bvp,num_moments+1,Nx,Nt))
+        #F = np.zeros((num_bvp,num_moments+1,Nx,Nt))
+        F_phi = np.zeros((num_bvp,num_moments+1,self.basis_size))
         smoothed_residual = np.zeros((num_bvp,Nx))
         Pay = np.zeros((num_bvp,Nx,Nt))
         for i in range(num_bvp):
@@ -215,22 +216,36 @@ class LinearBasis(Function):
             for j in range(2,num_moments+1):
                 moments[j] = -j*AiB.dot(moments[j-1])
                 print("moments[{}]: min={}, max={}, mean={}, std={}".format(j,np.min(moments[j]),np.max(moments[j]),np.mean(moments[j]),np.std(moments[j])))
+            F_phi[i] = moments.copy()
             # Now convert 
-            tt = time.time()
-            F[i,0] = bdy.reshape((Nx,Nt)) # Only the zeroth has a nontrivial boundary condition
-            #for k in range(Nt):
-            #   F[i,:,:,k] += phi[:,k,:].dot(moments)
-            #  (nmom+1)x(Nx) (Nx)x(bs)   (nmom+1)x(bs)
-            #    F[i,:,:,k] += moments.dot(phi[:,k,:].T)
-            #  (nmom+1)x(Nx) (nmom+1)x(bs)  (bs)x(Nx)
-            # ---------------- old but works--------------------
-            for j in range(num_moments+1):
-                for k in range(Nt):
-                    F[i,j,:,k] += phi[:,k,:].dot(moments[j])
-            #        (Nx)         (Nx)x(bs)    (bs)
-            # --------------------------------------------------
-            print("basis->data time: {:3.3e}".format(time.time()-tt))
-        return F,Pay,smoothed_residual
+            if False: # We are getting rid of the conversion to all data. Want to save only the reduced bases and metadata.
+                tt = time.time()
+                F[i,0] = bdy.reshape((Nx,Nt)) # Only the zeroth has a nontrivial boundary condition
+                #for k in range(Nt):
+                #   F[i,:,:,k] += phi[:,k,:].dot(moments)
+                #  (nmom+1)x(Nx) (Nx)x(bs)   (nmom+1)x(bs)
+                #    F[i,:,:,k] += moments.dot(phi[:,k,:].T)
+                #  (nmom+1)x(Nx) (nmom+1)x(bs)  (bs)x(Nx)
+                # ---------------- old but works--------------------
+                for j in range(num_moments+1):
+                    for k in range(Nt):
+                        F[i,j,:,k] += phi[:,k,:].dot(moments[j])
+                #        (Nx)         (Nx)x(bs)    (bs)
+                # --------------------------------------------------
+                print("basis->data time: {:3.3e}".format(time.time()-tt))
+        return F_phi,self.kmeans#F,Pay,smoothed_residual
+    def reconstruct_function(self,X,bdy_dist,bdy_fun_list,F_phi,kmeans):
+        # Without reference to where the kmeans or F_phi was produced
+        F = np.zeros((len(bdy_fun_list),len(X)))
+        _,global_addresses = nested_kmeans_predict_batch(X,kmeans)
+        for k in range(len(bdy_fun_list)):
+            F[k] = bdy_fun_list[k](X)
+        num_clust = np.max(global_addresses) + 1
+        for j in range(num_clust):
+            idx = np.where(global_addresses==j)[0]
+            for k in range(len(bdy_fun_list)):
+                F[k,idx] += F_phi[k,j]
+        return F
     def solve_damage_function_moments(self,data,bdy_dist,bdy_fun,src_fun,pot_fun,dirn=1,weights=None,num_moments=1):
         # All linear basis functions homogenize etc. in the same way, so this one can be implemented at this level
         # bdy_fun is also known as the guess fun
