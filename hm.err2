@@ -1,3 +1,9 @@
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 22.251469865395848, tolerance: 4.257224641328882
+  model = cd_fast.enet_coordinate_descent(
+/home/jf4241/SHORT/tpt_obj.py:1546: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1546: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
 /home/jf4241/SHORT/tpt_obj.py:1300: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
   fig.savefig(join(self.savefolder,fsuff))
 /home/jf4241/SHORT/tpt_obj.py:1304: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
@@ -16,6 +22,30 @@
   fig.savefig(join(self.savefolder,fsuff))
 /home/jf4241/SHORT/tpt_obj.py:1478: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
   fig.savefig(join(self.savefolder,fsuff))
+/home/jf4241/SHORT/tpt_obj.py:1342: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1343: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1369: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1370: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1394: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1395: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1421: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1422: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1446: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1447: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1473: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1474: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
 /home/jf4241/SHORT/tpt_obj.py:2070: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
   fig.savefig(join(self.savefolder,"pij_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])))
 /home/jf4241/SHORT/tpt_obj.py:1258: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
@@ -28,9 +58,113 @@
   fig.savefig(join(self.savefolder,"piabj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])))
 /home/jf4241/SHORT/tpt_obj.py:1273: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
   fig.savefig(join(self.savefolder,"pibaj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])))
-Traceback (most recent call last):
-  File "hm_bothcast_driver.py", line 216, in <module>
-    tpt.write_compare_generalized_rates(model,data)
-  File "/home/jf4241/SHORT/tpt_obj.py", line 1084, in write_compare_generalized_rates
-    vg_dga = self.dam_moments[keys[k]]['rate_ba'][2]/dga_rate - eg_dga**2
-IndexError: index 2 is out of bounds for axis 0 with size 2
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
+  z = ma.masked_where(z <= 0, z)
+/home/jf4241/SHORT/tpt_obj.py:1931: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:1936: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
+  z = ma.masked_where(z <= 0, z)
+/home/jf4241/SHORT/tpt_obj.py:1931: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:1936: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
+  z = ma.masked_where(z <= 0, z)
+/home/jf4241/SHORT/tpt_obj.py:1931: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:1936: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
+  z = ma.masked_where(z <= 0, z)
+/home/jf4241/SHORT/tpt_obj.py:1931: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:1936: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
+  z = ma.masked_where(z <= 0, z)
+/home/jf4241/SHORT/tpt_obj.py:1931: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:1936: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:376: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:341: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:1913: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
+  z = ma.masked_where(z <= 0, z)
+/home/jf4241/SHORT/tpt_obj.py:1931: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:1936: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+ This problem is unconstrained.
+ This problem is unconstrained.

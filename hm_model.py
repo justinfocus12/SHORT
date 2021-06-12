@@ -356,14 +356,14 @@ class HoltonMassModel(Model):
                     'abb_bwd': 't-',
                     'abb_full': 'tfull',
                     'units': 1.0,
-                    'unit_symbol': "",
+                    'unit_symbol': "days",
                     'unit_symbol_t': "days",
                     'logscale': True,
                     'pay_symbol': "1",
                     },
                 'heatflux': {
                     'pay': self.fun_at_level(funlib["vT"]["fun"], self.ref_alt),
-                    'name': 'Heat flux (%.0f\\mathrm{ km})'%self.ref_alt,
+                    'name': 'Heat flux (%.0f km)'%self.ref_alt,
                     'name_fwd': "\\int_0^{\\tau^+}\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, 
                     'name_bwd': "\\int_{\\tau^-}^0\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, #r"$\tau^-$",
                     'name_full': "\\int_{\\tau^-}^{\\tau^+}\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, #r"$\tau^+-\tau^-$",
@@ -988,7 +988,7 @@ class HoltonMassModel(Model):
             handle, = ax.plot(units*U[i],z,alpha=1.0,color=colorlist[i],linewidth=3,label=r"$%s=%.2f$"%(qsymbol,qlevels[i]))
             if i % len(np.unique(qlevels)) == 0: handles += [handle]
         #ax.legend(handles=handles,loc='lower right',prop={'size':18})
-        ax.set_ylabel(r"$z\,(km)$",fontdict=font)
+        ax.set_ylabel(r"$z$ (km)",fontdict=font)
         ax.set_xlabel("{} ({})".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
         #if cv_name is not None:
         #    xlab = cv_name

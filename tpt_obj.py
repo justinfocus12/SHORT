@@ -1185,7 +1185,7 @@ class TPT:
             ax[0].legend(handles=[hemp_pdf_ab,hemp_gamma_ab,hdga_gamma_ab],prop={'size': 16})
             #ax[0].legend(handles=[hemp_pdf_ab,hdga_gamma_ab],prop={'size': 16})
             ax[0].tick_params(axis='both',labelsize=14)
-            ax[0].set_xlabel("%s (%s)"%(model.dam_dict[keys[k]]["name"],model.dam_dict[keys[k]]["unit_symbol"]),fontdict=font)
+            ax[0].set_xlabel(r"%s ($%s$)"%(model.dam_dict[keys[k]]["name"],model.dam_dict[keys[k]]["unit_symbol"]),fontdict=font)
             
             #  B -> A
 
@@ -1212,7 +1212,7 @@ class TPT:
             ax[1].legend(handles=[hemp_pdf_ba,hemp_gamma_ba,hdga_gamma_ba],prop={'size': 16})
             #ax[1].legend(handles=[hemp_pdf_ba,hdga_gamma_ba],prop={'size': 16})
             ax[1].tick_params(axis='both',labelsize=14)
-            ax[1].set_xlabel("%s (%s)"%(model.dam_dict[keys[k]]["name"],model.dam_dict[keys[k]]["unit_symbol"]),fontdict=font)
+            ax[1].set_xlabel(r"%s ($%s$)"%(model.dam_dict[keys[k]]["name"],model.dam_dict[keys[k]]["unit_symbol"]),fontdict=font)
             fig.savefig(join(self.savefolder,"pdf_{}".format(model.dam_dict[keys[k]]['abb_full'])))
             plt.close(fig)
         f.close()
@@ -2190,8 +2190,8 @@ class TPT:
         # First plot the scalar
         #print("About to call Helper to plot 2d")
         fig,ax = helper.plot_field_2d(field[:,0],weight,theta_x[:,0],shp=shp,cmap=cmap,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,avg_flag=avg_flag,std_flag=False,logscale=logscale,ss=ss,units=units,unit_symbols=unit_symbols,cbar_orientation=cbar_orientation,fig=fig,ax=ax,vmin=vmin,vmax=vmax)
-        ax.set_xlim([np.min(theta_x[:,:,0])*units[0],np.max(theta_x[:,:,0])*units[0]])
-        ax.set_ylim([np.min(theta_x[:,:,1])*units[1],np.max(theta_x[:,:,1])*units[1]])
+        #ax.set_xlim([np.min(theta_x[:,:,0])*units[0],np.max(theta_x[:,:,0])*units[0]])
+        #ax.set_ylim([np.min(theta_x[:,:,1])*units[1],np.max(theta_x[:,:,1])*units[1]])
         #print("Helper's role is done")
         if abpoints_flag:
             #ass = np.where(np.in1d(ss,self.aidx))[0]
@@ -2206,13 +2206,6 @@ class TPT:
         if theta_ab is not None:
             ax.text(units[0]*theta_ab[0,0],units[1]*theta_ab[0,1],asymb,bbox=dict(facecolor='white',alpha=1.0),color='black',fontsize=15,horizontalalignment='center',verticalalignment='center',zorder=100)
             ax.text(units[0]*theta_ab[1,0],units[1]*theta_ab[1,1],bsymb,bbox=dict(facecolor='white',alpha=1.0),color='black',fontsize=15,horizontalalignment='center',verticalalignment='center',zorder=100)
-        ax.set_title("{}".format(fieldname),fontdict=font)
-        xlab = fun0name
-        if len(unit_symbols[0]) > 0: xlab += " ({})".format(unit_symbols[0])
-        ylab = fun1name
-        if len(unit_symbols[1]) > 0: ylab += " ({})".format(unit_symbols[1])
-        ax.set_xlabel("{}".format(xlab),fontdict=font)
-        ax.set_ylabel("{}".format(ylab),fontdict=font)
         if current_flag:
             bdy_dist = lambda x: np.minimum(model.adist(x),model.bdist(x))
             data.insert_boundaries(bdy_dist,lag_time_max=self.lag_time_current_display)
@@ -2245,7 +2238,7 @@ class TPT:
                 ax.plot(magu_obs[ti][:,0]*units[0],magu_obs[ti][:,1]*units[1],color='deepskyblue',zorder=3,alpha=1.0,linestyle='solid',linewidth=0.85)
         if magu_fw is not None:
             ax.plot(magu_fw[:,0]*units[0],magu_fw[:,1]*units[1],color='cyan',linewidth=2.0,zorder=5,linestyle='solid')
-        fig.set_tight_layout(True)
+        #fig.set_tight_layout(True)
         return fig,ax 
     def inverse_committor_slice(self,field,comm_levels):
         comm_fwd = self.dam_moments['one']['xb'][0]
