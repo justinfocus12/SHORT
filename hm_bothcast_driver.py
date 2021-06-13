@@ -55,10 +55,10 @@ demo_flag =         0
 qp_tb_coords_flag = 0
 trans_state_flag =  0
 plot_long_2d_flag = 0
-display_cast_flag = 0
+display_cast_flag = 1
 lifecycle_flag =    0
-gen_rates_flag =    1
-plot_long_1d_flag = 0
+gen_rates_flag =    0
+plot_long_1d_flag = 1
 validation_flag =   0
 # ---------------------------------------
 
@@ -76,7 +76,8 @@ np.random.seed(0)
 # ---------- 1. Initialize the model ----------
 model = HoltonMassModel(physical_params)
 q = model.q # Dictionary of model parameters
-fig,ax = model.plot_two_snapshots(model.xst[0],model.xst[1],"A","B")
+print("q['Gsq'] = {}".format(q['Gsq']))
+fig,ax = model.plot_two_snapshots(model.xst[0],model.xst[1],asymb,bsymb)
 fig.savefig(join(savefolder,"snapshots_AB"))
 plt.close(fig)
 print("Done plotting snapshots")

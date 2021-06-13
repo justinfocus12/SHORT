@@ -494,8 +494,8 @@ class TPT:
         ax[0].plot(t_long[[tsubset[0],tsubset[-1]]],ab_long[0]*np.ones(2)*units,color='skyblue',linewidth=2.5)
         ax[0].plot(t_long[[tsubset[0],tsubset[-1]]],ab_long[1]*np.ones(2)*units,color='red',linewidth=2.5)
         dthab = np.abs(ab_long[1]-ab_long[0])
-        ax[0].text(0,units*(ab_long[0]+0.01*dthab),asymb,fontdict=bbigfont,color='black',weight='bold')
-        ax[0].text(0,units*(ab_long[1]+0.01*dthab),bsymb,fontdict=bbigfont,color='black',weight='bold')
+        #ax[0].text(0,units*(ab_long[0]+0.01*dthab),asymb,fontdict=bbigfont,color='black',weight='bold')
+        #ax[0].text(0,units*(ab_long[1]+0.01*dthab),bsymb,fontdict=bbigfont,color='black',weight='bold')
         for i in range(len(ab_starts)):
             if ab_ends[i] < timax:
                 ax[0].axvspan(t_long[ab_starts[i]],t_long[ab_ends[i]],facecolor='orange',alpha=0.5,zorder=-1)
@@ -508,6 +508,9 @@ class TPT:
         ylab = fieldname
         if field_unit_symbol is not None: ylab += " ({})".format(field_unit_symbol)
         ax[0].set_ylabel(ylab,fontdict=bigfont)
+        ylim = ax[0].get_ylim()
+        fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1],8)
+        ax[0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
         #ax.set_title("Long integration",fontdict=font)
         ax[0].tick_params(axis='both',labelsize=25)
         #ax.yaxis.set_major_locator(ticker.NullLocator())
@@ -559,6 +562,13 @@ class TPT:
         ax.set_xlabel(r"%s (%s)"%(fieldnames[0],field_unit_symbols[0]),fontdict=ffont)
         ax.set_ylabel(r"%s (%s)"%(fieldnames[1],field_unit_symbols[1]),fontdict=ffont)
         ax.tick_params(axis='both',labelsize=20)
+        # Set tick formats
+        xlim,ylim = ax.get_xlim(),ax.get_ylim()
+        fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
+        fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+        ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
         fig.savefig(join(self.savefolder,"long_{}_{}".format(field_abbs[0],field_abbs[1])),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         del x_long
@@ -2022,7 +2032,7 @@ class TPT:
                 _,_,hpiab = helper.plot_field_1d(theta_x,piab,weight,avg_flag=False,color='darkorange',label=r"$\pi_{AB}$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,fig=fig,ax=ax,thetaname=theta_1d_name,density_flag=True,linewidth=2.5)
                 _,_,hpiba = helper.plot_field_1d(theta_x,piba,weight,avg_flag=False,color='springgreen',label=r"$\pi_{BA}$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,fig=fig,ax=ax,thetaname=theta_1d_name,density_flag=True,linewidth=2.5)
                 handles += [hpiab,hpiba]
-            #ax.legend(handles=handles,prop={'size': 25})
+            ax.legend(handles=handles,prop={'size': 25})
             ax.set_xlabel("Probability density",fontdict=giantfont)
             ax.tick_params(axis='both', which='major', labelsize=35)
             # Plot the lines for A and B

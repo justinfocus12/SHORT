@@ -26,18 +26,22 @@ def mantexp(num):
         mantissa += np.sign(mantissa)
         exponent -= 1
     return mantissa,exponent
-def generate_sci_fmt(xmin,xmax):
+def generate_sci_fmt(xmin,xmax,numdiv=4):
     # Print to two sig figs
-    eps = (xmax-xmin)/4
+    eps = (xmax-xmin)/numdiv
     print("eps = {}".format(eps))
     general_sci_fmt = lambda num,pos: sci_not_precision(num,eps)
     return general_sci_fmt
 def sci_not_precision(num,eps):
     # Specify a number to an accuracy of epsilon/10
     #print("num = {}".format(num))
+    if num == 0: return "0"
+    Mn,En = mantexp(num)
     Me,Ee = mantexp(eps)
     # Need Ee+1 places past the decimal point
-    digs = np.abs(Ee) #+2 #max(0,Ee)
+    #digs = np.abs(Ee) # Wrong for large eps
+    # Need enough digits to distinguish num from num+eps
+    digs = max(0,En-Ee)
     #print("digs = {}".format(digs))
     num_to_prec = eval(("{:."+str(digs)+"e}").format(num))
     #print("num_to_prec = {}".format(num_to_prec))
@@ -189,6 +193,11 @@ def plot_field_1d(theta,u,weight,shp=[20,],uname="",thetaname="",avg_flag=True,s
         ax.set_ylabel(ylab,fontdict=font)
         ax.set_xlabel(uname,fontdict=font)
         ax.set_ylim([np.min(units*theta),np.max(units*theta)])
+    xlim,ylim = ax.get_xlim(),ax.get_ylim()
+    fmt_x = generate_sci_fmt(xlim[0],xlim[1])
+    fmt_y = generate_sci_fmt(ylim[0],ylim[1])
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
+    ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
     ax.tick_params(axis='x',labelsize=10)
     ax.tick_params(axis='y',labelsize=10)
     #ax.xaxis.set_major_locator(plt.MaxNLocator(nbins=3))
@@ -275,7 +284,7 @@ def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldnam
     #    fmt_y = fmt if xlim[1]-xlim[0]<1e3 else sci_fmt
     ax0.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
     ax0.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
-    ax0.xaxis.set_major_locator(ticker.MaxNLocator(nbins=3))
+    ax0.xaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
     if std_flag:
         im = ax1.contourf(th01,th10,field_std.reshape(shp),cmap=plt.cm.magma)
         ax1.tick_params(axis='x',labelsize=10)
