@@ -35,7 +35,9 @@ def generate_sci_fmt(xmin,xmax,numdiv=4):
 def sci_not_precision(num,eps):
     # Specify a number to an accuracy of epsilon/10
     #print("num = {}".format(num))
-    if num == 0: return "0"
+    if num == 0: 
+        print("num = {}; returning 0".format(num))
+        return "0"
     Mn,En = mantexp(num)
     Me,Ee = mantexp(eps)
     # Need Ee+1 places past the decimal point
@@ -234,7 +236,7 @@ def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldnam
     ax0.set_xlim([np.min(units[0]*thaxes[0]),np.max(units[0]*thaxes[0])])
     ax0.set_ylim([np.min(units[1]*thaxes[1]),np.max(units[1]*thaxes[1]) + 0.15*units[1]*np.ptp(thaxes[1])])
     print("eps = {} - {}".format(np.nanmax(field_mean),np.nanmin(field_mean)))
-    cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean))
+    cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean),20)
     # -------------------
     # New colorbar code
     ax0_left,ax0_bottom,ax0_width,ax0_height = ax0.get_position().bounds

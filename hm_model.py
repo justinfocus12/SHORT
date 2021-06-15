@@ -322,7 +322,7 @@ class HoltonMassModel(Model):
                     },
                 'heatflux_g5em5': {
                     'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 5e-5),
-                    'name':  r"$1\{$%s$ > 5\times10^5\ K\cdot m/s\}$"%funlib['vTref']['name'],
+                    'name':  r"$1\{$%s$ > 5\times10^5\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
                     },
                 'magref': {
                     'pay': funlib['magref']['fun'],
@@ -330,7 +330,7 @@ class HoltonMassModel(Model):
                     },
                 'magref_g1e7': {
                     'pay': lambda x: 1.0*(funlib['magref']['fun'](x)*funlib['magref']['units'] > 1e7),
-                    'name': r"$1\{$%s$ > 10^7\ m^2/s\}$"%funlib['magref']['name'],
+                    'name': r"$1\{$%s$ > 10^7\ \mathrm{m}^2/\mathrm{s}\}$"%funlib['magref']['name'],
                     },
                 'Uref': {
                     'pay': funlib["Uref"]["fun"],
@@ -342,7 +342,7 @@ class HoltonMassModel(Model):
                     },
                 'Uref_ln20': {
                     'pay': lambda x: 1.0*(funlib['Uref']['fun'](x)*funlib['Uref']['units'] < -20),
-                    'name':  r"$1\{$%s$ < -20\ m/s\}$"%funlib['Uref']['name'],
+                    'name':  r"$1\{$%s$ < -20\ \mathrm{m/s}\}$"%funlib['Uref']['name'],
                     },
                 }
         self.dam_dict = {
@@ -773,9 +773,9 @@ class HoltonMassModel(Model):
                  },
                 "vTref": 
                 {"fun": lambda X: self.meridional_heat_flux(X)[:,q['zi']],
-                 "name": r"$\overline{v'T'}(%.0f km)$"%self.ref_alt,
+                 "name": r"$\overline{v'T'}(%.0f\,\mathrm{km})$"%self.ref_alt,
                  "units": q['H']*q['f0_d']/(2*q['length']*q['ideal_gas_constant']),
-                 "unit_symbol": r"$K\cdot m/s$",
+                 "unit_symbol": r"$\mathrm{K}\cdot\mathrm{m/s}$",
                  },
                 "dqdy":
                 {"fun": lambda X: self.background_pv_gradient(X),

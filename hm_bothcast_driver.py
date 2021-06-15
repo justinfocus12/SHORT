@@ -58,7 +58,7 @@ plot_long_2d_flag = 0
 display_cast_flag = 1
 lifecycle_flag =    0
 gen_rates_flag =    0
-plot_long_1d_flag = 1
+plot_long_1d_flag = 0
 validation_flag =   0
 # ---------------------------------------
 
