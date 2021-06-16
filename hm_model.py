@@ -277,15 +277,15 @@ class HoltonMassModel(Model):
         im = ax[2,1].contourf(tz[:-1,:],zt[:-1,:],dU,cmap=plt.cm.coolwarm)
         # Common legends
         #fig.suptitle("Least action paths",fontdict=bigfont)
-        ax[0,0].set_title(r"$A\to B$",fontdict=bigfont)
-        ax[0,1].set_title(r"$B\to A$",fontdict=bigfont)
+        ax[0,0].set_title(r"$A\to B$ least action",fontdict=bigfont)
+        ax[0,1].set_title(r"$B\to A$ least action",fontdict=bigfont)
         ax[1,0].set_title("%s"%(funlib[fun_name]["name"]),fontdict=bigfont)
         ax[1,1].set_title("%s"%(funlib[fun_name]["name"]),fontdict=bigfont)
         ax[2,0].set_title(r"$\delta U(t)$",fontdict=bigfont)
         ax[2,1].set_title(r"$\delta U(t)$",fontdict=bigfont)
-        ax[0,0].set_ylabel("%s at z=%d km (%s)"%(funlib[fun_name]["name"],self.ref_alt,funlib[fun_name]["unit_symbol"]),fontdict=bigfont)
-        ax[1,0].set_ylabel(r"$z\,(km)$",fontdict=bigfont)
-        ax[2,0].set_ylabel(r"$z\,(km)$",fontdict=bigfont)
+        ax[0,0].set_ylabel("%s(%d km) (%s)"%(funlib[fun_name]["name"],self.ref_alt,funlib[fun_name]["unit_symbol"]),fontdict=bigfont)
+        ax[1,0].set_ylabel(r"$z\,(\mathrm{km})$",fontdict=bigfont)
+        ax[2,0].set_ylabel(r"$z\,(\mathrm{km})$",fontdict=bigfont)
         # Tick labels
         for i in range(ax.shape[0]):
             for j in range(ax.shape[1]):
@@ -965,7 +965,7 @@ class HoltonMassModel(Model):
         def funz(x):
             return np.mean(fun(x),1).reshape((len(x),1))
         return funz
-    def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None):
+    def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None,zorderlist=None):
     #def plot_zdep_family_weighted(self,cv_x,cv_a,cv_b,labels,weights=None,cv_name=None,colorlist=None,units=1.0,unit_symbol=""):
         # Given a sequence of states (X) plot them all on the same graph. For the Holton-Mass model, this means different zonal wind profiles.
         key = "U"
@@ -985,7 +985,7 @@ class HoltonMassModel(Model):
         if colorlist is None: colorlist = plt.cm.coolwarm(qlevels)
         handles = []
         for i in range(num_states):
-            handle, = ax.plot(units*U[i],z,alpha=1.0,color=colorlist[i],linewidth=3,label=r"$%s=%.2f$"%(qsymbol,qlevels[i]))
+            handle, = ax.plot(units*U[i],z,alpha=1.0,color=colorlist[i],zorder=zorderlist[i],linewidth=3,label=r"$%s=%.2f$"%(qsymbol,qlevels[i]))
             if i % len(np.unique(qlevels)) == 0: handles += [handle]
         #ax.legend(handles=handles,loc='lower right',prop={'size':18})
         ax.set_ylabel(r"$z$ (km)",fontdict=font)

@@ -26,7 +26,7 @@ def mantexp(num):
         mantissa += np.sign(mantissa)
         exponent -= 1
     return mantissa,exponent
-def generate_sci_fmt(xmin,xmax,numdiv=4):
+def generate_sci_fmt(xmin,xmax,numdiv=10):
     # Print to two sig figs
     eps = (xmax-xmin)/numdiv
     print("eps = {}".format(eps))
@@ -231,7 +231,7 @@ def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldnam
             posidx = realidx[np.where(field_mean[realidx] > 0)[0]]
         #field_mean[posidx] = np.log10(field_mean[posidx])
         field_mean[np.setdiff1d(np.arange(np.prod(shp)),posidx)] = np.nan
-    locator = ticker.LogLocator(numticks=6) if logscale else ticker.MaxNLocator()
+    locator = ticker.LogLocator(numticks=10) if logscale else ticker.MaxNLocator()
     im = ax0.contourf(th01,th10,field_mean.reshape(shp),cmap=cmap,locator=locator,zorder=1,vmin=vmin,vmax=vmax)
     ax0.set_xlim([np.min(units[0]*thaxes[0]),np.max(units[0]*thaxes[0])])
     ax0.set_ylim([np.min(units[1]*thaxes[1]),np.max(units[1]*thaxes[1]) + 0.15*units[1]*np.ptp(thaxes[1])])
@@ -250,7 +250,7 @@ def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldnam
         if not logscale:
             cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, orientation=cbar_orientation, format=ticker.FuncFormatter(cbar_fmt), ticks=np.linspace(np.nanmin(field_mean),np.nanmax(field_mean),4))
         else:
-            cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, orientation='horizontal')
+            cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, ticks=10.0**(np.linspace(np.log10(np.nanmin(field_mean)),np.log10(np.nanmax(field_mean)),4).astype(int)), orientation='horizontal')
         cbar.ax.tick_params(labelsize=15)
     
     # -------------------
@@ -278,8 +278,8 @@ def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldnam
     ax0.tick_params(axis='x',labelsize=14)
     ax0.tick_params(axis='y',labelsize=14)
     xlim,ylim = ax0.get_xlim(),ax0.get_ylim()
-    fmt_x = generate_sci_fmt(xlim[0],xlim[1])
-    fmt_y = generate_sci_fmt(ylim[0],ylim[1])
+    fmt_x = generate_sci_fmt(xlim[0],xlim[1],10)
+    fmt_y = generate_sci_fmt(ylim[0],ylim[1],10)
     #if fmt_x is None:
     #    fmt_x = fmt if xlim[1]-xlim[0]<1e3 else sci_fmt
     #if fmt_y is None:

@@ -916,10 +916,11 @@ class TPT:
         # Means
         fig,ax = plt.subplots(nrows=len(keys),figsize=(6,3*len(keys)),tight_layout=True,sharex=True)
         for k in range(len(keys)):
-            ax[k].plot(names,self.lifecycle_mean_emp[keys[k]],marker='o',color='black')
-            ax[k].plot(names,self.lifecycle_mean_dga[keys[k]],marker='o',color='red')
+            hemp, = ax[k].plot(names,self.lifecycle_mean_emp[keys[k]],marker='o',color='black',label='DNS')
+            hdga, = ax[k].plot(names,self.lifecycle_mean_dga[keys[k]],marker='o',color='red',label='DGA')
             ax[k].set_title(r"$\Gamma = $%s"%model.corr_dict[keys[k]]['name'])
-            ax[k].set_ylabel(r"$\langle\Gamma,q^+q^-\rangle_\pi")
+            ax[k].set_ylabel(r"$\langle\Gamma,q^+q^-\rangle_\pi$")
+            ax[k].legend(handles=[hdga,hemp],prop={'size':13})
         #fig.suptitle("Lifecycle correlations")
         fig.savefig(join(self.savefolder,"lifecycle_mean"))
         plt.close(fig)
@@ -955,12 +956,15 @@ class TPT:
             comm_bwd = self.dam_moments[dk0]['ax'][0,:,0]
             comm_fwd = self.dam_moments[dk0]['xb'][0,:,0]
             reactive_flag = 1*(self.long_from_label==-1)*(self.long_to_label==1)
-            mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)
-            corr_dga = (mean_trans_dga - np.sum(self.chom*comm_bwd*comm_fwd)*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
-            f.write("DGA: mean = %3.3e, corr = %3.3e, "%(mean_trans_dga,corr_dga))
-            mean_trans_emp = np.mean(reactive_flag*Pay_long)
-            corr_emp = (mean_trans_emp - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
-            f.write("EMP: mean = %3.3e, corr = %3.3e\n"%(mean_trans_emp,corr_emp))
+            Zab = np.sum(self.chom*comm_bwd*comm_fwd)
+            mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)/Zab #np.sum(self.chom*comm_bwd*comm_fwd)
+            corr_dga = (mean_trans_dga*Zab - Zab*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
+            f.write("DGA: Z = %3.3e, mean = %3.3e, corr = %3.3e, "%(Zab,mean_trans_dga,corr_dga))
+            #f.write("DGA: mean = %3.3e, corr = %3.3e, "%(mean_trans_dga,corr_dga))
+            mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
+            corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
+            f.write("EMP: Z = %3.3e, mean = %3.3e, corr = %3.3e\n"%(np.mean(reactive_flag),mean_trans_emp,corr_emp))
+            #f.write("EMP: mean = %3.3e, corr = %3.3e\n"%(mean_trans_emp,corr_emp))
             self.lifecycle_corr_dga[keys[k]][1] = corr_dga #
             self.lifecycle_corr_emp[keys[k]][1] = corr_emp #
             self.lifecycle_mean_dga[keys[k]][1] = mean_trans_dga #
@@ -970,12 +974,15 @@ class TPT:
             comm_bwd = self.dam_moments[dk0]['bx'][0,:,0]
             comm_fwd = self.dam_moments[dk0]['xa'][0,:,0]
             reactive_flag = 1*(self.long_from_label==1)*(self.long_to_label==-1)
-            mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)
-            corr_dga = (mean_trans_dga - np.sum(self.chom*comm_bwd*comm_fwd)*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
-            f.write("DGA: mean = %3.3e, corr = %3.3e, "%(mean_trans_dga,corr_dga))
-            mean_trans_emp = np.mean(reactive_flag*Pay_long)
-            corr_emp = (mean_trans_emp - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
-            f.write("EMP: mean = %3.3e, corr = %3.3e\n"%(mean_trans_emp,corr_emp))
+            Zba = np.sum(self.chom*comm_bwd*comm_fwd)
+            mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)/Zba
+            corr_dga = (mean_trans_dga*Zba - Zba*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
+            f.write("DGA: Z = %3.3e, mean = %3.3e, corr = %3.3e, "%(Zba,mean_trans_dga,corr_dga))
+            #f.write("DGA: mean = %3.3e, corr = %3.3e, "%(mean_trans_dga,corr_dga))
+            mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
+            corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
+            f.write("EMP: Z = %3.3e, mean = %3.3e, corr = %3.3e\n"%(np.mean(reactive_flag),mean_trans_emp,corr_emp))
+            #f.write("EMP: mean = %3.3e, corr = %3.3e\n"%(mean_trans_emp,corr_emp))
             self.lifecycle_corr_dga[keys[k]][3] = corr_dga #[k,3] = corr_dga
             self.lifecycle_corr_emp[keys[k]][3] = corr_emp #[k,3] = corr_emp
             self.lifecycle_mean_dga[keys[k]][3] = mean_trans_dga #
@@ -985,12 +992,13 @@ class TPT:
             comm_bwd = self.dam_moments[dk0]['ax'][0,:,0]
             comm_fwd = self.dam_moments[dk0]['xa'][0,:,0]
             reactive_flag = 1*(self.long_from_label==-1)*(self.long_to_label==-1)
-            mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)
-            corr_dga = (mean_trans_dga - np.sum(self.chom*comm_bwd*comm_fwd)*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
-            f.write("DGA: mean = %3.3e, corr = %3.3e, "%(mean_trans_dga,corr_dga))
-            mean_trans_emp = np.mean(reactive_flag*Pay_long)
-            corr_emp = (mean_trans_emp - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
-            f.write("EMP: mean = %3.3e, corr = %3.3e\n"%(mean_trans_emp,corr_emp))
+            Zaa = np.sum(self.chom*comm_bwd*comm_fwd)
+            mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)/Zaa
+            corr_dga = (mean_trans_dga*Zaa - Zaa*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
+            f.write("DGA: Z = %3.3e, mean = %3.3e, corr = %3.3e, "%(Zaa,mean_trans_dga,corr_dga))
+            mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
+            corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
+            f.write("EMP: Z = %3.3e, mean = %3.3e, corr = %3.3e\n"%(np.mean(reactive_flag),mean_trans_emp,corr_emp))
             self.lifecycle_corr_dga[keys[k]][0] = corr_dga
             self.lifecycle_corr_emp[keys[k]][0] = corr_emp
             self.lifecycle_mean_dga[keys[k]][0] = mean_trans_dga #
@@ -1000,12 +1008,15 @@ class TPT:
             comm_bwd = self.dam_moments[dk0]['bx'][0,:,0]
             comm_fwd = self.dam_moments[dk0]['xb'][0,:,0]
             reactive_flag = 1*(self.long_from_label==1)*(self.long_to_label==1)
-            mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)
-            corr_dga = (mean_trans_dga - np.sum(self.chom*comm_bwd*comm_fwd)*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
-            f.write("DGA: mean = %3.3e, corr = %3.3e, "%(mean_trans_dga,corr_dga))
-            mean_trans_emp = np.mean(reactive_flag*Pay_long)
-            corr_emp = (mean_trans_emp - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
-            f.write("EMP: mean = %3.3e, corr = %3.3e\n"%(mean_trans_emp,corr_emp))
+            Zbb = np.sum(self.chom*comm_bwd*comm_fwd)
+            mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)/Zbb
+            corr_dga = (mean_trans_dga*Zbb - Zbb*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
+            f.write("DGA: Z = %3.3e, mean = %3.3e, corr = %3.3e, "%(Zbb,mean_trans_dga,corr_dga))
+            #f.write("DGA: mean = %3.3e, corr = %3.3e, "%(mean_trans_dga,corr_dga))
+            mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
+            corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
+            f.write("EMP: Z = %3.3e, mean = %3.3e, corr = %3.3e\n"%(np.mean(reactive_flag),mean_trans_emp,corr_emp))
+            #f.write("EMP: mean = %3.3e, corr = %3.3e\n"%(mean_trans_emp,corr_emp))
             self.lifecycle_corr_dga[keys[k]][2] = corr_dga
             self.lifecycle_corr_emp[keys[k]][2] = corr_emp
             self.lifecycle_mean_dga[keys[k]][2] = mean_trans_dga #
@@ -1034,7 +1045,7 @@ class TPT:
             emp_rate = len(self.dam_emp[keys[k]]['ab'])/(t_long[-1] - t_long[0])
             # Compute the correlation with T -- if the moments go up to 2
             if self.num_moments >= 2:
-            # DGA
+                # DGA
                 egt_t_dga = np.sum(self.dam_moments[keys[k]]['ab'][1,:,0]*self.chom)/np.sum(self.dam_moments[keys[k]]['ab'][0,:,0]*self.chom)
                 eg_dga = self.dam_moments[keys[k]]['rate_ab'][1]/dga_rate
                 et_dga = self.dam_moments['one']['rate_ab'][1]/dga_rate
@@ -1052,19 +1063,21 @@ class TPT:
                 fig,ax = plt.subplots()
                 scat = ax.scatter(units_k*units_t*self.dam_emp[keys[k]]['ab'].flatten(),units_t*self.dam_emp['one']['ab'].flatten(),color='black',marker='.')
                 # Plot two crosses, one empirical and one DGA
-                hemp, = ax.plot(units_k*eg_emp*np.ones(2),units_t*(et_emp + np.sqrt(vt_emp)*np.array([-1,1])), color='black', linestyle='-',label='Empirical')
-                ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='black', linestyle='-',label='Empirical')
-                hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',label='DGA')
-                ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',label='DGA')
+                hemp, = ax.plot(units_k*eg_emp*np.ones(2),units_t*(et_emp + np.sqrt(vt_emp)*np.array([-1,1])), color='cyan', linestyle='-',linewidth=3,label='DNS')
+                ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='cyan', linestyle='-',linewidth=3,label='DNS')
+                hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=3,label='DGA')
+                ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=3,label='DGA')
                 ax.set_xlabel(r"$%s (%s)$"%(model.dam_dict[keys[k]]['name_full'],unit_symbol_k),fontdict=font)
                 ax.set_ylabel(r"$%s (%s)$"%(model.dam_dict['one']['name_full'],unit_symbol_t),fontdict=font)
-                ax.xaxis.set_major_formatter(ticker.FuncFormatter(sci_fmt))
-                ax.yaxis.set_major_formatter(ticker.FuncFormatter(sci_fmt))
+                xlim,ylim = ax.get_xlim(),ax.get_ylim()
+                fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
+                fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+                ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
+                ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
                 ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
-                ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
-                ax.set_title(r"Empirical correlations $A\to B$")
+                ax.set_title(r"Empirical integrals $A\to B$",fontdict=font)
                 ax.legend(handles=[hemp,hdga])
-                fig.savefig(join(self.savefolder,"corr{}_ab".format(keys[k])))
+                fig.savefig(join(self.savefolder,"corr{}_ab".format(keys[k])),bbox_inches="tight",pad_inches=0.2)
                 plt.close(fig)
                 f.write("\t\tCorrelation with T: DGA: %3.3e, EMP: %3.3e\n"%(dga_corr,emp_corr))
             f.write("\t\tRate: DGA: %3.3e, EMP: %3.3e\n"%(dga_rate,emp_rate))
@@ -1088,39 +1101,42 @@ class TPT:
             dga_rate = self.dam_moments[keys[k]]['rate_avg'][0] #['rate_ba'][0]
             emp_rate = len(self.dam_emp[keys[k]]['ba'])/(t_long[-1] - t_long[0])
             # Compute the correlation with T
+            if num_moments >= 2:
             # DGA
-            egt_t_dga = np.sum(self.dam_moments[keys[k]]['ba'][1,:,0]*self.chom)/np.sum(self.dam_moments[keys[k]]['ba'][0,:,0]*self.chom)
-            eg_dga = self.dam_moments[keys[k]]['rate_ba'][1]/dga_rate
-            et_dga = self.dam_moments['one']['rate_ba'][1]/dga_rate
-            vg_dga = self.dam_moments[keys[k]]['rate_ba'][2]/dga_rate - eg_dga**2
-            vt_dga = self.dam_moments['one']['rate_ba'][2]/dga_rate - et_dga**2
-            dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
-            # Empirical
-            egt_emp = np.mean(self.dam_emp[keys[k]]['ba'].flatten()*self.dam_emp['one']['ba'].flatten())
-            eg_emp = np.mean(self.dam_emp[keys[k]]['ba'])
-            et_emp = np.mean(self.dam_emp['one']['ba'])
-            vg_emp = np.var(self.dam_emp[keys[k]]['ba'])
-            vt_emp = np.var(self.dam_emp['one']['ba'])
-            emp_corr = (egt_emp - eg_emp*et_emp)/np.sqrt(vg_emp*vt_emp)
-            # Plot them
-            fig,ax = plt.subplots()
-            scat = ax.scatter(units_k*self.dam_emp[keys[k]]['ba'].flatten(),units_t*self.dam_emp['one']['ba'].flatten(),color='black',marker='.')
-            # Plot two crosses, one empirical and one DGA
-            hemp, = ax.plot(units_k*eg_emp*np.ones(2),units_t*(et_emp + np.sqrt(vt_emp)*np.array([-1,1])), color='black', linestyle='-',label='Empirical')
-            ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='black', linestyle='-',label='Empirical')
-            hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',label='DGA')
-            ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',label='DGA')
-            ax.set_xlabel(r"$%s (%s)$"%(model.dam_dict[keys[k]]['name_full'],unit_symbol_k),fontdict=font)
-            ax.set_ylabel(r"$%s (%s)$"%(model.dam_dict['one']['name_full'],unit_symbol_t),fontdict=font)
-            ax.xaxis.set_major_formatter(ticker.FuncFormatter(sci_fmt))
-            ax.yaxis.set_major_formatter(ticker.FuncFormatter(sci_fmt))
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
-            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
-            ax.set_title(r"Empirical correlations $B\to A$")
-            ax.legend(handles=[hemp,hdga])
-            fig.savefig(join(self.savefolder,"corr{}_ba".format(keys[k])))
-            plt.close(fig)
-            f.write("\t\tCorrelation with T: DGA: %3.3e, EMP: %3.3e\n"%(dga_corr,emp_corr))
+                egt_t_dga = np.sum(self.dam_moments[keys[k]]['ba'][1,:,0]*self.chom)/np.sum(self.dam_moments[keys[k]]['ba'][0,:,0]*self.chom)
+                eg_dga = self.dam_moments[keys[k]]['rate_ba'][1]/dga_rate
+                et_dga = self.dam_moments['one']['rate_ba'][1]/dga_rate
+                vg_dga = self.dam_moments[keys[k]]['rate_ba'][2]/dga_rate - eg_dga**2
+                vt_dga = self.dam_moments['one']['rate_ba'][2]/dga_rate - et_dga**2
+                dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+                # Empirical
+                egt_emp = np.mean(self.dam_emp[keys[k]]['ba'].flatten()*self.dam_emp['one']['ba'].flatten())
+                eg_emp = np.mean(self.dam_emp[keys[k]]['ba'])
+                et_emp = np.mean(self.dam_emp['one']['ba'])
+                vg_emp = np.var(self.dam_emp[keys[k]]['ba'])
+                vt_emp = np.var(self.dam_emp['one']['ba'])
+                emp_corr = (egt_emp - eg_emp*et_emp)/np.sqrt(vg_emp*vt_emp)
+                # Plot them
+                fig,ax = plt.subplots()
+                scat = ax.scatter(units_k*self.dam_emp[keys[k]]['ba'].flatten(),units_t*self.dam_emp['one']['ba'].flatten(),color='black',marker='.')
+                # Plot two crosses, one empirical and one DGA
+                hemp, = ax.plot(units_k*eg_emp*np.ones(2),units_t*(et_emp + np.sqrt(vt_emp)*np.array([-1,1])), color='cyan', linestyle='-',linewidth=3,label='DNS')
+                ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='cyan', linestyle='-',label='DNS')
+                hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',label='DGA')
+                ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=3,label='DGA')
+                ax.set_xlabel(r"$%s (%s)$"%(model.dam_dict[keys[k]]['name_full'],unit_symbol_k),fontdict=font)
+                ax.set_ylabel(r"$%s (%s)$"%(model.dam_dict['one']['name_full'],unit_symbol_t),fontdict=font)
+                xlim,ylim = ax.get_xlim(),ax.get_ylim()
+                fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
+                fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+                ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
+                ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+                ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
+                ax.set_title(r"Empirical integrals $B\to A$",fontdict=font)
+                ax.legend(handles=[hemp,hdga])
+                fig.savefig(join(self.savefolder,"corr{}_ba".format(keys[k])),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig)
+                f.write("\t\tCorrelation with T: DGA: %3.3e, EMP: %3.3e\n"%(dga_corr,emp_corr))
             f.write("\t\tRate: DGA: %3.3e, EMP: %3.3e\n"%(dga_rate,emp_rate))
             for i in range(num_moments+1):
                 dga_avg_per_time_tweighted = units_k**i/units_t*np.sum(
@@ -1241,8 +1257,8 @@ class TPT:
         ba_ends = np.where(np.diff(ba_reactive_flag)==-1)[0] + 1
         # Randomly select a few transitions
         num_obs = 5
-        ab_obs_idx = np.random.choice(np.arange(len(ab_starts)),num_obs)
-        ba_obs_idx = np.random.choice(np.arange(len(ba_starts)),num_obs)
+        ab_obs_idx = np.arange(num_obs) #np.random.choice(np.arange(len(ab_starts)),num_obs)
+        ba_obs_idx = np.arange(num_obs) #np.random.choice(np.arange(len(ba_starts)),num_obs)
         theta_ab_obs = []
         theta_ba_obs = []
         for i in range(num_obs):
@@ -1257,7 +1273,7 @@ class TPT:
         for k in range(1):
             # -----------------------------
             # A->B
-            fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
+            fieldname = r"$A\to B$ density, current"  #r"$\pi_{AB},J_{AB}$"
             field = self.dam_moments[keys[k]]['ab'][0] # just (q-)*(q+)
             comm_bwd = self.dam_moments[keys[k]]['ax'][0]
             comm_fwd = self.dam_moments[keys[k]]['xb'][0]
@@ -1271,7 +1287,7 @@ class TPT:
             #sys.exit()
             # ---------------------------------
             # B->A
-            fieldname = r"$B\to A$" #r"$\pi_{BA},J_{BA}$"
+            fieldname = r"$B\to A$ density, current" #r"$\pi_{BA},J_{BA}$"
             field = self.dam_moments[keys[k]]['ba'][0] # just (q-)*(q+)
             comm_bwd = self.dam_moments[keys[k]]['bx'][0]
             comm_fwd = self.dam_moments[keys[k]]['xa'][0]
@@ -1281,7 +1297,7 @@ class TPT:
             theta_fw = theta_2d_fun(xfw)
             # Add current
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"pibaj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])))
+            fig.savefig(join(self.savefolder,"pibaj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
         return
     def display_casts_abba(self,model,data,theta_2d_abbs):
@@ -2075,7 +2091,7 @@ class TPT:
         comm_fwd = np.ones((Nx,Nt))
         comm_bwd = np.ones((Nx,Nt))
         field = np.ones((Nx,Nt))
-        fieldname = r"$\pi,J$"
+        fieldname = "Eqm. density, current"
         weight = self.chom
         fig,ax = self.plot_field_2d(model,data,field,weight,theta_2d_short,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,cmap=plt.cm.YlOrBr)
         #fig.set_tight_layout(True)
@@ -2250,7 +2266,6 @@ class TPT:
                 ax.plot(magu_obs[ti][:,0]*units[0],magu_obs[ti][:,1]*units[1],color='deepskyblue',zorder=3,alpha=1.0,linestyle='solid',linewidth=0.85)
         if magu_fw is not None:
             ax.plot(magu_fw[:,0]*units[0],magu_fw[:,1]*units[1],color='cyan',linewidth=2.0,zorder=5,linestyle='solid')
-        #fig.set_tight_layout(True)
         return fig,ax 
     def inverse_committor_slice(self,field,comm_levels):
         comm_fwd = self.dam_moments['one']['xb'][0]
@@ -2690,7 +2705,7 @@ class TPT:
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
     def plot_transition_states(self,model,data):
-        num_per_level = 5
+        num_per_level = 10
         # Plot dominant transition states
         #funlib = hm.observable_function_library(q)
         Nx,Nt,xdim = data.X.shape
@@ -2703,27 +2718,36 @@ class TPT:
         reac_dens_idx = np.zeros((len(qlevels),num_per_level),dtype=int)
         real_qlevels = np.zeros((len(qlevels),num_per_level))
         colorlist = []
+        zorders = [2,0,1]
+        zorderlist = np.random.permutation(np.arange(len(qlevels)*num_per_level))
         for i in range(len(qlevels)):
             reac_dens_idx[i,:],reac_dens_weights,ans2 = self.maximize_rflux_on_surface(model,data,comm_fwd.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,qlevels[i],0.05,num_per_level)
             print("ans2.shape = {}".format(ans2.shape))
             real_qlevels[i,:] = qlevels[i] 
-            color = plt.cm.coolwarm(qlevels[i]) 
+            color = plt.cm.coolwarm(qlevels[i]) if i != 1 else 'gold'
             colorlist += [color for j in range(num_per_level)]
+            #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-        fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_qlevels.flatten(),r"q^+",colorlist=colorlist)
+        fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_qlevels.flatten(),r"q^+",colorlist=colorlist,zorderlist=zorderlist)
         ax.set_title(r"$A\to B$ transition states",fontdict=font)
-        fig.savefig(join(self.savefolder,"trans_states_ab"))
+        fig.savefig(join(self.savefolder,"trans_states_ab"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         # B -> A
         reac_dens_idx = np.zeros((len(qlevels),num_per_level),dtype=int)
         real_qlevels = np.zeros((len(qlevels),num_per_level))
+        colorlist = []
+        zorders = [2,0,1]
+        zorderlist = np.random.permutation(np.arange(len(qlevels)*num_per_level))
         for i in range(len(qlevels)):
             reac_dens_idx[i,:],reac_dens_weights,ans2 = self.maximize_rflux_on_surface(model,data,comm_fwd.reshape((Nx,Nt,1)),1-comm_bwd,1-comm_fwd,weight,qlevels[i],0.05,num_per_level)
             real_qlevels[i,:] = qlevels[i] 
+            color = plt.cm.coolwarm(qlevels[i]) if i != 1 else 'gold'
+            colorlist += [color for j in range(num_per_level)]
+            #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-        fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_qlevels.flatten(),r"q^+")
+        fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_qlevels.flatten(),r"q^+",colorlist=colorlist,zorderlist=zorderlist)
         ax.set_title(r"$B\to A$ transition states",fontdict=font)
-        fig.savefig(join(self.savefolder,"trans_states_ba"))
+        fig.savefig(join(self.savefolder,"trans_states_ba"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
 
