@@ -56,8 +56,8 @@ qp_tb_coords_flag = 0
 trans_state_flag =  0
 plot_long_2d_flag = 0
 display_cast_flag = 0
-lifecycle_flag =    0
-gen_rates_flag =    1
+lifecycle_flag =    1
+gen_rates_flag =    0
 plot_long_1d_flag = 0
 validation_flag =   0
 # ---------------------------------------
@@ -211,7 +211,7 @@ if display_cast_flag:
 if lifecycle_flag:
     keys=['Uref_ln20','magref_g1e7','heatflux_g5em5']
     tpt.write_compare_lifecycle_correlations(model,data)
-    tpt.plot_lifecycle_correlations(model,keys=keys)
+    tpt.plot_lifecycle_correlations_bar(model,keys=keys)
 # ------------------------------------------------------
 
 # ----------- Write, plot, and validate generalized rates ------

@@ -366,7 +366,7 @@ class HoltonMassModel(Model):
                     'name': 'Heat flux (%.0f km)'%self.ref_alt,
                     'name_fwd': "\\int_0^{\\tau^+}\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, 
                     'name_bwd': "\\int_{\\tau^-}^0\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, #r"$\tau^-$",
-                    'name_full': "\\int_{\\tau^-}^{\\tau^+}\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, #r"$\tau^+-\tau^-$",
+                    'name_full': "\\int_{\\tau^-}^{\\tau^+}\\overline{v'T'}(%.0f\\ \\mathrm{km})dt"%self.ref_alt, #r"$\tau^+-\tau^-$",
                     'abb_fwd': 'vT+',
                     'abb_bwd': 'vT-',
                     'abb_full': 'vTfull',

@@ -4,6 +4,7 @@ from numpy import save,load
 import scipy
 from scipy.stats import describe
 from scipy import special
+import pandas as pd
 from sklearn import linear_model
 import matplotlib
 matplotlib.use('AGG')
@@ -891,7 +892,46 @@ class TPT:
             self.dam_moments[dam_keys[k]]['rate_ab'] = Fmp_unweighted[k]
             self.dam_moments[dam_keys[k]]['rate_ba'] = Fmp_unweighted[num_bvp+k]
         return
+    def plot_lifecycle_correlations_bar(self,model,keys=None):
+        # TODO: make this a bar plot
+        if keys is None: keys = list(model.corr_dict.keys())
+        names = [r"$A\to A$",r"$A\to B$",r"$B\to B$",r"$B\to A$"]
+        # Correlations
+        maxcorr = 0
+        fig,ax = plt.subplots(nrows=len(keys),figsize=(6,3*len(keys)),tight_layout=True,sharex=True)
+        for k in range(len(keys)):
+            print("key = {}. corr_dga range = ({},{}). corr_emp range = ({},{})".format(keys[k],np.min(self.lifecycle_corr_dga[keys[k]]),np.max(self.lifecycle_corr_dga[keys[k]]),np.min(self.lifecycle_corr_emp[keys[k]]),np.max(self.lifecycle_corr_emp[keys[k]])))
+            data = []
+            for i in range(len(names)):
+                data += [[names[i],self.lifecycle_corr_dga[keys[k]][i],self.lifecycle_corr_emp[keys[k]][i]]]
+            df = pd.DataFrame(data,columns=["Phase","DGA","DNS"])
+            print(df)
+            df.plot(x="Phase", y=["DGA","DNS"], kind='bar', ax=ax[k], color=['red','black'], rot=0)
+            ax[k].set_title(r"$\Gamma = $%s"%model.corr_dict[keys[k]]['name'])
+            ax[k].set_ylabel(r"Corr($\Gamma,q^+q^-$)")
+            ax[k].plot(names,np.zeros(len(names)),linestyle='--',color='black')
+            maxcorr = max(maxcorr,max(np.max(np.abs(self.lifecycle_corr_dga[keys[k]])),np.max(np.abs(self.lifecycle_corr_emp[keys[k]]))))
+        for k in range(len(keys)):
+            ax[k].set_ylim([-maxcorr,maxcorr])
+        #fig.suptitle("Lifecycle correlations")
+        fig.savefig(join(self.savefolder,"lifecycle_corr"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Means
+        fig,ax = plt.subplots(nrows=len(keys),figsize=(6,3*len(keys)),tight_layout=True,sharex=True)
+        for k in range(len(keys)):
+            data = []
+            for i in range(len(names)):
+                data += [[names[i],self.lifecycle_mean_dga[keys[k]][i],self.lifecycle_mean_emp[keys[k]][i]]]
+            df = pd.DataFrame(data,columns=["Phase","DGA","DNS"])
+            print(df)
+            df.plot(x="Phase", y=["DGA","DNS"], kind='bar', ax=ax[k], color=['red','black'], rot=0)
+            ax[k].set_title(r"$\Gamma = $%s"%model.corr_dict[keys[k]]['name'])
+            ax[k].set_ylabel(r"$\langle\Gamma,q^+q^-\rangle_\pi$")
+        fig.savefig(join(self.savefolder,"lifecycle_mean"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        return
     def plot_lifecycle_correlations(self,model,keys=None):
+        # TODO: make this a bar plot
         # After they've been computed, plot
         if keys is None: keys = list(model.corr_dict.keys())
         names = [r"$A\to A$",r"$A\to B$",r"$B\to B$",r"$B\to A$"]
