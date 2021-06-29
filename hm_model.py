@@ -312,6 +312,10 @@ class HoltonMassModel(Model):
         q = self.q
         funlib = self.observable_function_library()
         self.corr_dict = {
+                'vTintref_l0': {
+                    'pay': lambda x: 1*(funlib['vTintref']['fun'](x)*funlib['vTintref']['units'] < 0),
+                    'name': r"$1\{$%s$ < 0\ \mathrm{K}\cdot\mathrm{m}^2/\mathrm{s}\}$"%funlib["vTintref"]["name"],
+                    },
                 'one': {
                     'pay': lambda x: np.ones(len(x)),
                     'name': '1',
@@ -356,16 +360,16 @@ class HoltonMassModel(Model):
                     'abb_bwd': 't-',
                     'abb_full': 'tfull',
                     'units': 1.0,
-                    'unit_symbol': "days",
-                    'unit_symbol_t': "days",
+                    'unit_symbol': "\\mathrm{days}",
+                    'unit_symbol_t': "\\mathrm{days}",
                     'logscale': True,
                     'pay_symbol': "1",
                     },
                 'heatflux': {
                     'pay': self.fun_at_level(funlib["vT"]["fun"], self.ref_alt),
                     'name': 'Heat flux (%.0f km)'%self.ref_alt,
-                    'name_fwd': "\\int_0^{\\tau^+}\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, 
-                    'name_bwd': "\\int_{\\tau^-}^0\\overline{v'T'}(%.0f\\ km)dt"%self.ref_alt, #r"$\tau^-$",
+                    'name_fwd': "\\int_0^{\\tau^+}\\overline{v'T'}(%.0f\\ \\mathrm{km})dt"%self.ref_alt, 
+                    'name_bwd': "\\int_{\\tau^-}^0\\overline{v'T'}(%.0f\\ \\mathrm{km})dt"%self.ref_alt, #r"$\tau^-$",
                     'name_full': "\\int_{\\tau^-}^{\\tau^+}\\overline{v'T'}(%.0f\\ \\mathrm{km})dt"%self.ref_alt, #r"$\tau^+-\tau^-$",
                     'abb_fwd': 'vT+',
                     'abb_bwd': 'vT-',

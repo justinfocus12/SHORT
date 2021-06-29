@@ -1103,10 +1103,10 @@ class TPT:
                 fig,ax = plt.subplots()
                 scat = ax.scatter(units_k*units_t*self.dam_emp[keys[k]]['ab'].flatten(),units_t*self.dam_emp['one']['ab'].flatten(),color='black',marker='.')
                 # Plot two crosses, one empirical and one DGA
-                hemp, = ax.plot(units_k*eg_emp*np.ones(2),units_t*(et_emp + np.sqrt(vt_emp)*np.array([-1,1])), color='cyan', linestyle='-',linewidth=3,label='DNS')
-                ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='cyan', linestyle='-',linewidth=3,label='DNS')
-                hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=3,label='DGA')
-                ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=3,label='DGA')
+                hemp, = ax.plot(units_k*eg_emp*np.ones(2),units_t*(et_emp + np.sqrt(vt_emp)*np.array([-1,1])), color='cyan', linestyle='-',linewidth=4,label='DNS')
+                ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='cyan', linestyle='-',linewidth=4,label='DNS')
+                hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+                ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
                 ax.set_xlabel(r"$%s (%s)$"%(model.dam_dict[keys[k]]['name_full'],unit_symbol_k),fontdict=font)
                 ax.set_ylabel(r"$%s (%s)$"%(model.dam_dict['one']['name_full'],unit_symbol_t),fontdict=font)
                 xlim,ylim = ax.get_xlim(),ax.get_ylim()
@@ -1160,10 +1160,10 @@ class TPT:
                 fig,ax = plt.subplots()
                 scat = ax.scatter(units_k*self.dam_emp[keys[k]]['ba'].flatten(),units_t*self.dam_emp['one']['ba'].flatten(),color='black',marker='.')
                 # Plot two crosses, one empirical and one DGA
-                hemp, = ax.plot(units_k*eg_emp*np.ones(2),units_t*(et_emp + np.sqrt(vt_emp)*np.array([-1,1])), color='cyan', linestyle='-',linewidth=3,label='DNS')
-                ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='cyan', linestyle='-',label='DNS')
-                hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',label='DGA')
-                ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=3,label='DGA')
+                hemp, = ax.plot(units_k*eg_emp*np.ones(2),units_t*(et_emp + np.sqrt(vt_emp)*np.array([-1,1])), color='cyan', linestyle='-',linewidth=4,label='DNS')
+                ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='cyan', linestyle='-',linewidth=4,label='DNS')
+                hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+                ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
                 ax.set_xlabel(r"$%s (%s)$"%(model.dam_dict[keys[k]]['name_full'],unit_symbol_k),fontdict=font)
                 ax.set_ylabel(r"$%s (%s)$"%(model.dam_dict['one']['name_full'],unit_symbol_t),fontdict=font)
                 xlim,ylim = ax.get_xlim(),ax.get_ylim()
@@ -1248,6 +1248,7 @@ class TPT:
             hemp_pdf_ab, = ax[0].plot(bin_centers,hist,color='black',marker='o',label='DNS PDF')
             #hemp_gamma_ab, = ax[0].plot(bin_centers,emp_gamma_ab,color='blue',marker='o',label=r"$\Gamma(\alpha=%s,\beta=%s)$"%(helper.sci_fmt_latex(alpha_emp),helper.sci_fmt_latex(beta_emp)))
             hdga_gamma_ab, = ax[0].plot(bin_centers,dga_gamma_ab,color='red',marker='o',label=r"$\Gamma(\alpha=%s,\beta=%s)$"%(helper.sci_fmt_latex(alpha),helper.sci_fmt_latex(beta)))
+            #ax[0].set_yscale('log')
             ax[0].set_title(r"$A\to B$ %s PDF"%model.dam_dict[keys[k]]["name"],fontdict=font)
             ax[0].legend(handles=[hemp_pdf_ab,hdga_gamma_ab],prop={'size': 16})
             #ax[0].legend(handles=[hemp_pdf_ab,hdga_gamma_ab],prop={'size': 16})
@@ -1274,6 +1275,7 @@ class TPT:
             hemp_pdf_ba, = ax[1].plot(bin_centers,hist,color='black',marker='o',label='DNS PDF')
             #hemp_gamma_ba, = ax[1].plot(bin_centers,emp_gamma_ba,marker='o',color='blue',label=r"$\Gamma(\alpha=%s,\beta=%s)$"%(helper.sci_fmt_latex(alpha_emp),helper.sci_fmt_latex(beta_emp)))
             hdga_gamma_ba, = ax[1].plot(bin_centers,dga_gamma_ba,marker='o',color='red',label=r"$\Gamma(\alpha=%s,\beta=%s)$"%(helper.sci_fmt_latex(alpha),helper.sci_fmt_latex(beta)))
+            #ax[1].set_yscale('log')
             ax[1].set_title(r"$B\to A$ %s PDF"%model.dam_dict[keys[k]]["name"],fontdict=font)
             ax[1].legend(handles=[hemp_pdf_ba,hdga_gamma_ba],prop={'size': 16})
             #ax[1].legend(handles=[hemp_pdf_ba,hdga_gamma_ba],prop={'size': 16})
@@ -1361,11 +1363,11 @@ class TPT:
             weight = self.chom
             theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
             # Plot unconditional MFPT
-            fig,ax = self.plot_field_2d(model,data,self.mfpt_b,weight,theta_x,shp=[20,20],fieldname=r"$E[\tau_B^+]$",fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+            fig,ax = self.plot_field_2d(model,data,self.mfpt_b,weight,theta_x,shp=[20,20],fieldname=r"$E_x[\tau_B^+]$",fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
             fsuff = 'mfpt_xb_th0%s_th1%s'%(theta_2d_abbs[i][0],theta_2d_abbs[i][1])
             fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
-            fig,ax = self.plot_field_2d(model,data,self.mfpt_a,weight,theta_x,shp=[20,20],fieldname=r"$E[\tau_A^+]$",fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+            fig,ax = self.plot_field_2d(model,data,self.mfpt_a,weight,theta_x,shp=[20,20],fieldname=r"$E_x[\tau_A^+]$",fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
             fsuff = 'mfpt_xa_th0%s_th1%s'%(theta_2d_abbs[i][0],theta_2d_abbs[i][1])
             fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
@@ -1391,15 +1393,15 @@ class TPT:
                     comm_bwd = self.dam_moments[keys[k]]['ax'][0]
                     comm_fwd = self.dam_moments[keys[k]]['xb'][0]
                     if j == 0: 
-                        fieldname = r"$P\{A\to B\}$"
+                        fieldname = r"$P_x\{A\to B\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['ab'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
                         if j == 1: 
-                            fieldname = r"$E[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full']) 
+                            fieldname = r"$E_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full']) 
                             field = field_units**j*self.dam_moments[keys[k]]['ab'][j]
                         elif j == 2:
-                            fieldname = r"$Var[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full']) 
+                            fieldname = r"$Var_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full']) 
                             field = field_units**j*(self.dam_moments[keys[k]]['ab'][j] - self.dam_moments[keys[k]]['ab'][1]**2)
                         field[np.where(prob==0)[0]] = np.nan
                         field *= 1.0/(prob + 1*(prob == 0))
@@ -1417,15 +1419,15 @@ class TPT:
                     comm_bwd = self.dam_moments[keys[k]]['bx'][0]
                     comm_fwd = self.dam_moments[keys[k]]['xa'][0]
                     if j == 0: 
-                        fieldname = r"$P\{B\to A\}$"
+                        fieldname = r"$P_x\{B\to A\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['ba'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
                         if j == 1: 
-                            fieldname = r"$E[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full']) 
+                            fieldname = r"$E_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full']) 
                             field = field_units**j*self.dam_moments[keys[k]]['ba'][j]
                         elif j == 2:
-                            fieldname = r"$Var[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full']) 
+                            fieldname = r"$Var_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full']) 
                             field = field_units**j*(self.dam_moments[keys[k]]['ba'][j] - self.dam_moments[keys[k]]['ba'][1]**2)
                         field[np.where(prob==0)[0]] = np.nan
                         field *= 1.0/(prob + 1*(prob == 0))
@@ -1443,15 +1445,15 @@ class TPT:
                     comm_fwd = self.dam_moments[keys[k]]['xb'][0]
                     comm_bwd = 1.0
                     if j == 0: 
-                        fieldname = r"$P\{x\to B\}$"
+                        fieldname = r"$P_x\{x\to B\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['xb'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
                         if j == 1: 
-                            fieldname = r"$E[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                            fieldname = r"$E_x[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
                             field = field_units**j*self.dam_moments[keys[k]]['xb'][j]
                         elif j == 2:
-                            fieldname = r"$Var[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                            fieldname = r"$Var_x[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
                             field = field_units**j*(self.dam_moments[keys[k]]['xb'][j] - self.dam_moments[keys[k]]['xb'][1]**2)
                         field[np.where(prob==0)[0]] = np.nan
                         field *= 1.0/(prob + 1*(prob == 0))
@@ -1462,22 +1464,22 @@ class TPT:
                         print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                     fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
                     fsuff = 'cast_%s%d_xb_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                    fig.savefig(join(self.savefolder,fsuff))
+                    fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                     plt.close(fig)
                     # ---------------------------------
                     # x->A
                     comm_fwd = self.dam_moments[keys[k]]['xa'][0]
                     comm_bwd = 1.0
                     if j == 0: 
-                        fieldname = r"$P\{x\to A\}$"
+                        fieldname = r"$P_x\{x\to A\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['xa'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
                         if j == 1: 
-                            fieldname = r"$E[%s|x\to A]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                            fieldname = r"$E_x[%s|x\to A]$"%(model.dam_dict[keys[k]]['name_fwd']) 
                             field = field_units**j*self.dam_moments[keys[k]]['xa'][j]
                         elif j == 2:
-                            fieldname = r"$Var[%s|x\to A]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                            fieldname = r"$Var_x[%s|x\to A]$"%(model.dam_dict[keys[k]]['name_fwd']) 
                             field = field_units**j*(self.dam_moments[keys[k]]['xa'][j] - self.dam_moments[keys[k]]['xa'][1]**2)
                         field[np.where(prob==0)[0]] = np.nan
                         field *= 1.0/(prob + 1*(prob == 0))
@@ -1496,15 +1498,15 @@ class TPT:
                     comm_fwd = self.dam_moments[keys[k]]['bx'][0]
                     comm_bwd = 1.0
                     if j == 0: 
-                        fieldname = r"$P[B\to x]$"
+                        fieldname = r"$P_x\{B\to x\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['bx'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
                         if j == 1: 
-                            fieldname = r"$E[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
+                            fieldname = r"$E_x[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
                             field = field_units**j*self.dam_moments[keys[k]]['bx'][j]
                         elif j == 2:
-                            fieldname = r"$Var[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
+                            fieldname = r"$Var_x[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
                             field = field_units**j*(self.dam_moments[keys[k]]['bx'][j] - self.dam_moments[keys[k]]['bx'][1]**2)
                         field[np.where(prob==0)[0]] = np.nan
                         field *= 1.0/(prob + 1*(prob == 0))
@@ -1522,15 +1524,15 @@ class TPT:
                     comm_fwd = self.dam_moments[keys[k]]['ax'][0]
                     comm_bwd = 1.0
                     if j == 0: 
-                        fieldname = r"$P[A\to x]$"
+                        fieldname = r"$P_x\{A\to x\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['ax'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
                         if j == 1: 
-                            fieldname = r"$E[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                            fieldname = r"$E_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_fwd']) 
                             field = field_units**j*self.dam_moments[keys[k]]['ax'][j]
                         elif j == 2:
-                            fieldname = r"$Var[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                            fieldname = r"$Var_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_fwd']) 
                             field = field_units**j*(self.dam_moments[keys[k]]['ax'][j] - self.dam_moments[keys[k]]['ax'][1]**2)
                         field[np.where(prob==0)[0]] = np.nan
                         field *= 1.0/(prob + 1*(prob == 0))
@@ -2026,7 +2028,7 @@ class TPT:
                 # ------------------
                 # A->x
                 if i == 0:
-                    uname = r"$P[A\to x]$"
+                    uname = r"$P\{A\to x\}$"
                 else:
                     uname = r"$E[(%s)^{%d}1_A(X(\tau^-))]$"%(model.dam_dict[keys[k]]['name_bwd'],i)
                 fsuff = model.dam_dict[keys[k]]['abb_bwd']+'%d_ax'%i
@@ -2042,7 +2044,7 @@ class TPT:
                 # ------------------
                 # B->x
                 if i == 0:
-                    uname = r"$P[B\to x]$"
+                    uname = r"$P\{B\to x\}$"
                 else:
                     uname = r"$E[(%s)^{%d}1_B(X(\tau^-))]$"%(model.dam_dict[keys[k]]['name_bwd'],i)
                 fsuff = model.dam_dict[keys[k]]['abb_bwd']+'%d_bx'%i

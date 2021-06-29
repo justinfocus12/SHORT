@@ -209,7 +209,7 @@ if display_cast_flag:
 
 # ----------- Display lifecycle correlations -----------
 if lifecycle_flag:
-    keys=['Uref_ln20','magref_g1e7','heatflux_g5em5']
+    keys=['Uref_ln20','magref_g1e7','heatflux_g5em5','vTintref_l0']
     tpt.write_compare_lifecycle_correlations(model,data)
     tpt.plot_lifecycle_correlations_bar(model,keys=keys)
 # ------------------------------------------------------
