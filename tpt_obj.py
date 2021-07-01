@@ -2752,8 +2752,9 @@ class TPT:
         num = min(max_num_states,len(idx))
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
-    def plot_transition_states(self,model,data):
-        num_per_level = 10
+    def plot_transition_states_committor(self,model,data,preload_idx=False):
+        num_per_level = 5
+        num_levels = 11
         # Plot dominant transition states
         #funlib = hm.observable_function_library(q)
         Nx,Nt,xdim = data.X.shape
@@ -2761,41 +2762,166 @@ class TPT:
         comm_fwd = self.dam_moments[key]['xb'][0,:,:]
         comm_bwd = self.dam_moments[key]['ax'][0,:,:]
         weight = np.ones(data.nshort)/data.nshort #self.chom
-        qlevels = np.array([0.25,0.5,0.75])
+        qlevels = np.linspace(0.05,0.95,num_levels) #np.array([0.25,0.5,0.75])
+        tolerance = np.abs(qlevels[-1]-qlevels[0])/(2*num_levels)
+        funlib = model.observable_function_library()
         # A -> B
-        reac_dens_idx = np.zeros((len(qlevels),num_per_level),dtype=int)
+        if preload_idx:
+            reac_dens_idx = np.load(join(self.savefolder,"reac_dens_idx_ab_committor.npy"))
+        else:
+            reac_dens_idx = np.zeros((len(qlevels),num_per_level),dtype=int)
         real_qlevels = np.zeros((len(qlevels),num_per_level))
         colorlist = []
         zorders = [2,0,1]
         zorderlist = np.random.permutation(np.arange(len(qlevels)*num_per_level))
         for i in range(len(qlevels)):
-            reac_dens_idx[i,:],reac_dens_weights,ans2 = self.maximize_rflux_on_surface(model,data,comm_fwd.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,qlevels[i],0.05,num_per_level)
-            print("ans2.shape = {}".format(ans2.shape))
             real_qlevels[i,:] = qlevels[i] 
-            color = plt.cm.coolwarm(qlevels[i]) if i != 1 else 'gold'
+            color = plt.cm.coolwarm(qlevels[i]) #if i != 1 else 'gold'
             colorlist += [color for j in range(num_per_level)]
             #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
+        # save the reac dens idx
+        np.save(join(self.savefolder,"reac_dens_idx_ab_committor"),reac_dens_idx)
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
         fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_qlevels.flatten(),r"q^+",colorlist=colorlist,zorderlist=zorderlist)
         ax.set_title(r"$A\to B$ transition states",fontdict=font)
         fig.savefig(join(self.savefolder,"trans_states_ab"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
+        # Now plot them over committor: wind at 30 km
+        func = funlib["Uref"]
+        fig,ax = plt.subplots()
+        for i in range(len(qlevels)):
+            print("reac_dens_idx[i,:]={}".format(reac_dens_idx[i,:]))
+            fxi = func["fun"](data.X[reac_dens_idx[i,:],0])
+            ax.scatter(qlevels[i]*np.ones(len(fxi)),fxi*func["units"],color='black') #plt.cm.coolwarm(1-tb_levels[i]/np.nanmax(tb)))
+        ax.set_xlabel(r"$P_x\{x\to B\}$",fontdict=font)
+        ax.set_ylabel("%s (%s)"%(func["name"],func["unit_symbol"]),fontdict=font)
+        ax.set_title(r"$A\to B$ max-flux (committor levels)",fontdict=font)
+        fig.savefig(join(self.savefolder,"maxflux_qp_ab"))
+        plt.close(fig)
         # B -> A
-        reac_dens_idx = np.zeros((len(qlevels),num_per_level),dtype=int)
+        if preload_idx:
+            reac_dens_idx = np.load(join(self.savefolder,"reac_dens_idx_ba_committor.npy"))
+        else:
+            reac_dens_idx = np.zeros((len(qlevels),num_per_level),dtype=int)
         real_qlevels = np.zeros((len(qlevels),num_per_level))
         colorlist = []
         zorders = [2,0,1]
         zorderlist = np.random.permutation(np.arange(len(qlevels)*num_per_level))
         for i in range(len(qlevels)):
-            reac_dens_idx[i,:],reac_dens_weights,ans2 = self.maximize_rflux_on_surface(model,data,comm_fwd.reshape((Nx,Nt,1)),1-comm_bwd,1-comm_fwd,weight,qlevels[i],0.05,num_per_level)
+            if not preload_idx: reac_dens_idx[i,:],reac_dens_weights,ans2 = self.maximize_rflux_on_surface(model,data,comm_fwd.reshape((Nx,Nt,1)),1-comm_bwd,1-comm_fwd,weight,qlevels[i],tolerance,num_per_level)
             real_qlevels[i,:] = qlevels[i] 
-            color = plt.cm.coolwarm(qlevels[i]) if i != 1 else 'gold'
+            color = plt.cm.coolwarm(qlevels[i]) #if i != 1 else 'gold'
             colorlist += [color for j in range(num_per_level)]
             #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
+        np.save(join(self.savefolder,"reac_dens_idx_ba_committor"),reac_dens_idx)
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
         fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_qlevels.flatten(),r"q^+",colorlist=colorlist,zorderlist=zorderlist)
         ax.set_title(r"$B\to A$ transition states",fontdict=font)
         fig.savefig(join(self.savefolder,"trans_states_ba"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Now plot them over committor: wind at 30 km
+        func = funlib["Uref"]
+        fig,ax = plt.subplots()
+        for i in range(len(qlevels)):
+            print("reac_dens_idx[i,:]={}".format(reac_dens_idx[i,:]))
+            fxi = func["fun"](data.X[reac_dens_idx[i,:],0])
+            ax.scatter(1-qlevels[i]*np.ones(len(fxi)),fxi*func["units"],color='black') #plt.cm.coolwarm(1-tb_levels[i]/np.nanmax(tb)))
+        ax.set_xlabel(r"$P_x\{x\to A\}$",fontdict=font)
+        ax.set_ylabel("%s (%s)"%(func["name"],func["unit_symbol"]),fontdict=font)
+        ax.set_title(r"$B\to A$ max flux (committor levels)",fontdict=font)
+        fig.savefig(join(self.savefolder,"maxflux_qp_ba"))
+        plt.close(fig)
+        return
+    def plot_transition_states_leadtime(self,model,data,preload_idx=False):
+        num_per_level = 5
+        num_levels = 11
+        min_quantile,max_quantile = 0.05,0.95
+        # Plot dominant transition states at level sets of lead time
+        #funlib = hm.observable_function_library(q)
+        Nx,Nt,xdim = data.X.shape
+        key = list(self.dam_moments.keys())[0]
+        comm_fwd = self.dam_moments[key]['xb'][0,:,:]
+        comm_bwd = self.dam_moments[key]['ax'][0,:,:]
+        key = list(self.dam_moments.keys())[0]
+        funlib = model.observable_function_library()
+        weight = np.ones(data.nshort)/data.nshort #self.chom
+        # A -> B
+        eps = 1e-2
+        tb = self.dam_moments['one']['xb'][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
+        tb[np.where(comm_fwd < eps)[0]] = np.nan
+        tb_max,tb_min = np.nanquantile(tb[:,0],[max_quantile,min_quantile])
+        tolerance = np.abs(tb_max-tb_min)/(2*num_levels)
+        tb_levels = np.linspace(tb_max,tb_min,num_levels)
+        if preload_idx:
+            reac_dens_idx = np.load(join(self.savefolder,"reac_dens_idx_ab_time.npy"))
+        else:
+            reac_dens_idx = np.zeros((len(tb_levels),num_per_level),dtype=int)
+        real_tb_levels = np.zeros((len(tb_levels),num_per_level))
+        colorlist = []
+        zorders = [2,0,1]
+        zorderlist = np.random.permutation(np.arange(len(tb_levels)*num_per_level))
+        for i in range(len(tb_levels)):
+            if not preload_idx: reac_dens_idx[i,:],reac_dens_weights,ans2 = self.maximize_rflux_on_surface(model,data,tb.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,tb_levels[i],tolerance,num_per_level)
+            real_tb_levels[i,:] = tb_levels[i] 
+            color = plt.cm.coolwarm(1-tb_levels[i]/np.nanmax(tb)) #if i != 1 else 'gold'
+            colorlist += [color for j in range(num_per_level)]
+            #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
+        np.save(join(self.savefolder,"reac_dens_idx_ab_time"),reac_dens_idx)
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_tb_levels.flatten(),r"\eta^+",colorlist=colorlist,zorderlist=zorderlist)
+        ax.set_title(r"$A\to B$ transition states",fontdict=font)
+        fig.savefig(join(self.savefolder,"trans_states_ab_leadtime"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Now plot them over time: wind at 30 km
+        func = funlib["Uref"]
+        fig,ax = plt.subplots()
+        for i in range(len(tb_levels)):
+            print("reac_dens_idx[i,:]={}".format(reac_dens_idx[i,:]))
+            fxi = func["fun"](data.X[reac_dens_idx[i,:],0])
+            ax.scatter(-tb_levels[i]*np.ones(len(fxi)),fxi*func["units"],color='black') #plt.cm.coolwarm(1-tb_levels[i]/np.nanmax(tb)))
+        ax.set_xlabel(r"Time to $B$",fontdict=font)
+        ax.set_ylabel("%s (%s)"%(func["name"],func["unit_symbol"]),fontdict=font)
+        ax.set_title(r"$A\to B$ max flux (time levels)",fontdict=font)
+        fig.savefig(join(self.savefolder,"maxflux_leadtime_ab"))
+        plt.close(fig)
+
+        # B -> A
+        eps = 1e-2
+        ta = self.dam_moments['one']['xa'][1,:,:]*(1-comm_fwd > eps)/(1-comm_fwd + 1*(1-comm_fwd < eps))
+        ta[np.where(1-comm_fwd < eps)[0]] = np.nan
+        ta_max,ta_min = np.nanquantile(ta[:,0],[max_quantile,min_quantile])
+        tolerance = np.abs(ta_max-ta_min)/(2*num_levels)
+        ta_levels = np.linspace(ta_max,ta_min,num_levels)
+        if preload_idx:
+            reac_dens_idx = np.load(join(self.savefolder,"reac_dens_idx_ba_time.npy"))
+        else:
+            reac_dens_idx = np.zeros((len(ta_levels),num_per_level),dtype=int)
+        real_ta_levels = np.zeros((len(ta_levels),num_per_level))
+        colorlist = []
+        zorders = [2,0,1]
+        zorderlist = np.random.permutation(np.arange(len(ta_levels)*num_per_level))
+        for i in range(len(ta_levels)):
+            if not preload_idx: reac_dens_idx[i,:],reac_dens_weights,ans2 = self.maximize_rflux_on_surface(model,data,ta.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,ta_levels[i],tolerance,num_per_level)
+            real_ta_levels[i,:] = ta_levels[i] 
+            color = plt.cm.coolwarm(ta_levels[i]/np.nanmax(ta)) #if i != 1 else 'gold'
+            colorlist += [color for j in range(num_per_level)]
+            #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
+        np.save(join(self.savefolder,"reac_dens_idx_ba_time"),reac_dens_idx)
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_tb_levels.flatten(),r"\eta^+",colorlist=colorlist,zorderlist=zorderlist)
+        ax.set_title(r"$B\to A$ transition states",fontdict=font)
+        fig.savefig(join(self.savefolder,"trans_states_ba_leadtime"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Now plot them over time: wind at 30 km
+        func = funlib["Uref"]
+        fig,ax = plt.subplots()
+        for i in range(len(tb_levels)):
+            fxi = func["fun"](data.X[reac_dens_idx[i,:],0])
+            ax.scatter(-ta_levels[i]*np.ones(len(fxi)),fxi*func["units"],color='black') #plt.cm.coolwarm(1-ta_levels[i]/np.nanmax(ta)))
+        ax.set_xlabel(r"Time to $A$",fontdict=font)
+        ax.set_ylabel("%s (%s)"%(func["name"],func["unit_symbol"]),fontdict=font)
+        ax.set_title(r"$B\to A$ max flux (time levels)",fontdict=font)
+        fig.savefig(join(self.savefolder,"maxflux_leadtime_ba"))
         plt.close(fig)
         return
 

@@ -379,3 +379,439 @@ In MOM:
 	detA = 0.0
 Starting bvp 0 out of 2
 feynman_kac_lhs_VX time = 1.891e-02
+feynman_kac_lhs_VF time = 9.918e+01
+feynman_kac_lhs time = 3.551e-01
+moments[2]: min=0.028756574252227968, max=10040.280461674094, mean=806.0085998062627, std=1708.076919927237
+basis->data time: 6.049e+01
+Starting bvp 1 out of 2
+feynman_kac_lhs_VX time = 1.868e-02
+feynman_kac_lhs_VF time = 9.949e+01
+feynman_kac_lhs time = 3.558e-01
+moments[2]: min=2.627513252709054, max=11831.771795947567, mean=1065.1129473597455, std=1988.3033556908106
+basis->data time: 6.067e+01
+fd_weights = [1.07177346 1.         0.93303299 0.87055056 0.8122524  0.75785828
+ 0.70710678 0.65975396 0.61557221 0.57434918 0.53588673]
+data.first_exit_idx: shape=(500000,), min=1, max=10, mean=7.868048, std=3.3156243257787814
+normalizer: shp=(500000,), min=1.0, max=7.466363086456484, mean=6.024857121689904, std=2.3205649452682997
+data.first_exit_idx: shape=(500000,), min=1, max=10, mean=7.868048, std=3.3156243257787814
+normalizer: shp=(500000,), min=1.0, max=7.466363086456484, mean=6.024857121689904, std=2.3205649452682997
+data.first_exit_idx: shape=(500000,), min=1, max=10, mean=7.868048, std=3.3156243257787814
+normalizer: shp=(500000,), min=1.0, max=7.466363086456484, mean=6.024857121689904, std=2.3205649452682997
+len(bdy_idx) = 26372
+len(iidx) = 473628
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 10, 
+num_leaves = 1000; K = 1000
+phi colsums range = (29.0,99110.0)
+phi rowsums range = (0.0,1.0)
+In BVP: 
+	detA = 0.0, detLHS = 0.0
+len(bdy_idx) = 26150
+len(iidx) = 473850
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 10, 
+num_leaves = 1000; K = 1000
+phi colsums range = (246.0,110308.0)
+phi rowsums range = (0.0,1.0)
+In BVP: 
+	detA = 0.0, detLHS = 0.0
+eps = 0.011000000000000001
+eps = 0.011000000000000001
+eps = 0.011000000000000001
+eps = 0.011000000000000001
+e1 = nan, alpha = nan, beta = nan, alpha/beta = nan
+e1 = -17.757633311271547, alpha = -0.09652657756341178, beta = 0.005435779412234069, alpha/beta = -17.757633311271547
+AB, EMP: alpha=nan, beta=nan
+AB, DGA: alpha=-0.09652657756341178, beta=0.005435779412234069
+e1 = nan, alpha = nan, beta = nan, alpha/beta = nan
+e1 = 40.11835710204493, alpha = -11.359280849449986, beta = -0.2831442180086426, alpha/beta = 40.11835710204493
+BA, EMP: alpha=nan, beta=nan
+BA, DGA: alpha=-11.359280849449986, beta=-0.2831442180086426
+TPT computation: done
+Labelling long traj. dt = 0.005, Nt = 10000001, tmin = 0.0, tmax = 50000.0
+sum(ina_long) = 0
+sum(inb_long) = 9657140
+num_rxn = 0
+Loaded TPT
+shp0 = [20], dth=[0.19966611]
+thaxes in (-1.8968280468395744,1.8968280468395744)
+field in (0.0,1.0), field_mean in (0.008781476993547685,0.9996069570808648)
+shp0 = [20], dth=[0.19966611]
+thaxes in (-1.8968280468395744,1.8968280468395744)
+field in (0.0,448.5518455276244), field_mean in (0.6177281902007165,37.16201238982191)
+shp0 = [20], dth=[0.02994992]
+thaxes in (-0.2845242071066862,0.2845242071066862)
+field in (0.0,1.0), field_mean in (0.8552902888820216,0.9935845526364309)
+shp0 = [20], dth=[0.02994992]
+thaxes in (-0.2845242071066862,0.2845242071066862)
+field in (0.0,448.5518455276244), field_mean in (0.08616515529936876,16.872484983596223)
+I subplots_adjusted. What more do you want?
+t_long[timax] = 3000.0
+eps = 0.15189724193235699
+eps = 0.04282929822448702
+About to start displaying casts
+Starting view (x,v)
+eps = 1358.9610983255516 - 0.0
+eps = 67.94805491627758
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+eps = 141469.264745862 - 0.0
+eps = 7073.463237293099
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+	Starting damage function one
+eps = 1.0 - 0.9999999999999999
+eps = 5.551115123125783e-18
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+eps = 0.885936674265248 - 0.0
+eps = 0.0442968337132624
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+eps = 0.7846879187784326 - 0.0
+eps = 0.039234395938921626
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+eps = 1.0 - 0.0
+eps = 0.05
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+eps = 1.0 - 0.0
+eps = 0.05
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+eps = 1.0 - 0.0
+eps = 0.05
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+eps = 1.0 - 0.0
+eps = 0.05
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+field range: (23.038363717127517,460.77266018585595)
+field range: (23.038363717127517,197.4972170407164)
+eps = 178.63182058284502 - 24.079536943239564
+eps = 7.7276141819802735
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+field range: (19.202642590224293,7277.804774555026)
+field range: (19.202642590224293,249.28670187692137)
+eps = 235.9555035606727 - 27.24306131793238
+eps = 10.435622112137015
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+field range: (0.0,448.55184552762444)
+field range: (0.0,122.07682807640128)
+eps = 52.58831115882492 - 0.0
+eps = 2.629415557941246
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+field range: (0.0,7274.9829932769635)
+field range: (0.0,248.02939521704283)
+eps = 107.28156231354822 - 0.0
+eps = 5.364078115677411
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+field range: (0.0,204.90618101133956)
+field range: (0.0,204.90618101133956)
+eps = 204.90618101133953 - 0.0
+eps = 10.245309050566977
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+field range: (0.0,340.61582380132484)
+field range: (0.0,188.35683598326483)
+eps = 138.89571108070066 - 0.0
+eps = 6.944785554035033
+eps = 0.37936560936791486
+eps = 0.06544056763453783
+eps = 0.013288774342327375 - 1.0299838108941431e-08
+eps = 0.0006644382021244633
+eps = 0.3926766833808242
+eps = 0.06773672790241633
+comm_bwd.shape = (500000, 11)
+comm_fwd.shape = (500000, 11)
+About to go into plotting current
+chomss.shape = (500000,)
+comm_bwd_x.shape = (500000,)
+comm_fwd_ypj.shape = (500000,)
+theta_ypj.shape = (500000, 2)
+theta_x.shape = (500000, 2)
+field0.shape = (500000, 2), field1.shape = (500000, 2)
+Jmag range = (7.70764467464091e-17,5.0105004666934755e-06)
+J0.shape = (25, 25)
+Final J0 range = (-0.3385692344610652,0.6299770747719984)
+eps = 7.995207037336287e-05 - 1.0603415691704596e-10
+eps = 3.997598216960297e-06
+eps = 0.3926766833808242
+eps = 0.06773672790241633
+ABpoints done
+comm_bwd.shape = (500000, 11)
+comm_fwd.shape = (500000, 11)
+About to go into plotting current
+chomss.shape = (500000,)
+comm_bwd_x.shape = (500000,)
+comm_fwd_ypj.shape = (500000,)
+theta_ypj.shape = (500000, 2)
+theta_x.shape = (500000, 2)
+field0.shape = (500000, 2), field1.shape = (500000, 2)
+Jmag range = (0.0,8.846942803645401e-09)
+J0.shape = (25, 25)
+Final J0 range = (-0.48486450145223303,0.32991679701247867)
+eps = 4.378821398502944e-05 - 2.0414332490720844e-11
+eps = 2.1894096785348474e-06
+eps = 0.3926766833808242
+eps = 0.06773672790241633
+ABpoints done
+comm_bwd.shape = (500000, 11)
+comm_fwd.shape = (500000, 11)
+About to go into plotting current
+chomss.shape = (500000,)
+comm_bwd_x.shape = (500000,)
+comm_fwd_ypj.shape = (500000,)
+theta_ypj.shape = (500000, 2)
+theta_x.shape = (500000, 2)
+field0.shape = (500000, 2), field1.shape = (500000, 2)
+Jmag range = (0.0,4.761092479806984e-09)
+J0.shape = (25, 25)
+Final J0 range = (-0.35261027494698577,0.17277400961878236)
+data.X.shape = (500000, 11, 2)
+Pay.shape = (500000,)
+Pay_long.shape = (10000001,)
+data.X.shape = (500000, 11, 2)
+Pay.shape = (500000,)
+Pay_long.shape = (10000001,)
+key = v_g0. corr_dga range = (-0.04380515098794745,0.06436445259253083). corr_emp range = (nan,nan)
+      Phase       DGA       DNS
+0  $A\to A$ -0.022874       NaN
+1  $A\to B$  0.064364       NaN
+2  $B\to B$  0.003247 -0.000189
+3  $B\to A$ -0.043805       NaN
+key = v_l0. corr_dga range = (-0.06995957228757595,0.04902828183086513). corr_emp range = (nan,nan)
+      Phase       DGA      DNS
+0  $A\to A$  0.025438      NaN
+1  $A\to B$ -0.069960      NaN
+2  $B\to B$ -0.003659  0.00019
+3  $B\to A$  0.049028      NaN
+      Phase       DGA      DNS
+0  $A\to A$  0.454490      NaN
+1  $A\to B$  0.801696      NaN
+2  $B\to B$  0.549926  0.50041
+3  $B\to A$  0.181983      NaN
+      Phase       DGA      DNS
+0  $A\to A$  0.540939      NaN
+1  $A\to B$  0.197648      NaN
+2  $B\to B$  0.444955  0.49959
+3  $B\to A$  0.817268      NaN
+eps = 0.011000000000000001
+eps = 0.011000000000000001
+eps = 0.011000000000000001
+eps = 0.011000000000000001
+e1 = nan, alpha = nan, beta = nan, alpha/beta = nan
+e1 = -17.757633311271547, alpha = -0.09652657756341178, beta = 0.005435779412234069, alpha/beta = -17.757633311271547
+AB, EMP: alpha=nan, beta=nan
+AB, DGA: alpha=-0.09652657756341178, beta=0.005435779412234069
+e1 = nan, alpha = nan, beta = nan, alpha/beta = nan
+e1 = 40.11835710204493, alpha = -11.359280849449986, beta = -0.2831442180086426, alpha/beta = 40.11835710204493
+BA, EMP: alpha=nan, beta=nan
+BA, DGA: alpha=-11.359280849449986, beta=-0.2831442180086426
+Beginning plot field long
+field_long.shape = (5000,)
+eps = 0.31945946162246064
+theta_x.shape = (500000, 1)
+avg_flag = False
+shp0 = [20], dth=[0.19966611]
+thaxes in (-1.8968280468395744,1.8968280468395744)
+u in (1.0,1.0), u_mean in (4.993570927866213e-07,0.09151142288222733)
+ylab = $x$
+eps = 0.0100662015877648
+eps = 0.3993322203672788
+avg_flag = False
+shp0 = [20], dth=[0.19966611]
+thaxes in (-1.8968280468395744,1.8968280468395744)
+u in (0.0,206.29545401247563), u_mean in (2.8270090176832475e-05,0.032590998725477244)
+ylab = $x$
+eps = 0.0100662015877648
+eps = 0.3993322203672788
+avg_flag = False
+shp0 = [20], dth=[0.19966611]
+thaxes in (-1.8968280468395744,1.8968280468395744)
+u in (0.0,542.7123770494537), u_mean in (8.62372439535782e-06,0.025148711675698657)
+ylab = $x$
+eps = 0.0100662015877648
+eps = 0.3993322203672788
+Plotting lines for A and B
+Done plotting field long
+Beginning plot field long
+field_long.shape = (5000,)
+eps = 0.05266614123869767
+theta_x.shape = (500000, 1)
+avg_flag = False
+shp0 = [20], dth=[0.02994992]
+thaxes in (-0.2845242071066862,0.2845242071066862)
+u in (1.0,1.0), u_mean in (2.348435026274282e-05,0.004972521449608956)
+ylab = $v$
+eps = 0.0005443940809280834
+eps = 0.05989983305509182
+avg_flag = False
+shp0 = [20], dth=[0.02994992]
+thaxes in (-0.2845242071066862,0.2845242071066862)
+u in (0.0,206.29545401247563), u_mean in (0.00016913633503499358,0.004026194543282309)
+ylab = $v$
+eps = 0.0005443940809280834
+eps = 0.05989983305509182
+avg_flag = False
+shp0 = [20], dth=[0.02994992]
+thaxes in (-0.2845242071066862,0.2845242071066862)
+u in (0.0,542.7123770494537), u_mean in (0.00024749416760384314,0.004887954350414773)
+ylab = $v$
+eps = 0.0005443940809280834
+eps = 0.05989983305509182
+Plotting lines for A and B
+Done plotting field long
+theta_2d_short.shape = (500000, 2)
+theta_2d_long.shape = (10000001, 2)
+Displaying change of measure
+eps = 0.2639084120042592 - 4.914922748101661e-07
+eps = 0.013195396025599219
+eps = 0.35939899834855094
+eps = 0.06199632723272004
+eps = 0.18331200000000014 - 0.0
+eps = 0.009165600000000006
+eps = 0.124256646198593
+eps = 0.04299093013556632
+committor for one: DescribeResult(nobs=500000, minmax=(0.0, 1.0), mean=0.6230508615576723, variance=0.1435095023064954, skewness=-0.46538156142411696, kurtosis=-1.4457630377308806)
+theta_2d_short.shape = (500000, 2)
+theta_2d_long.shape = (10000001, 2)
+eps = 1.0 - 0.0
+eps = 0.05
+eps = 0.37936560936791486
+eps = 0.06716268783544671
+eps = 1.0 - 0.9999999999999999
+eps = 5.551115123125783e-18
+eps = 0.13111899605932914
+eps = 0.04576456606828113
+------------- key = one --------------------
+1D: Ttot_short = nan, Ttot_long = nan
+w_long_grid: min=0.0, max=0.022200000000000004
+w_short_grid: min=0.0, max=0.027709928930158317
+eps_grid: min=0.0, max=0.9934140389531997
+q_var_long_grid: min=0.0, max=1.1102230246251564e-16
+q_var_short_grid: min=0.0, max=0.24973695170476248
+Teps_short: min=0.0, max=6846.994214561909
+Teps_long: min=0.0, max=8.854028621383663e-11
+Ttot_short = 155.6291603301519
+Ttot_long = 0.000000
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =         3998     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  1.98469D+00    |proj g|=  5.05946D-03
+
+At iterate    1    f=  5.00626D-01    |proj g|=  2.85605D-03
+
+At iterate    2    f=  2.98227D-01    |proj g|=  2.19888D-03
+
+At iterate    3    f=  2.11114D-01    |proj g|=  7.11205D-04
+
+At iterate    4    f=  2.01643D-01    |proj g|=  6.60050D-04
+
+At iterate    5    f=  1.66114D-01    |proj g|=  7.32312D-04
+
+At iterate    6    f=  1.11236D-01    |proj g|=  4.84088D-04
+
+At iterate    7    f=  1.01775D-01    |proj g|=  1.47935D-04
+
+At iterate    8    f=  1.00430D-01    |proj g|=  2.86790D-04
+
+At iterate    9    f=  9.92652D-02    |proj g|=  2.08900D-04
+
+At iterate   10    f=  9.61397D-02    |proj g|=  1.30808D-04
+
+           * * *
+
+Tit   = total number of iterations
+Tnf   = total number of function evaluations
+Tnint = total number of segments explored during Cauchy searches
+Skip  = number of BFGS updates skipped
+Nact  = number of active bounds at final generalized Cauchy point
+Projg = norm of the final projected gradient
+F     = final function value
+
+           * * *
+
+   N    Tit     Tnf  Tnint  Skip  Nact     Projg        F
+ 3998     10     14      1     0     0   1.308D-04   9.614D-02
+  F =   9.6139718491729406E-002
+
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT                 
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =         3998     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  1.98469D+00    |proj g|=  5.75781D-03
+
+At iterate    1    f=  5.84044D-01    |proj g|=  2.71962D-03
+
+At iterate    2    f=  2.01213D-01    |proj g|=  6.91293D-04
+
+At iterate    3    f=  1.85452D-01    |proj g|=  6.65816D-04
+
+At iterate    4    f=  1.45998D-01    |proj g|=  1.19370D-03
+
+At iterate    5    f=  1.13585D-01    |proj g|=  7.52105D-04
+
+At iterate    6    f=  8.13524D-02    |proj g|=  2.45467D-04
+
+At iterate    7    f=  7.79396D-02    |proj g|=  1.99214D-04
+
+At iterate    8    f=  7.10803D-02    |proj g|=  3.16193D-04
+
+At iterate    9    f=  6.15169D-02    |proj g|=  6.75145D-04
+
+At iterate   10    f=  4.75576D-02    |proj g|=  3.88919D-04
+
+           * * *
+
+Tit   = total number of iterations
+Tnf   = total number of function evaluations
+Tnint = total number of segments explored during Cauchy searches
+Skip  = number of BFGS updates skipped
+Nact  = number of active bounds at final generalized Cauchy point
+Projg = norm of the final projected gradient
+F     = final function value
+
+           * * *
+
+   N    Tit     Tnf  Tnint  Skip  Nact     Projg        F
+ 3998     10     15      1     0     0   3.889D-04   4.756D-02
+  F =   4.7557589748535134E-002
+
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT                 

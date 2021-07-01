@@ -1,0 +1,171 @@
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3334: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3583: RuntimeWarning: Degrees of freedom <= 0 for slice
+  return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:185: RuntimeWarning: invalid value encountered in true_divide
+  arrmean = um.true_divide(
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:209: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/home/jf4241/SHORT/tpt_obj.py:1115: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1116: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1138: RuntimeWarning: invalid value encountered in double_scalars
+  emp_avg_per_traj_tweighted = units_t*emp_avg_per_time_tweighted*(t_long[-1] - t_long[0]) / np.sum(self.dam_emp['one']['ab'])
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3334: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3583: RuntimeWarning: Degrees of freedom <= 0 for slice
+  return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:185: RuntimeWarning: invalid value encountered in true_divide
+  arrmean = um.true_divide(
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:209: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/home/jf4241/SHORT/tpt_obj.py:1172: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1173: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1194: RuntimeWarning: invalid value encountered in double_scalars
+  emp_avg_per_traj_tweighted = units_t*emp_avg_per_time_tweighted*(t_long[-1] - t_long[0]) / np.sum(self.dam_emp['one']['ba'])
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3334: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/home/jf4241/SHORT/tpt_obj.py:1204: RuntimeWarning: invalid value encountered in power
+  hdga, = ax[0].plot(np.arange(1,num_moments+1),dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',linewidth=2,label='DGA')
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:908: RuntimeWarning: invalid value encountered in true_divide
+  return n/db/n.sum(), bin_edges
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3334: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:908: RuntimeWarning: invalid value encountered in true_divide
+  return n/db/n.sum(), bin_edges
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3334: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/home/jf4241/SHORT/tpt_obj.py:1280: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:1417: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1418: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1444: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1445: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1469: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1470: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1496: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1497: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1522: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1523: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1549: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1550: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1011: RuntimeWarning: invalid value encountered in double_scalars
+  mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
+/home/jf4241/SHORT/tpt_obj.py:1012: RuntimeWarning: invalid value encountered in double_scalars
+  corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
+/home/jf4241/SHORT/tpt_obj.py:1029: RuntimeWarning: invalid value encountered in double_scalars
+  mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
+/home/jf4241/SHORT/tpt_obj.py:1030: RuntimeWarning: invalid value encountered in double_scalars
+  corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
+/home/jf4241/SHORT/tpt_obj.py:1046: RuntimeWarning: invalid value encountered in double_scalars
+  mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
+/home/jf4241/SHORT/tpt_obj.py:1047: RuntimeWarning: invalid value encountered in double_scalars
+  corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3334: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3583: RuntimeWarning: Degrees of freedom <= 0 for slice
+  return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:185: RuntimeWarning: invalid value encountered in true_divide
+  arrmean = um.true_divide(
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:209: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/home/jf4241/SHORT/tpt_obj.py:1115: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1116: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1138: RuntimeWarning: invalid value encountered in double_scalars
+  emp_avg_per_traj_tweighted = units_t*emp_avg_per_time_tweighted*(t_long[-1] - t_long[0]) / np.sum(self.dam_emp['one']['ab'])
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3334: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3583: RuntimeWarning: Degrees of freedom <= 0 for slice
+  return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:185: RuntimeWarning: invalid value encountered in true_divide
+  arrmean = um.true_divide(
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:209: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/home/jf4241/SHORT/tpt_obj.py:1172: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1173: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1194: RuntimeWarning: invalid value encountered in double_scalars
+  emp_avg_per_traj_tweighted = units_t*emp_avg_per_time_tweighted*(t_long[-1] - t_long[0]) / np.sum(self.dam_emp['one']['ba'])
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3334: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/home/jf4241/SHORT/tpt_obj.py:1204: RuntimeWarning: invalid value encountered in power
+  hdga, = ax[0].plot(np.arange(1,num_moments+1),dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',linewidth=2,label='DGA')
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:908: RuntimeWarning: invalid value encountered in true_divide
+  return n/db/n.sum(), bin_edges
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3334: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:908: RuntimeWarning: invalid value encountered in true_divide
+  return n/db/n.sum(), bin_edges
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3334: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+/home/jf4241/SHORT/tpt_obj.py:1280: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:1989: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:1989: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
+  z = ma.masked_where(z <= 0, z)
+/home/jf4241/SHORT/tpt_obj.py:2007: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:2012: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+Traceback (most recent call last):
+  File "duffing_driver.py", line 230, in <module>
+    tpt.display_dam_moments_abba_validation(model,data,theta_1d_fun,theta_2d_fun,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 2029, in display_dam_moments_abba_validation
+    fig,ax = helper.compare_plot_fields_2d(theta_2d_short,theta_2d_long,u0,u1,self.chom,np.ones(len(x_long)),theta_names=theta_2d_names,u_names=[uname+" DGA",uname+" empirical"],avg_flag=True,logscale=logscale,shp=shp_2d)
+  File "/home/jf4241/SHORT/helper.py", line 389, in compare_plot_fields_2d
+    h = ax[0].scatter(u0_grid[scatter_subset],u1_grid[scatter_subset],marker='o',color='black',s=50*w1_grid[scatter_subset]/np.max(w1_grid[scatter_subset]),label=r"Avg. Error = %3.3e"%(total_error))
+  File "<__array_function__ internals>", line 5, in amax
+  File "/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py", line 2667, in amax
+    return _wrapreduction(a, np.maximum, 'max', axis, None, out,
+  File "/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py", line 90, in _wrapreduction
+    return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
+ValueError: zero-size array to reduction operation maximum which has no identity
+ This problem is unconstrained.
+ This problem is unconstrained.

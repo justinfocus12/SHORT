@@ -146,7 +146,6 @@ class Model(ABC):
         t_short = load(join(short_simfolder,"t_short.npy"))
         Nt = len(t_short)
         cvx_short = np.zeros((Nt,0,self.tpt_obs_dim))
-        #sfli = np.zeros(0, dtype=int)
         num_loaded = 0
         i = 0
         while num_loaded < num_traj:
