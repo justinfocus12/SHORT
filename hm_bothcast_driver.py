@@ -155,7 +155,8 @@ if regression_flag:
 
 # ---------- Plot 1d committor proxies in an array ------
 if proj_1d_flag:
-    tpt.plot_projections_1d_array(model,data)
+    theta1d_list = ['Uref','vTintref']
+    tpt.plot_projections_1d_array(model,data,theta1d_list)
 # -------------------------------------------------------
 
 # ---------- Demonstrate committor is better with 2 observables ------

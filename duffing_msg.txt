@@ -1,0 +1,381 @@
+self.xst = [[-9.45649274e-01 -8.65385032e-15]
+ [ 1.04668053e+00  1.80582481e-14]]
+About to run long trajectory
+Time 500.005 out of 50000.000 (1.000% done)
+Time 1000.005 out of 50000.000 (2.000% done)
+Time 1500.000 out of 50000.000 (3.000% done)
+Time 2000.000 out of 50000.000 (4.000% done)
+Time 2500.000 out of 50000.000 (5.000% done)
+Time 3000.000 out of 50000.000 (6.000% done)
+Time 3500.000 out of 50000.000 (7.000% done)
+Time 4000.000 out of 50000.000 (8.000% done)
+Time 4500.000 out of 50000.000 (9.000% done)
+Time 5000.000 out of 50000.000 (10.000% done)
+Time 5500.000 out of 50000.000 (11.000% done)
+Time 6000.000 out of 50000.000 (12.000% done)
+Time 6500.000 out of 50000.000 (13.000% done)
+Time 7000.000 out of 50000.000 (14.000% done)
+Time 7500.000 out of 50000.000 (15.000% done)
+Time 8000.000 out of 50000.000 (16.000% done)
+Time 8500.000 out of 50000.000 (17.000% done)
+Time 9000.000 out of 50000.000 (18.000% done)
+Time 9500.005 out of 50000.000 (19.000% done)
+Time 10000.005 out of 50000.000 (20.000% done)
+Time 10500.005 out of 50000.000 (21.000% done)
+Time 11000.005 out of 50000.000 (22.000% done)
+Time 11500.005 out of 50000.000 (23.000% done)
+Time 12000.005 out of 50000.000 (24.000% done)
+Time 12500.005 out of 50000.000 (25.000% done)
+Time 13000.005 out of 50000.000 (26.000% done)
+Time 13500.005 out of 50000.000 (27.000% done)
+Time 14000.005 out of 50000.000 (28.000% done)
+Time 14500.005 out of 50000.000 (29.000% done)
+Time 15000.005 out of 50000.000 (30.000% done)
+Time 15500.005 out of 50000.000 (31.000% done)
+Time 16000.005 out of 50000.000 (32.000% done)
+Time 16500.005 out of 50000.000 (33.000% done)
+Time 17000.005 out of 50000.000 (34.000% done)
+Time 17500.005 out of 50000.000 (35.000% done)
+Time 18000.005 out of 50000.000 (36.000% done)
+Time 18500.005 out of 50000.000 (37.000% done)
+Time 19000.005 out of 50000.000 (38.000% done)
+Time 19500.005 out of 50000.000 (39.000% done)
+Time 20000.005 out of 50000.000 (40.000% done)
+Time 20500.005 out of 50000.000 (41.000% done)
+Time 21000.005 out of 50000.000 (42.000% done)
+Time 21500.005 out of 50000.000 (43.000% done)
+Time 22000.005 out of 50000.000 (44.000% done)
+Time 22500.000 out of 50000.000 (45.000% done)
+Time 23000.000 out of 50000.000 (46.000% done)
+Time 23500.000 out of 50000.000 (47.000% done)
+Time 24000.000 out of 50000.000 (48.000% done)
+Time 24500.000 out of 50000.000 (49.000% done)
+Time 25000.000 out of 50000.000 (50.000% done)
+Time 25500.000 out of 50000.000 (51.000% done)
+Time 26000.000 out of 50000.000 (52.000% done)
+Time 26500.000 out of 50000.000 (53.000% done)
+Time 27000.000 out of 50000.000 (54.000% done)
+Time 27500.000 out of 50000.000 (55.000% done)
+Time 28000.000 out of 50000.000 (56.000% done)
+Time 28500.000 out of 50000.000 (57.000% done)
+Time 29000.000 out of 50000.000 (58.000% done)
+Time 29500.000 out of 50000.000 (59.000% done)
+Time 30000.000 out of 50000.000 (60.000% done)
+Time 30500.000 out of 50000.000 (61.000% done)
+Time 31000.000 out of 50000.000 (62.000% done)
+Time 31500.000 out of 50000.000 (63.000% done)
+Time 32000.000 out of 50000.000 (64.000% done)
+Time 32500.000 out of 50000.000 (65.000% done)
+Time 33000.000 out of 50000.000 (66.000% done)
+Time 33500.000 out of 50000.000 (67.000% done)
+Time 34000.000 out of 50000.000 (68.000% done)
+Time 34500.000 out of 50000.000 (69.000% done)
+Time 35000.000 out of 50000.000 (70.000% done)
+Time 35500.000 out of 50000.000 (71.000% done)
+Time 36000.000 out of 50000.000 (72.000% done)
+Time 36500.000 out of 50000.000 (73.000% done)
+Time 37000.005 out of 50000.000 (74.000% done)
+Time 37500.005 out of 50000.000 (75.000% done)
+Time 38000.005 out of 50000.000 (76.000% done)
+Time 38500.005 out of 50000.000 (77.000% done)
+Time 39000.005 out of 50000.000 (78.000% done)
+Time 39500.005 out of 50000.000 (79.000% done)
+Time 40000.005 out of 50000.000 (80.000% done)
+Time 40500.005 out of 50000.000 (81.000% done)
+Time 41000.005 out of 50000.000 (82.000% done)
+Time 41500.005 out of 50000.000 (83.000% done)
+Time 42000.005 out of 50000.000 (84.000% done)
+Time 42500.005 out of 50000.000 (85.000% done)
+Time 43000.005 out of 50000.000 (86.000% done)
+Time 43500.005 out of 50000.000 (87.000% done)
+Time 44000.005 out of 50000.000 (88.000% done)
+Time 44500.005 out of 50000.000 (89.000% done)
+Time 45000.005 out of 50000.000 (90.000% done)
+Time 45500.005 out of 50000.000 (91.000% done)
+Time 46000.005 out of 50000.000 (92.000% done)
+Time 46500.005 out of 50000.000 (93.000% done)
+Time 47000.005 out of 50000.000 (94.000% done)
+Time 47500.005 out of 50000.000 (95.000% done)
+Time 48000.005 out of 50000.000 (96.000% done)
+Time 48500.005 out of 50000.000 (97.000% done)
+Time 49000.005 out of 50000.000 (98.000% done)
+Time 49500.005 out of 50000.000 (99.000% done)
+Time 50000.005 out of 50000.000 (100.000% done)
+x_seed: min=[-1.9966611  -0.29949917], max=[1.9966611  0.29949917]
+empirical weights: min=841.0, max=900.0, mean=897.0975025153218, std=9.091802681893633
+About to run short trajectories
+x_short_filelist_existing = []
+Process Short batch 0 starting with seed 0
+x_seed: min=-1.996661101836394, max=1.996661101836394, mean=-9.632302771556175e-17
+Process Short batch 1 starting with seed 1
+x_seed: min=-1.996661101836394, max=1.996661101836394, mean=-9.632302771556175e-17
+Process Short batch 2 starting with seed 2
+x_seed: min=-1.996661101836394, max=1.996661101836394, mean=-9.632302771556175e-17
+Process Short batch 3 starting with seed 3
+x_seed: min=-1.996661101836394, max=1.996661101836394, mean=-9.632302771556175e-17
+Process Short batch 4 starting with seed 4
+x_seed: min=-1.996661101836394, max=1.996661101836394, mean=-9.632302771556175e-17
+idx: min=1, max=358793, mean=179220.53584
+idx: min=3, max=358797, mean=179119.3699
+xstart[0]: min=-1.996661101836394, max=1.996661101836394, mean=-0.002015626043405617
+Starting trajectories 0-9999 out of 100000
+idx: min=6, max=358796, mean=179122.6396
+xstart[0]: min=-1.996661101836394, max=1.996661101836394, mean=-0.0030970283806343304
+Starting trajectories 0-9999 out of 100000
+idx: min=5, max=358800, mean=179771.02302
+xstart[0]: min=-1.996661101836394, max=1.996661101836394, mean=-0.0031300166944907572
+Starting trajectories 0-9999 out of 100000
+idx: min=0, max=358799, mean=179344.11991
+xstart[0]: min=-1.996661101836394, max=1.996661101836394, mean=0.0041239398998331135
+Starting trajectories 0-9999 out of 100000
+xstart[0]: min=-1.996661101836394, max=1.996661101836394, mean=-0.0006327212020032801
+Starting trajectories 0-9999 out of 100000
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Starting trajectories 10000-19999 out of 100000
+Starting trajectories 10000-19999 out of 100000
+Starting trajectories 10000-19999 out of 100000
+Starting trajectories 10000-19999 out of 100000
+Starting trajectories 10000-19999 out of 100000
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Starting trajectories 20000-29999 out of 100000
+Starting trajectories 20000-29999 out of 100000
+Starting trajectories 20000-29999 out of 100000
+Starting trajectories 20000-29999 out of 100000
+Starting trajectories 20000-29999 out of 100000
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Starting trajectories 30000-39999 out of 100000
+Starting trajectories 30000-39999 out of 100000
+Starting trajectories 30000-39999 out of 100000
+Starting trajectories 30000-39999 out of 100000
+Starting trajectories 30000-39999 out of 100000
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Starting trajectories 40000-49999 out of 100000
+Starting trajectories 40000-49999 out of 100000
+Starting trajectories 40000-49999 out of 100000
+Starting trajectories 40000-49999 out of 100000
+Starting trajectories 40000-49999 out of 100000
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Starting trajectories 50000-59999 out of 100000
+Starting trajectories 50000-59999 out of 100000
+Starting trajectories 50000-59999 out of 100000
+Starting trajectories 50000-59999 out of 100000
+Starting trajectories 50000-59999 out of 100000
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Starting trajectories 60000-69999 out of 100000
+Starting trajectories 60000-69999 out of 100000
+Starting trajectories 60000-69999 out of 100000
+Starting trajectories 60000-69999 out of 100000
+Starting trajectories 60000-69999 out of 100000
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Starting trajectories 70000-79999 out of 100000
+Starting trajectories 70000-79999 out of 100000
+Starting trajectories 70000-79999 out of 100000
+Starting trajectories 70000-79999 out of 100000
+Starting trajectories 70000-79999 out of 100000
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Starting trajectories 80000-89999 out of 100000
+Starting trajectories 80000-89999 out of 100000
+Starting trajectories 80000-89999 out of 100000
+Starting trajectories 80000-89999 out of 100000
+Starting trajectories 80000-89999 out of 100000
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Starting trajectories 90000-99999 out of 100000
+Starting trajectories 90000-99999 out of 100000
+Starting trajectories 90000-99999 out of 100000
+Starting trajectories 90000-99999 out of 100000
+Starting trajectories 90000-99999 out of 100000
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 5.005 out of 10.000 (50.050% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Time 10.000 out of 10.000 (100.000% done)
+Process Short batch 4 finishing with seed 4
+Process Short batch 0 finishing with seed 0
+Process Short batch 2 finishing with seed 2
+Process Short batch 3 finishing with seed 3
+Process Short batch 1 finishing with seed 1
+Done with generating short data
+self.xst = [[-9.45649274e-01 -8.65385032e-15]
+ [ 1.04668053e+00  1.80582481e-14]]
+About to minimize action
+About to L-BFGS
+Done with L-BFGS
+About to minimize action
+About to L-BFGS
+Done with L-BFGS
+In TPT: self.nshort = 500000
+in load_short_traj: num_traj=500000
+num_loaded = 100000
+num_loaded = 200000
+num_loaded = 300000
+num_loaded = 400000
+num_loaded = 500000
+cvx_short.shape = (2001, 500000, 2)
+Labelling long traj. dt = 0.005, Nt = 10000001, tmin = 0.0, tmax = 50000.0
+sum(ina_long) = 0
+sum(inb_long) = 9657140
+num_rxn = 0
+Beginning change of measure
+len(bdy_idx) = 0
+len(iidx) = 500000
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 10, 
+num_leaves = 1000; K = 1000
+About to compute the Feynman-Kac LHS
+phi colsums range = (26.0,114693.0)
+phi rowsums range = (1.0,1.0)
+Last two diags of R = [ 4.08026113e+01 -4.86048441e-14]
+chom range = -4.995553929331656e-20,0.00014114270306876098
+chom positivity fraction = 0.892106
+Inside solve_damage_function_moments_multiple: about to fit data forward
+data.X[:,lag_idx]: min=[-1.9966611  -0.29949917], max=[1.9966611  0.29949917], mean=[-0.00095029  0.00078025], std=[1.1558041  0.17291289]
+len(bdy_idx) = 52522
+len(iidx) = 447478
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 10, 
+num_leaves = 1000; K = 1000
+Finished fitting data forward
+phi colsums range = (22.0,101323.0)
+phi rowsums range = (0.0,1.0)
+In MOM: 
+	detA = 0.0
+Starting bvp 0 out of 2
+feynman_kac_lhs_VX time = 1.787e-02
+feynman_kac_lhs_VF time = 9.787e+01
+feynman_kac_lhs time = 3.843e-01
+moments[2]: min=-0.0, max=642.0375663395457, mean=295.4802942924789, std=164.49243174881005
+basis->data time: 6.030e+01
+Starting bvp 1 out of 2
+feynman_kac_lhs_VX time = 1.831e-02
+feynman_kac_lhs_VF time = 9.929e+01
+feynman_kac_lhs time = 3.652e-01
+moments[2]: min=0.004563084276069691, max=344.130583398776, mean=143.68359583150152, std=122.37413966164196
+basis->data time: 6.049e+01
+Inside solve_damage_function_moments_multiple: about to fit data forward
+data.X[:,lag_idx]: min=[-1.6541359  -0.54798177], max=[1.74979919 0.43323278], mean=[0.21140616 0.01164163], std=[0.93361972 0.13059431]
+len(bdy_idx) = 133384
+len(iidx) = 366616
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 50, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 50, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 11, 
+num_leaves = 1000; K = 1000
+Finished fitting data forward
+phi colsums range = (181.0,99637.0)
+phi rowsums range = (0.0,1.0)
+In MOM: 
+	detA = 0.0
+Starting bvp 0 out of 2
+feynman_kac_lhs_VX time = 1.891e-02

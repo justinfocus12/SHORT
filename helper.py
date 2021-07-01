@@ -35,8 +35,8 @@ def generate_sci_fmt(xmin,xmax,numdiv=10):
 def sci_not_precision(num,eps):
     # Specify a number to an accuracy of epsilon/10
     #print("num = {}".format(num))
-    if num == 0: 
-        print("num = {}; returning 0".format(num))
+    if np.abs(num) < eps*1e-3: 
+        #print("num = {}; returning 0".format(num))
         return "0"
     Mn,En = mantexp(num)
     Me,Ee = mantexp(eps)

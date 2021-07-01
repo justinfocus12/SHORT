@@ -3,13 +3,13 @@ import numpy as np
 
 def get_algo_params():
     # Algorithm parameters
-    tmax_long = 100000.0
-    tmax_short = 20.0
-    dt_save = 0.01
-    nshort = 300000 
+    tmax_long = 50000.0
+    tmax_short = 10.0
+    dt_save = 0.005
+    nshort = 500000 
     basis_type = 'MSM'
-    basis_size = 1000 
-    lag_time = 0.1 
+    basis_size = 1000
+    lag_time = 10.0
     nlags = 11 
     num_moments = 2
     lag_time_seq = np.linspace(0,lag_time,nlags)
@@ -43,13 +43,21 @@ def get_algo_params():
     return algo_params,algo_param_string
 
 def get_physical_params():
-    sigma = 0.5
+    sigma_x = 0.0
+    sigma_p = 0.2
     dt_sim = 0.005
+    kappa = 0.1
+    alpha = 1.0
+    mu = 10.0
     physical_params = dict({
-            'sigma': sigma,
+            'sigma_x': sigma_x,
+            'sigma_p': sigma_p,
             'dt_sim': dt_sim,
+            'kappa': kappa,
+            'alpha': alpha,
+            'mu': mu,
         })
-    physical_param_string = ("sig{}".format(sigma)).replace(".","p")
+    physical_param_string = ("k{}_a{}_m{}_sx{}_sp{}".format(kappa,alpha,mu,sigma_x,sigma_p)).replace(".","p")
     return physical_params,physical_param_string
 
 

@@ -83,6 +83,8 @@ class TPT:
         ina_long = (model.adist(x_long)==0)
         #print("ina_long.shape={}".format(ina_long.shape))
         inb_long = (model.bdist(x_long)==0)
+        print("sum(ina_long) = {}".format(np.sum(ina_long)))
+        print("sum(inb_long) = {}".format(np.sum(inb_long)))
         self.long_from_label[0] = 1*inb_long[0] - 1*ina_long[0]
         self.long_to_label[-1] = 1*inb_long[-1] - 1*ina_long[-1]
         case = np.nan
@@ -468,16 +470,19 @@ class TPT:
         tmax = min(tmax,t_long[-1])
         ab_reactive_flag = 1*(self.long_from_label==-1)*(self.long_to_label==1)
         ba_reactive_flag = 1*(self.long_from_label==1)*(self.long_to_label==-1)
-        # Identify the transitions
-        ab_starts = np.where(np.diff(ab_reactive_flag)==1)[0] + 1
-        ab_ends = np.where(np.diff(ab_reactive_flag)==-1)[0] + 1
-        ba_starts = np.where(np.diff(ba_reactive_flag)==1)[0] + 1
-        ba_ends = np.where(np.diff(ba_reactive_flag)==-1)[0] + 1
-        # Get them lined up correctly
-        if ab_starts[0] > ab_ends[0]: ab_ends = ab_ends[1:]
-        if ab_starts[-1] > ab_ends[-1]: ab_starts = ab_starts[:-1]
-        if ba_starts[0] > ba_ends[0]: ba_ends = ba_ends[1:]
-        if ba_starts[-1] > ba_ends[-1]: ba_starts = ba_starts[:-1]
+        #sys.exit("sum(ab_reactive_flag) = {}".format(np.sum(ab_reactive_flag)))
+        any_trans = (np.sum(ab_reactive_flag) > 0) and (np.sum(ba_reactive_flag) > 0)
+        if any_trans:
+            # Identify the transitions
+            ab_starts = np.where(np.diff(ab_reactive_flag)==1)[0] + 1
+            ab_ends = np.where(np.diff(ab_reactive_flag)==-1)[0] + 1
+            ba_starts = np.where(np.diff(ba_reactive_flag)==1)[0] + 1
+            ba_ends = np.where(np.diff(ba_reactive_flag)==-1)[0] + 1
+            # Get them lined up correctly
+            if ab_starts[0] > ab_ends[0]: ab_ends = ab_ends[1:]
+            if ab_starts[-1] > ab_ends[-1]: ab_starts = ab_starts[:-1]
+            if ba_starts[0] > ba_ends[0]: ba_ends = ba_ends[1:]
+            if ba_starts[-1] > ba_ends[-1]: ba_starts = ba_starts[:-1]
         # Plot, marking transitions
         tmax = min(t_long[-1],tmax)
         # Interpolate field
@@ -497,12 +502,13 @@ class TPT:
         dthab = np.abs(ab_long[1]-ab_long[0])
         #ax[0].text(0,units*(ab_long[0]+0.01*dthab),asymb,fontdict=bbigfont,color='black',weight='bold')
         #ax[0].text(0,units*(ab_long[1]+0.01*dthab),bsymb,fontdict=bbigfont,color='black',weight='bold')
-        for i in range(len(ab_starts)):
-            if ab_ends[i] < timax:
-                ax[0].axvspan(t_long[ab_starts[i]],t_long[ab_ends[i]],facecolor='orange',alpha=0.5,zorder=-1)
-        for i in range(len(ba_starts)):
-            if ba_ends[i] < timax:
-                ax[0].axvspan(t_long[ba_starts[i]],t_long[ba_ends[i]],facecolor='mediumspringgreen',alpha=0.5,zorder=-1)
+        if any_trans:
+            for i in range(len(ab_starts)):
+                if ab_ends[i] < timax:
+                    ax[0].axvspan(t_long[ab_starts[i]],t_long[ab_ends[i]],facecolor='orange',alpha=0.5,zorder=-1)
+            for i in range(len(ba_starts)):
+                if ba_ends[i] < timax:
+                    ax[0].axvspan(t_long[ba_starts[i]],t_long[ba_ends[i]],facecolor='mediumspringgreen',alpha=0.5,zorder=-1)
         xlab = "Time"
         if time_unit_symbol is not None: xlab += " ({})".format(time_unit_symbol)
         ax[0].set_xlabel(xlab,fontdict=bigfont)
@@ -536,10 +542,12 @@ class TPT:
         ba_starts = np.where(np.diff(ba_reactive_flag)==1)[0] + 1
         ba_ends = np.where(np.diff(ba_reactive_flag)==-1)[0] + 1
         # Get them lined up correctly
-        if ab_starts[0] > ab_ends[0]: ab_ends = ab_ends[1:]
-        if ab_starts[-1] > ab_ends[-1]: ab_starts = ab_starts[:-1]
-        if ba_starts[0] > ba_ends[0]: ba_ends = ba_ends[1:]
-        if ba_starts[-1] > ba_ends[-1]: ba_starts = ba_starts[:-1]
+        any_trans = len(ab_starts) > 0 and len(ba_starts) > 0
+        if any_trans:
+            if ab_starts[0] > ab_ends[0]: ab_ends = ab_ends[1:]
+            if ab_starts[-1] > ab_ends[-1]: ab_starts = ab_starts[:-1]
+            if ba_starts[0] > ba_ends[0]: ba_ends = ba_ends[1:]
+            if ba_starts[-1] > ba_ends[-1]: ba_starts = ba_starts[:-1]
         timax = np.argmin(np.abs(t_long-tmax))
         print("t_long[timax] = {}".format(t_long[timax]))
         tsubset = np.linspace(0,timax-1,min(timax,15000)).astype(int)
@@ -613,12 +621,11 @@ class TPT:
             theta_ypj = theta_j[2*len(ss):3*len(ss)]
             ans = (theta_x,theta_yj,theta_xpj,theta_ypj)
         return ans
-    def plot_projections_1d_array(self,model,data):
+    def plot_projections_1d_array(self,model,data,theta1d_list):
         q = model.q
         funlib = model.observable_function_library()
-        theta1d_list = ['Uref','vTintref'] #,'LASSO']
         Nth = len(theta1d_list)
-        n = q['Nz']-1
+        #n = q['Nz']-1
         comm_fwd = self.dam_moments['one']['xb'][0]
         eps = 1e-5
         mfpt_xb = self.dam_moments['one']['xb'][1,:,0]*(comm_fwd[:,0] > eps)/(comm_fwd[:,0] + 1*(comm_fwd[:,0] <= eps))
@@ -1297,7 +1304,7 @@ class TPT:
         ba_starts = np.where(np.diff(ba_reactive_flag)==1)[0] + 1
         ba_ends = np.where(np.diff(ba_reactive_flag)==-1)[0] + 1
         # Randomly select a few transitions
-        num_obs = 5
+        num_obs = min([5,len(ab_starts),len(ba_starts)])
         ab_obs_idx = np.arange(num_obs) #np.random.choice(np.arange(len(ab_starts)),num_obs)
         ba_obs_idx = np.arange(num_obs) #np.random.choice(np.arange(len(ba_starts)),num_obs)
         theta_ab_obs = []

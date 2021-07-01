@@ -24,16 +24,19 @@ from model_obj import Model
 
 class DuffingOscillator(Model):
     #def __init__(self,hB_d=38.5,du_per_day=1.0,dh_per_day=0.0,ref_alt=30.0,abdefdim=75):
-    def __init__(self,physical_params,xst=None):
+    def __init__(self,physical_params,physical_param_string,xst=None):
         # dx = v*dt
         # dv = -(a*v + b*x + c*x**3)*dt + sigma*dW
-        q = {
-                'a': 1.0, 'b': -1.0, 'c': 1.0,
-        }
-        q['sigma'] = physical_params['sigma']
+        q = {}
+        q['mu'] = physical_params['mu']
+        q['kappa'] = physical_params['kappa']
+        q['alpha'] = physical_params['alpha']
+        q['sigma_x'] = physical_params['sigma_x']
+        q['sigma_p'] = physical_params['sigma_p']
         q['dt_sim'] = physical_params['dt_sim']
+        self.physical_param_string = physical_param_string
         self.state_dim = 2
-        self.noise_rank = 1
+        self.noise_rank = 2
         self.q = self.initialize_params(q)
         tpt_obs_dim = self.state_dim # We're dealing with full state here
         self.dt_sim = self.q['dt_sim']
@@ -50,21 +53,22 @@ class DuffingOscillator(Model):
         return
     def initialize_params(self,q):
         q['sig_mat'] = np.zeros((self.state_dim,self.noise_rank))
-        q['sig_mat'][1,0] = q['sigma']
+        q['sig_mat'][0,0] = q['sigma_x']
+        q['sig_mat'][1,1] = q['sigma_p']/q['mu'] # Momentum / mass
         return q
     def drift_fun(self,x):
         q = self.q
         drift = np.zeros((len(x),self.state_dim))
         drift[:,0] = x[:,1]
-        drift[:,1] = -(q['a']*x[:,1] + q['b']*x[:,0] + q['c']*x[:,0]**3)
+        drift[:,1] = 1/q['mu']*(-x[:,1] + q['alpha']*(x[:,0] - x[:,0]**3 + q['kappa']))
         return drift
     def drift_jacobian_fun(self,x):
         # x is just a single instance
         q = self.q
         J = np.zeros((self.state_dim,self.state_dim))
         J[0,1] = 1.0
-        J[1,0] = - (q['b'] + 3*q['c']*x[0]**2)
-        J[1,1] = - q['a']
+        J[1,0] = 1/q['mu']*q['alpha']*(1 - 3*x[0]**2)
+        J[1,1] = -1/q['mu']
         return J
     def diffusion_fun(self,x):
         wdot = np.random.randn(len(x)*self.noise_rank).reshape((self.noise_rank,len(x)))
@@ -76,16 +80,22 @@ class DuffingOscillator(Model):
         return x # No reduction happening here
     def adist(self,cvx):
         cva = self.tpt_observables(self.xst[0])
-        da = np.sqrt(np.sum((cvx - cva)**2, 1))
-        radius_a = 0.1
+        x_scale = 1.0
+        v_scale = 0.25
+        da = np.sqrt(((cvx[:,0]-cva[0])/x_scale)**2 + ((cvx[:,1]-cva[1])/v_scale)**2)
+        #da = np.sqrt(np.sum((cvx - cva)**2, 1))
+        radius_a = 0.4
         return np.maximum(0, da-radius_a)
     def bdist(self,cvx):
         cvb = self.tpt_observables(self.xst[1])
-        db = np.sqrt(np.sum((cvx - cvb)**2, 1))
-        radius_b = 0.1
+        x_scale = 1.0
+        v_scale = 0.25
+        db = np.sqrt(((cvx[:,0]-cvb[0])/x_scale)**2 + ((cvx[:,1]-cvb[1])/v_scale)**2)
+        #db = np.sqrt(np.sum((cvx - cvb)**2, 1))
+        radius_b = 0.4
         return np.maximum(0, db-radius_b)
     def set_param_folder(self):
-        self.param_foldername = ("sig{}".format(self.q['sigma'])).replace(".","p")
+        self.param_foldername = self.physical_param_string #("sig{}".format(self.q['sigma'])).replace(".","p")
         return
     def plot_least_action(self,physical_param_folder,fun_name="U"):
         funlib = self.observable_function_library()
@@ -160,9 +170,13 @@ class DuffingOscillator(Model):
         q = self.q
         funlib = self.observable_function_library()
         self.corr_dict = {
-                'one': {
-                    'pay': lambda x: np.ones(len(x)),
-                    'name': '1',
+                'v_g0': {
+                    'pay': lambda x: 1.0*(x[:,1] > 0), #np.ones(len(x)),
+                    'name': "v\\geq0",
+                    },
+                'v_l0': {
+                    'pay': lambda x: 1.0*(x[:,1] < 0), #np.ones(len(x)),
+                    'name': "v\\leq0",
                     },
                 }
         self.dam_dict = {
@@ -184,7 +198,7 @@ class DuffingOscillator(Model):
                 }
         return
     def approximate_fixed_points(self):
-        x = np.array([[-1.1,0.2],[0.8,-.1]],dtype=float)
+        x = np.array([[-1.0,0.0],[1.0,0.0]],dtype=float)
         return x
     def regression_feature_names(self):
         funlib = self.observable_function_library()
