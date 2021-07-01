@@ -2752,10 +2752,88 @@ class TPT:
         num = min(max_num_states,len(idx))
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
+    def collect_transition_states(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11):
+        # ramp_name can be either committor or leadtime
+        # dirn is 'ab' or 'ba'
+        Nx,Nt,xdim = data.X.shape
+        key = list(self.dam_moments.keys())[0]
+        fwd_key = 'xb' if dirn=='ba' else 'xa'
+        bwd_key = 'ax' if dirn=='ab' else 'bx'
+        comm_fwd = self.dam_moments[key][fwd_key][0,:,:]
+        comm_bwd = self.dam_moments[key][bwd_key][0,:,:]
+        weight = np.ones(data.nshort)/data.nshort #self.chom
+        if ramp_name == 'committor':
+            ramp = comm_fwd
+            ramp_min,ramp_max = 0.05,0.95
+            levels = np.linspace(ramp_min,ramp_max,num_levels) #np.array([0.25,0.5,0.75])
+        elif ramp_name == 'leadtime':
+            eps = 1e-2
+            ramp = -self.dam_moments['one'][fwd_key][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
+            ramp[np.where(comm_fwd <= eps)[0]] = np.nan
+            ramp_min,ramp_max = np.nanquantile(tb[:,0],[max_quantile,min_quantile])
+            levels = np.linspace(tb_max,tb_min,num_levels)
+        tolerance = np.abs(ramp_max-ramp_min)/(2*num_levels)
+        rflux_idx = np.zeros((len(levels),num_per_level),dtype=int)
+        for i in range(num_levels):
+            rflux_idx[i,:],rflux_weights,ans2 = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,levels[i],tolerance,num_per_level)
+
+        # Save a dictionary with the levels and indices
+        flux_dict = dict({
+            "levels": levels,
+            "idx": rflux_idx,
+            })
+        pickle.dump(flux_dict,open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"wb"))
+        return rflux_idx
+    def plot_maxflux_path(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,func):
+        # Plot any observable function at the gates, as a timeseries.
+        flux_dict = pickle.load(open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"rb"))
+        rflux_idx = flux_dict["idx"]
+        levels = flux_dict["levels"]
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        fig,ax = plt.subplots()
+        for i in range(len(num_levels)):
+            print("rflux_idx[i,:]={}".format(rflux_idx[i,:]))
+            fxi = func["fun"](data.X[rflux_idx[i,:],tidx])
+            ax.scatter(levels[i]*np.ones(len(fxi)),fxi*func["units"],color='black') 
+        if ramp_name == "committor":
+            xlab = r"$P_x\{x\to B\}$" if dirn==1 else r"$P_x\{x\to A\}$"
+        elif ramp_name == "leadtime":
+            xlab = r"$E_x\{\tau^+|A\to B\}$" if dirn==1 else r"$E_x\{\tau^+|B\to A\}$"
+        ax.set_xlabel(xlab,fontdict=font)
+        ax.set_ylabel("%s (%s)"%(func["name"],func["unit_symbol"]),fontdict=font)
+        ax.set_title(r"$A\to B$ max-flux path",fontdict=font)
+        fig.savefig(join(self.savefolder,"flux_plot_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)))
+        plt.close(fig)
+        return
+    def plot_transition_states(self,model,data,ramp_name,dirn,num_per_level=10,num_levels=3,func="U",plot_level_subset=None):
+        # func is now an altitude-dependent function
+        if plot_level_subset is None: plot_level_subset = np.arange(num_levels)
+        if len(plot_level_subset) > num_levels: sys.exit("ERROR: plot_level_subset = {} while num_levels = {}".format(plot_level_subset,num_levels))
+        flux_dict = pickle.load(open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"rb"))
+        rflux_idx = flux_dict["idx"]
+        levels = flux_dict["levels"]
+        cmap = plt.cm.coolwarm if dirn=='ab' else plt.cm.coolwarm_r
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        # Get the colors in order
+        zorderlist = np.random.permutation(np.arange(num_levels*num_per_level))
+        colorlist = []
+        real_levels = np.zeros((num_levels,num_per_level))
+        for i in range(num_levels):
+            color = cmap[levels[i]]
+            colorlist += [color for j in range(num_per_level)]
+            real_levels[i,:] = levels[i]
+        # Plot now
+        fig,ax = model.plot_multiple_states(data.X[rflux_idx.flatten(),tidx],real_levels.flatten(),ramp_name,colorlist=colorlist,zorderlist=zorderlist,key=func)
+        title = r"$A\to B$ transition states" if dirn==1 else r"$B\to A$ transition states"
+        ax.set_title(title,fontdict=font)
+        fig.savefig(join(self.savefolder,"trans_states_plot_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)))
+        plt.close(fig)
+        return
     def plot_transition_states_committor(self,model,data,preload_idx=False):
+        # First, the finest-grained num_per_level and num_levels
         num_per_level = 5
         num_levels = 11
-        # Plot dominant transition states
+        # ------------- Plot dominant transition states ----------------
         #funlib = hm.observable_function_library(q)
         Nx,Nt,xdim = data.X.shape
         key = list(self.dam_moments.keys())[0]

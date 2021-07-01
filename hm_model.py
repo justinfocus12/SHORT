@@ -969,10 +969,10 @@ class HoltonMassModel(Model):
         def funz(x):
             return np.mean(fun(x),1).reshape((len(x),1))
         return funz
-    def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None,zorderlist=None):
+    def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None,zorderlist=None,key="U"):
     #def plot_zdep_family_weighted(self,cv_x,cv_a,cv_b,labels,weights=None,cv_name=None,colorlist=None,units=1.0,unit_symbol=""):
         # Given a sequence of states (X) plot them all on the same graph. For the Holton-Mass model, this means different zonal wind profiles.
-        key = "U"
+        #key = "U"
         funlib = self.observable_function_library()
         U = funlib[key]["fun"](X)
         units = funlib[key]["units"]
