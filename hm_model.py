@@ -969,7 +969,7 @@ class HoltonMassModel(Model):
         def funz(x):
             return np.mean(fun(x),1).reshape((len(x),1))
         return funz
-    def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None,zorderlist=None,key="U"):
+    def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None,zorderlist=None,key="U",labellist=None):
     #def plot_zdep_family_weighted(self,cv_x,cv_a,cv_b,labels,weights=None,cv_name=None,colorlist=None,units=1.0,unit_symbol=""):
         # Given a sequence of states (X) plot them all on the same graph. For the Holton-Mass model, this means different zonal wind profiles.
         #key = "U"
@@ -984,14 +984,16 @@ class HoltonMassModel(Model):
         # Plot a bunch of zonal wind profiles
         #N = len(cv_x)
         z = q['z_d'][1:-1]/1000
-        ax.plot(units*Ua,z,color='blue',linestyle='--',linewidth=4)
-        ax.plot(units*Ub,z,color='red',linestyle='--',linewidth=4)
+        ax.plot(units*Ua,z,color='blue',linestyle='--',linewidth=4,zorder=np.max(zorderlist)+1)
+        ax.plot(units*Ub,z,color='red',linestyle='--',linewidth=4,zorder=np.max(zorderlist)+1)
         if colorlist is None: colorlist = plt.cm.coolwarm(qlevels)
+        if labellist is None: labellist = ["" for i in range(num_states)]
         handles = []
         for i in range(num_states):
-            handle, = ax.plot(units*U[i],z,alpha=1.0,color=colorlist[i],zorder=zorderlist[i],linewidth=3,label=r"$%s=%.2f$"%(qsymbol,qlevels[i]))
-            if i % len(np.unique(qlevels)) == 0: handles += [handle]
-        #ax.legend(handles=handles,loc='lower right',prop={'size':18})
+            handle, = ax.plot(units*U[i],z,alpha=1.0,color=colorlist[i],zorder=zorderlist[i],linewidth=3,label=labellist[i])
+            if len(labellist[i]) > 0: handles += [handle]
+            #if i % len(np.unique(qlevels)) == 0: handles += [handle]
+        ax.legend(handles=handles,prop={'size':13})
         ax.set_ylabel(r"$z$ (km)",fontdict=font)
         ax.set_xlabel("{} ({})".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
         #if cv_name is not None:

@@ -2752,28 +2752,62 @@ class TPT:
         num = min(max_num_states,len(idx))
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
-    def collect_transition_states(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11):
+    def plot_transition_states_all(self,model,data,collect_flag=True):
+        for dirn in ['ab','ba']:
+            # First plot the profiles with a small number of levels
+            num_levels = 3
+            num_per_level = 10
+            if collect_flag: 
+                print("dobedo")
+                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.25,0.75])
+                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,tolerance=5.0,ramp_bounds=[0.25,0.75])
+            for func_key in ["U","vT","mag"]:
+                self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,func_key=func_key)
+                self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
+            # Next plot the evolution
+            num_levels = 11
+            num_per_level = 5
+            if collect_flag: 
+                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.05,0.95])
+                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,tolerance=5.0,ramp_bounds=[0.15,0.85])
+            for func_key in ["Uref","magref","vTref"]:
+                self.plot_maxflux_path(model,data,'committor',dirn,num_per_level,num_levels,func_key=func_key)
+                self.plot_maxflux_path(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
+        return
+    def collect_transition_states(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,tolerance=np.inf,ramp_bounds=None):
         # ramp_name can be either committor or leadtime
         # dirn is 'ab' or 'ba'
         Nx,Nt,xdim = data.X.shape
         key = list(self.dam_moments.keys())[0]
-        fwd_key = 'xb' if dirn=='ba' else 'xa'
+        fwd_key = 'xb' if dirn=='ab' else 'xa'
         bwd_key = 'ax' if dirn=='ab' else 'bx'
         comm_fwd = self.dam_moments[key][fwd_key][0,:,:]
         comm_bwd = self.dam_moments[key][bwd_key][0,:,:]
         weight = np.ones(data.nshort)/data.nshort #self.chom
         if ramp_name == 'committor':
+            symbol = "P_x\\{x\\to B\\}" if dirn=='ab' else "P_x\\{x\\to A\\}"
             ramp = comm_fwd
-            ramp_min,ramp_max = 0.05,0.95
-            levels = np.linspace(ramp_min,ramp_max,num_levels) #np.array([0.25,0.5,0.75])
+            if ramp_bounds is None: 
+                ramp_min,ramp_max = 0.05,0.95
+            else:
+                ramp_min,ramp_max = ramp_bounds
+            minlevel,maxlevel = 0.0,1.0
         elif ramp_name == 'leadtime':
+            symbol = "E_x[\\tau^+|A\\to B]" if dirn=='ab' else "E_x[\\tau^+|B\\to A]"
             eps = 1e-2
             ramp = -self.dam_moments['one'][fwd_key][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
             ramp[np.where(comm_fwd <= eps)[0]] = np.nan
-            ramp_min,ramp_max = np.nanquantile(tb[:,0],[max_quantile,min_quantile])
-            levels = np.linspace(tb_max,tb_min,num_levels)
-        tolerance = np.abs(ramp_max-ramp_min)/(2*num_levels)
+            minlevel,maxlevel = np.nanmin(ramp),np.nanmax(ramp)
+            ramp_min,ramp_max = minlevel + np.array(ramp_bounds)*(maxlevel - minlevel)
+            #if ramp_bounds is None:
+            #    min_quantile,max_quantile = 0.05,0.95
+            #else:
+            #    min_quantile,max_quantile = ramp_bounds
+            #ramp_min,ramp_max = np.nanquantile(ramp.flatten(),[min_quantile,max_quantile])
+        levels = np.linspace(ramp_min,ramp_max,num_levels)
+        tolerance = min(tolerance,np.abs(ramp_max-ramp_min)/(2*num_levels))
         rflux_idx = np.zeros((len(levels),num_per_level),dtype=int)
+        # TODO: build flux_idx one level at a time to allow for missing levels and stop crashing.
         for i in range(num_levels):
             rflux_idx[i,:],rflux_weights,ans2 = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,levels[i],tolerance,num_per_level)
 
@@ -2781,52 +2815,67 @@ class TPT:
         flux_dict = dict({
             "levels": levels,
             "idx": rflux_idx,
+            "minlevel": minlevel,
+            "maxlevel": maxlevel,
+            "symbol": symbol,
             })
         pickle.dump(flux_dict,open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"wb"))
         return rflux_idx
-    def plot_maxflux_path(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,func):
+    def plot_maxflux_path(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,func_key="Uref"):
         # Plot any observable function at the gates, as a timeseries.
+        funlib = model.observable_function_library()
         flux_dict = pickle.load(open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"rb"))
+        minlevel = flux_dict["minlevel"]
         rflux_idx = flux_dict["idx"]
         levels = flux_dict["levels"]
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
         fig,ax = plt.subplots()
-        for i in range(len(num_levels)):
+        print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
+        fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
+        ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
+        ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
+        for i in range(num_levels):
             print("rflux_idx[i,:]={}".format(rflux_idx[i,:]))
-            fxi = func["fun"](data.X[rflux_idx[i,:],tidx])
-            ax.scatter(levels[i]*np.ones(len(fxi)),fxi*func["units"],color='black') 
+            fxi = funlib[func_key]["fun"](data.X[rflux_idx[i,:],tidx])
+            ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
         if ramp_name == "committor":
-            xlab = r"$P_x\{x\to B\}$" if dirn==1 else r"$P_x\{x\to A\}$"
+            xlab = r"$P_x\{x\to B\}$" if dirn=='ab' else r"$P_x\{x\to A\}$"
         elif ramp_name == "leadtime":
-            xlab = r"$E_x\{\tau^+|A\to B\}$" if dirn==1 else r"$E_x\{\tau^+|B\to A\}$"
+            xlab = r"Time to $B$" if dirn=='ab' else r"Time to $A$"
         ax.set_xlabel(xlab,fontdict=font)
-        ax.set_ylabel("%s (%s)"%(func["name"],func["unit_symbol"]),fontdict=font)
-        ax.set_title(r"$A\to B$ max-flux path",fontdict=font)
-        fig.savefig(join(self.savefolder,"flux_plot_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)))
+        ax.set_ylabel("%s (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
+        title = r"$A\to B$ max-flux path" if dirn=='ab' else r"$B\to A$ max-flux path"
+        ax.set_title(title,fontdict=font)
+        fig.savefig(join(self.savefolder,"flux_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
-    def plot_transition_states(self,model,data,ramp_name,dirn,num_per_level=10,num_levels=3,func="U",plot_level_subset=None):
+    def plot_transition_states(self,model,data,ramp_name,dirn,num_per_level=10,num_levels=3,func_key="U",plot_level_subset=None):
         # func is now an altitude-dependent function
         if plot_level_subset is None: plot_level_subset = np.arange(num_levels)
         if len(plot_level_subset) > num_levels: sys.exit("ERROR: plot_level_subset = {} while num_levels = {}".format(plot_level_subset,num_levels))
         flux_dict = pickle.load(open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"rb"))
         rflux_idx = flux_dict["idx"]
         levels = flux_dict["levels"]
+        minlevel,maxlevel = flux_dict["minlevel"],flux_dict["maxlevel"]
         cmap = plt.cm.coolwarm if dirn=='ab' else plt.cm.coolwarm_r
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
         # Get the colors in order
         zorderlist = np.random.permutation(np.arange(num_levels*num_per_level))
         colorlist = []
+        labellist = []
         real_levels = np.zeros((num_levels,num_per_level))
-        for i in range(num_levels):
-            color = cmap[levels[i]]
+        print("levels = {}, minlevel = {}, maxlevel = {}".format(levels,minlevel,maxlevel))
+        for i in range(len(plot_level_subset)):
+            norm_level = (levels[plot_level_subset[i]]-minlevel)/(maxlevel-minlevel)
+            color = cmap(norm_level) if norm_level != 0.5 else 'gold'
             colorlist += [color for j in range(num_per_level)]
-            real_levels[i,:] = levels[i]
+            labellist += [r"$%s=%.1f$"%(flux_dict["symbol"],levels[plot_level_subset[i]])] + ["" for j in range(num_per_level-1)]
+            real_levels[i,:] = levels[plot_level_subset[i]]
         # Plot now
-        fig,ax = model.plot_multiple_states(data.X[rflux_idx.flatten(),tidx],real_levels.flatten(),ramp_name,colorlist=colorlist,zorderlist=zorderlist,key=func)
-        title = r"$A\to B$ transition states" if dirn==1 else r"$B\to A$ transition states"
+        fig,ax = model.plot_multiple_states(data.X[rflux_idx.flatten(),tidx],real_levels.flatten(),ramp_name,colorlist=colorlist,zorderlist=zorderlist,key=func_key,labellist=labellist)
+        title = r"$A\to B$ transition states" if dirn=='ab' else r"$B\to A$ transition states"
         ax.set_title(title,fontdict=font)
-        fig.savefig(join(self.savefolder,"trans_states_plot_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)))
+        fig.savefig(join(self.savefolder,"trans_states_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
     def plot_transition_states_committor(self,model,data,preload_idx=False):
