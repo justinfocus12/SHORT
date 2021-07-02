@@ -2732,11 +2732,15 @@ class TPT:
         if len(idx) == 0:
             idx = [np.argmin(np.abs(theta_x - theta_level))]
             print("WARNING: no datapoints are close to the level")
+            return [],[],[]
         # Maximize reactive density constrained to the surface
         rflux = np.abs(Jdn[idx] + Jup[idx])
         num = min(max_num_states,len(idx))
-        rflux_max_idx = np.argpartition(-rflux,num)[:num]
-        return idx[rflux_max_idx],rflux[rflux_max_idx],theta_x[idx[rflux_max_idx],tidx]
+        if num < len(idx):
+            rflux_max_idx = np.argpartition(-rflux,num)[:num]
+        else:
+            rflux_max_idx = np.arange(len(idx))
+        return list(idx[rflux_max_idx]),rflux[rflux_max_idx],theta_x[idx[rflux_max_idx],tidx]
     def maximize_rdens_on_surface(self,comm_bwd,comm_fwd,weight,theta_x,theta_level,theta_tol,max_num_states):
         # Find data closest to a certain level set, and return a set of datapoints
         # First, project reactive current onto the full-state CV space
@@ -2753,7 +2757,7 @@ class TPT:
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
     def plot_transition_states_all(self,model,data,collect_flag=True):
-        for dirn in ['ab','ba']:
+        for dirn in ['ba','ab']:
             # First plot the profiles with a small number of levels
             num_levels = 3
             num_per_level = 10
@@ -2769,7 +2773,7 @@ class TPT:
             num_per_level = 5
             if collect_flag: 
                 _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.05,0.95])
-                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,tolerance=5.0,ramp_bounds=[0.15,0.85])
+                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,tolerance=5.0,ramp_bounds=[0.01,0.99])
             for func_key in ["Uref","magref","vTref"]:
                 self.plot_maxflux_path(model,data,'committor',dirn,num_per_level,num_levels,func_key=func_key)
                 self.plot_maxflux_path(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
@@ -2806,11 +2810,16 @@ class TPT:
             #ramp_min,ramp_max = np.nanquantile(ramp.flatten(),[min_quantile,max_quantile])
         levels = np.linspace(ramp_min,ramp_max,num_levels)
         tolerance = min(tolerance,np.abs(ramp_max-ramp_min)/(2*num_levels))
-        rflux_idx = np.zeros((len(levels),num_per_level),dtype=int)
+        rflux_idx = [[] for i in range(num_levels)]
+        #rflux_idx = -np.ones((len(levels),num_per_level),dtype=int) # -1 is a filler
         # TODO: build flux_idx one level at a time to allow for missing levels and stop crashing.
         for i in range(num_levels):
-            rflux_idx[i,:],rflux_weights,ans2 = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,levels[i],tolerance,num_per_level)
-
+            new_idx,_,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,levels[i],tolerance,num_per_level)
+            rflux_idx[i] += new_idx
+            #if len(new_idx) > 0:
+            #    rfluxidx[i,:len(new_idx)] = new_idx
+            #if mrs is not None:
+            #    rflux_idx = np.concatenate((rflux_idx,mrs.reshap
         # Save a dictionary with the levels and indices
         flux_dict = dict({
             "levels": levels,
@@ -2835,8 +2844,8 @@ class TPT:
         ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
         ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
         for i in range(num_levels):
-            print("rflux_idx[i,:]={}".format(rflux_idx[i,:]))
-            fxi = funlib[func_key]["fun"](data.X[rflux_idx[i,:],tidx])
+            #print("rflux_idx[i]={}".format(rflux_idx[i]))
+            fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
             ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
         if ramp_name == "committor":
             xlab = r"$P_x\{x\to B\}$" if dirn=='ab' else r"$P_x\{x\to A\}$"
@@ -2860,19 +2869,26 @@ class TPT:
         cmap = plt.cm.coolwarm if dirn=='ab' else plt.cm.coolwarm_r
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
         # Get the colors in order
-        zorderlist = np.random.permutation(np.arange(num_levels*num_per_level))
+        num_total_states = 0
         colorlist = []
         labellist = []
-        real_levels = np.zeros((num_levels,num_per_level))
+        real_levels = [] #np.zeros((num_levels,num_per_level))
+        rflux_idx_flat = []
         print("levels = {}, minlevel = {}, maxlevel = {}".format(levels,minlevel,maxlevel))
         for i in range(len(plot_level_subset)):
-            norm_level = (levels[plot_level_subset[i]]-minlevel)/(maxlevel-minlevel)
+            plsi = plot_level_subset[i]
+            print("rflux_idx[plsi] = {}".format(rflux_idx[plsi]))
+            numi = len(rflux_idx[plsi])
+            num_total_states += numi
+            rflux_idx_flat += rflux_idx[plsi]
+            norm_level = (levels[plsi]-minlevel)/(maxlevel-minlevel)
             color = cmap(norm_level) if norm_level != 0.5 else 'gold'
-            colorlist += [color for j in range(num_per_level)]
-            labellist += [r"$%s=%.1f$"%(flux_dict["symbol"],levels[plot_level_subset[i]])] + ["" for j in range(num_per_level-1)]
-            real_levels[i,:] = levels[plot_level_subset[i]]
+            colorlist += [color for j in range(numi)]
+            if len(rflux_idx[plsi]) > 0: labellist += [r"$%s=%.1f$"%(flux_dict["symbol"],levels[plsi])] + ["" for j in range(numi-1)]
+            real_levels += [levels[plsi] for j in range(numi)] #[i,:] = levels[plot_level_subset[i]]
+        zorderlist = np.random.permutation(np.arange(num_total_states))
         # Plot now
-        fig,ax = model.plot_multiple_states(data.X[rflux_idx.flatten(),tidx],real_levels.flatten(),ramp_name,colorlist=colorlist,zorderlist=zorderlist,key=func_key,labellist=labellist)
+        fig,ax = model.plot_multiple_states(data.X[rflux_idx_flat,tidx],real_levels,ramp_name,colorlist=colorlist,zorderlist=zorderlist,key=func_key,labellist=labellist)
         title = r"$A\to B$ transition states" if dirn=='ab' else r"$B\to A$ transition states"
         ax.set_title(title,fontdict=font)
         fig.savefig(join(self.savefolder,"trans_states_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
