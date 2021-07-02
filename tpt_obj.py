@@ -2757,19 +2757,18 @@ class TPT:
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
     def plot_transition_states_all(self,model,data,collect_flag=True):
-        for dirn in ['ba','ab']:
+        for dirn in ['ab','ba']:
             # First plot the profiles with a small number of levels
-            num_levels = 3
-            num_per_level = 10
+            num_levels = 4
+            num_per_level = 5
             if collect_flag: 
-                print("dobedo")
-                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.25,0.75])
+                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.1,0.9])
                 _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,tolerance=5.0,ramp_bounds=[0.25,0.75])
             for func_key in ["U","vT","mag"]:
                 self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,func_key=func_key)
                 self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
             # Next plot the evolution
-            num_levels = 11
+            num_levels = 15
             num_per_level = 5
             if collect_flag: 
                 _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.05,0.95])
@@ -2875,8 +2874,12 @@ class TPT:
         real_levels = [] #np.zeros((num_levels,num_per_level))
         rflux_idx_flat = []
         print("levels = {}, minlevel = {}, maxlevel = {}".format(levels,minlevel,maxlevel))
+        funlib = model.observable_function_library()
+        comm_fwd = self.dam_moments['one']['xb'][0,:,0]
         for i in range(len(plot_level_subset)):
             plsi = plot_level_subset[i]
+            Uref = funlib["Uref"]["fun"](data.X[rflux_idx[plsi],tidx])
+            print("dirn={}, func_key={}, plsi = {}. committor range = {},{}. Uref range = {},{}".format(dirn,func_key,plsi,np.min(comm_fwd[rflux_idx[plsi]]),np.max(comm_fwd[rflux_idx[plsi]]),np.min(Uref),np.max(Uref)))
             print("rflux_idx[plsi] = {}".format(rflux_idx[plsi]))
             numi = len(rflux_idx[plsi])
             num_total_states += numi
@@ -2884,7 +2887,7 @@ class TPT:
             norm_level = (levels[plsi]-minlevel)/(maxlevel-minlevel)
             color = cmap(norm_level) if norm_level != 0.5 else 'gold'
             colorlist += [color for j in range(numi)]
-            if len(rflux_idx[plsi]) > 0: labellist += [r"$%s=%.1f$"%(flux_dict["symbol"],levels[plsi])] + ["" for j in range(numi-1)]
+            if numi > 0: labellist += [r"$%s=%.1f$"%(flux_dict["symbol"],levels[plsi])] + ["" for j in range(numi-1)]
             real_levels += [levels[plsi] for j in range(numi)] #[i,:] = levels[plot_level_subset[i]]
         zorderlist = np.random.permutation(np.arange(num_total_states))
         # Plot now
