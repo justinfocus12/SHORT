@@ -900,9 +900,9 @@ class TPT:
             self.dam_moments[dam_keys[k]]['rate_ba'] = Fmp_unweighted[num_bvp+k]
         return
     def plot_lifecycle_correlations_bar(self,model,keys=None):
-        # TODO: make this a bar plot
         if keys is None: keys = list(model.corr_dict.keys())
         names = [r"$A\to A$",r"$A\to B$",r"$B\to B$",r"$B\to A$"]
+        index = ['aa','ab','bb','ba']
         # Correlations
         maxcorr = 0
         fig,ax = plt.subplots(nrows=len(keys),figsize=(6,3*len(keys)),tight_layout=True,sharex=True)
@@ -910,10 +910,19 @@ class TPT:
             print("key = {}. corr_dga range = ({},{}). corr_emp range = ({},{})".format(keys[k],np.min(self.lifecycle_corr_dga[keys[k]]),np.max(self.lifecycle_corr_dga[keys[k]]),np.min(self.lifecycle_corr_emp[keys[k]]),np.max(self.lifecycle_corr_emp[keys[k]])))
             data = []
             for i in range(len(names)):
-                data += [[names[i],self.lifecycle_corr_dga[keys[k]][i],self.lifecycle_corr_emp[keys[k]][i]]]
-            df = pd.DataFrame(data,columns=["Phase","DGA","DNS"])
+                data += [[
+                    names[i],
+                    self.lifecycle_corr_dga[keys[k]][i],
+                    self.lifecycle_corr_emp[keys[k]][i],
+                    self.lifecycle_corr_dga_unc[keys[k]][i],
+                    self.lifecycle_corr_emp_unc[keys[k]][i]
+                    ]]
+            df = pd.DataFrame(data,index=index,columns=["Phase","DGA","DNS","DGA_unc","DNS_unc"])
             print(df)
-            df.plot(x="Phase", y=["DGA","DNS"], kind='bar', ax=ax[k], color=['red','black'], rot=0)
+            #df.plot(x="Phase",y=["DGA","DNS"], yerr=["DGA_unc","DNS_unc"], kind='bar', ax=ax[k], color=['red','skyblue'], rot=0)
+            #df.plot(x="Phase",y=["DGA","DNS"],yerr=["DGA_unc","DNS_unc"],kind='bar',ax=ax[k], color=['red','skyblue'],rot=0)
+            errors = df['DNS_unc'].to_frame('DNS')
+            df[['DGA','DNS']].plot.bar(yerr=errors,ax=ax[k],color=['red','skyblue'],rot=0,capsize=4)
             ax[k].set_title(r"$\Gamma = $%s"%model.corr_dict[keys[k]]['name'])
             ax[k].set_ylabel(r"Corr($\Gamma,q^+q^-$)")
             ax[k].plot(names,np.zeros(len(names)),linestyle='--',color='black')
@@ -923,15 +932,16 @@ class TPT:
         #fig.suptitle("Lifecycle correlations")
         fig.savefig(join(self.savefolder,"lifecycle_corr"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
+        return
         # Means
         fig,ax = plt.subplots(nrows=len(keys),figsize=(6,3*len(keys)),tight_layout=True,sharex=True)
         for k in range(len(keys)):
             data = []
             for i in range(len(names)):
-                data += [[names[i],self.lifecycle_mean_dga[keys[k]][i],self.lifecycle_mean_emp[keys[k]][i]]]
-            df = pd.DataFrame(data,columns=["Phase","DGA","DNS"])
+                data += [[names[i],self.lifecycle_mean_dga[keys[k]][i],self.lifecycle_mean_emp[keys[k]][i]],self.lifecycle_mean_emp_unc[keys[k]][i]]
+            df = pd.DataFrame(data,columns=["Phase","DGA","DNS","DNS_err"])
             print(df)
-            df.plot(x="Phase", y=["DGA","DNS"], kind='bar', ax=ax[k], color=['red','black'], rot=0)
+            df.plot(x="Phase", y=["DGA","DNS"], yerr="DNS_err", kind='bar', ax=ax[k], color=['red','black'], rot=0)
             ax[k].set_title(r"$\Gamma = $%s"%model.corr_dict[keys[k]]['name'])
             ax[k].set_ylabel(r"$\langle\Gamma,q^+q^-\rangle_\pi$")
         fig.savefig(join(self.savefolder,"lifecycle_mean"),bbox_inches="tight",pad_inches=0.2)
@@ -981,15 +991,23 @@ class TPT:
         keys = list(model.corr_dict.keys())
         dk0 = list(model.dam_dict.keys())[0]
         # Store a table for plotting
-        self.lifecycle_corr_dga = {} #np.zeros((len(keys),4))
-        self.lifecycle_corr_emp = {} #np.zeros((len(keys),4)) 
-        self.lifecycle_mean_dga = {} #np.zeros((len(keys),4))
-        self.lifecycle_mean_emp = {} #np.zeros((len(keys),4)) 
+        self.lifecycle_corr_dga = {} 
+        self.lifecycle_corr_dga_unc = {} 
+        self.lifecycle_corr_emp = {}  
+        self.lifecycle_corr_emp_unc = {} # error bar in sample mean
+        self.lifecycle_mean_dga = {} 
+        self.lifecycle_mean_dga_unc = {} 
+        self.lifecycle_mean_emp = {}  
+        self.lifecycle_mean_emp_unc = {}
         for k in range(len(keys)):
             self.lifecycle_corr_dga[keys[k]] = np.zeros(4)
-            self.lifecycle_corr_emp[keys[k]] = np.zeros(4)
+            self.lifecycle_corr_dga_unc[keys[k]] = np.zeros(4)
             self.lifecycle_mean_dga[keys[k]] = np.zeros(4)
+            self.lifecycle_mean_dga_unc[keys[k]] = np.zeros(4)
             self.lifecycle_mean_emp[keys[k]] = np.zeros(4)
+            self.lifecycle_mean_emp_unc[keys[k]] = np.zeros(4)
+            self.lifecycle_corr_emp[keys[k]] = np.zeros(4)
+            self.lifecycle_corr_emp_unc[keys[k]] = np.zeros(4)
             print("data.X.shape = {}".format(data.X.shape))
             Pay = model.corr_dict[keys[k]]['pay'](data.X[:,0,:]).flatten()
             print("Pay.shape = {}".format(Pay.shape))
@@ -998,25 +1016,40 @@ class TPT:
             del x_long
             print("Pay_long.shape = {}".format(Pay_long.shape))
             f.write("Correlation function %s\n"%model.corr_dict[keys[k]]['name'])
-            # A -> B
+            # ----------- A -> B -------------
             f.write("\tA->B: ")
+            # DGA
             comm_bwd = self.dam_moments[dk0]['ax'][0,:,0]
             comm_fwd = self.dam_moments[dk0]['xb'][0,:,0]
             reactive_flag = 1*(self.long_from_label==-1)*(self.long_to_label==1)
             Zab = np.sum(self.chom*comm_bwd*comm_fwd)
             mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)/Zab #np.sum(self.chom*comm_bwd*comm_fwd)
             corr_dga = (mean_trans_dga*Zab - Zab*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
+            self.lifecycle_corr_dga[keys[k]][1] = corr_dga #
+            self.lifecycle_mean_dga[keys[k]][1] = mean_trans_dga #
             f.write("DGA: Z = %3.3e, mean = %3.3e, corr = %3.3e, "%(Zab,mean_trans_dga,corr_dga))
-            #f.write("DGA: mean = %3.3e, corr = %3.3e, "%(mean_trans_dga,corr_dga))
+            # Empirical
+            # First a point estimate
             mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
             corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
+            # Then uncertainty bounds. Do this by blocking up data, say into tenths
+            Nlong = len(t_long)
+            num_blocks = 10
+            block_size = int(Nlong/num_blocks)
+            Nlong = num_blocks*block_size
+            block_indices = np.arange(Nlong).reshape((num_blocks,block_size))
+            mean_trans_emp_blocks = np.zeros(num_blocks)
+            corr_emp_blocks = np.zeros(num_blocks)
+            for j in range(num_blocks):
+                idx = block_indices[j]
+                mean_trans_emp_blocks[j] = np.sum(reactive_flag[idx]*Pay_long[idx])/np.sum(reactive_flag[idx])
+                corr_emp_blocks[j] = (np.mean(reactive_flag[idx]*Pay_long[idx]) - np.mean(reactive_flag[idx])*np.mean(Pay_long[idx]))/np.sqrt(np.mean(reactive_flag[idx]**2)*np.mean(Pay_long[idx]**2))
             f.write("EMP: Z = %3.3e, mean = %3.3e, corr = %3.3e\n"%(np.mean(reactive_flag),mean_trans_emp,corr_emp))
-            #f.write("EMP: mean = %3.3e, corr = %3.3e\n"%(mean_trans_emp,corr_emp))
-            self.lifecycle_corr_dga[keys[k]][1] = corr_dga #
             self.lifecycle_corr_emp[keys[k]][1] = corr_emp #
-            self.lifecycle_mean_dga[keys[k]][1] = mean_trans_dga #
             self.lifecycle_mean_emp[keys[k]][1] = mean_trans_emp #
-            # B -> A
+            self.lifecycle_mean_emp_unc[keys[k]][1] = np.std(mean_trans_emp_blocks)
+            self.lifecycle_corr_emp_unc[keys[k]][1] = np.std(corr_emp_blocks)
+            # ------------- B -> A -------------
             f.write("\tB->A: ")
             comm_bwd = self.dam_moments[dk0]['bx'][0,:,0]
             comm_fwd = self.dam_moments[dk0]['xa'][0,:,0]
@@ -1025,16 +1058,14 @@ class TPT:
             mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)/Zba
             corr_dga = (mean_trans_dga*Zba - Zba*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
             f.write("DGA: Z = %3.3e, mean = %3.3e, corr = %3.3e, "%(Zba,mean_trans_dga,corr_dga))
-            #f.write("DGA: mean = %3.3e, corr = %3.3e, "%(mean_trans_dga,corr_dga))
             mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
             corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
             f.write("EMP: Z = %3.3e, mean = %3.3e, corr = %3.3e\n"%(np.mean(reactive_flag),mean_trans_emp,corr_emp))
-            #f.write("EMP: mean = %3.3e, corr = %3.3e\n"%(mean_trans_emp,corr_emp))
             self.lifecycle_corr_dga[keys[k]][3] = corr_dga #[k,3] = corr_dga
             self.lifecycle_corr_emp[keys[k]][3] = corr_emp #[k,3] = corr_emp
             self.lifecycle_mean_dga[keys[k]][3] = mean_trans_dga #
             self.lifecycle_mean_emp[keys[k]][3] = mean_trans_emp #
-            # A -> A
+            # ------------- A -> A ----------------
             f.write("\tA->A: ")
             comm_bwd = self.dam_moments[dk0]['ax'][0,:,0]
             comm_fwd = self.dam_moments[dk0]['xa'][0,:,0]
@@ -1050,7 +1081,7 @@ class TPT:
             self.lifecycle_corr_emp[keys[k]][0] = corr_emp
             self.lifecycle_mean_dga[keys[k]][0] = mean_trans_dga #
             self.lifecycle_mean_emp[keys[k]][0] = mean_trans_emp #
-            # B -> B
+            # ------------- B -> B ----------------
             f.write("\tB->B: ")
             comm_bwd = self.dam_moments[dk0]['bx'][0,:,0]
             comm_fwd = self.dam_moments[dk0]['xb'][0,:,0]

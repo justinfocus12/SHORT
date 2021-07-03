@@ -326,7 +326,7 @@ class HoltonMassModel(Model):
                     },
                 'heatflux_g5em5': {
                     'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 5e-5),
-                    'name':  r"$1\{$%s$ > 5\times10^5\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
+                    'name':  r"$1\{$%s$ > 5\times10^{-5}\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
                     },
                 'magref': {
                     'pay': funlib['magref']['fun'],
