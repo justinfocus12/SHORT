@@ -134,9 +134,9 @@ class TPT:
             self.dam_emp[keys[k]]['ab'] = np.array(self.dam_emp[keys[k]]['ab'])
             self.dam_emp[keys[k]]['ba'] = np.array(self.dam_emp[keys[k]]['ba'])
         return ab_starts,ab_ends,ba_starts,ba_ends,self.dam_emp
-    def compile_data(self,model):
+    def compile_data(self,model,istart=0):
         print("In TPT: self.nshort = {}".format(self.nshort))
-        t_short,x_short = model.load_short_traj(self.short_simfolder,self.nshort)
+        t_short,x_short = model.load_short_traj(self.short_simfolder,self.nshort,istart=istart)
         data = Data(x_short,t_short,self.lag_time_seq)
         self.aidx = np.where(model.adist(data.X[:,0])==0)[0]
         self.bidx = np.where(model.bdist(data.X[:,0])==0)[0]

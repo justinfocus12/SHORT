@@ -324,6 +324,10 @@ class HoltonMassModel(Model):
                     'pay': funlib['vTref']['fun'], 
                     'name': funlib['vTref']['name'],
                     },
+                'heatflux_g2em5': {
+                    'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 2e-5),
+                    'name':  r"$1\{$%s$ > 2\times10^{-5}\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
+                    },
                 'heatflux_g5em5': {
                     'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 5e-5),
                     'name':  r"$1\{$%s$ > 5\times10^{-5}\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
@@ -331,6 +335,10 @@ class HoltonMassModel(Model):
                 'magref': {
                     'pay': funlib['magref']['fun'],
                     'name': funlib['magref']['name'],
+                    },
+                'magref_g8e6': {
+                    'pay': lambda x: 1.0*(funlib['magref']['fun'](x)*funlib['magref']['units'] > 8e6),
+                    'name': r"$1\{$%s$ > 8\times 10^6\ \mathrm{m}^2/\mathrm{s}\}$"%funlib['magref']['name'],
                     },
                 'magref_g1e7': {
                     'pay': lambda x: 1.0*(funlib['magref']['fun'](x)*funlib['magref']['units'] > 1e7),
@@ -343,6 +351,14 @@ class HoltonMassModel(Model):
                 'Uref_l0': {
                     'pay': lambda x: 1.0*(funlib['Uref']['fun'](x) < 0),
                     'name': r"$1\{$%s$ < 0\}$"%funlib['Uref']['name'],
+                    },
+                'Uref_ln10': {
+                    'pay': lambda x: 1.0*(funlib['Uref']['fun'](x)*funlib['Uref']['units'] < -10),
+                    'name':  r"$1\{$%s$ < -10\ \mathrm{m/s}\}$"%funlib['Uref']['name'],
+                    },
+                'Uref_ln15': {
+                    'pay': lambda x: 1.0*(funlib['Uref']['fun'](x)*funlib['Uref']['units'] < -15),
+                    'name':  r"$1\{$%s$ < -15\ \mathrm{m/s}\}$"%funlib['Uref']['name'],
                     },
                 'Uref_ln20': {
                     'pay': lambda x: 1.0*(funlib['Uref']['fun'](x)*funlib['Uref']['units'] < -20),

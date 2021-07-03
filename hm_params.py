@@ -6,9 +6,10 @@ def get_algo_params():
     tmax_long = 200000.0
     tmax_short = 20.0
     dt_save = 0.5
-    nshort = 500000 
+    nshort = 100000 
+    istart = 0 # Highly dependent on the existing static database
     basis_type = 'MSM'
-    basis_size = 1200 
+    basis_size = 500 
     lag_time = 20.0 
     nlags = 21 
     num_moments = 2
@@ -37,9 +38,10 @@ def get_algo_params():
         'sampling_feature_names': sampling_feature_names,
         'sampling_feature_suffix': "_sf0{}".format(sampling_feature_names[0]),
         'num_moments': num_moments,
+        'istart': istart,
         })
     # Make a string for the corresponding folder
-    algo_param_string = ("tlong{}_N{}_bs{}_lag{}_nlags{}_lagj{}_sf0{}".format(tmax_long,nshort,basis_size,lag_time,nlags,lag_time_current,sampling_feature_names[0])).replace('.','p')
+    algo_param_string = ("istart{}_tlong{}_N{}_bs{}_lag{}_nlags{}_lagj{}_sf0{}".format(istart,tmax_long,nshort,basis_size,lag_time,nlags,lag_time_current,sampling_feature_names[0])).replace('.','p')
     return algo_params,algo_param_string
 
 def get_physical_params():

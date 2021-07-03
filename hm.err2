@@ -1,2 +1,9 @@
-/opt/slurm/data/slurmd/job8354197/slurm_script: line 10: 895096 Killed                  python -u hm_bothcast_driver.py > hm_msg2.txt
-slurmstepd: error: Detected 1 oom-kill event(s) in StepId=8354197.batch cgroup. Some of your processes may have been killed by the cgroup out-of-memory handler.
+slurmstepd: error: *** JOB 8359071 ON cl01 CANCELLED AT 2021-07-03T18:31:06 ***
+slurmstepd: error: *** JOB 8358954 ON cl01 CANCELLED AT 2021-07-03T18:31:06 ***
+slurmstepd: error: *** JOB 8358951 ON cl01 CANCELLED AT 2021-07-03T18:31:06 ***
+slurmstepd: error: *** JOB 8358953 ON cl01 CANCELLED AT 2021-07-03T18:31:06 ***
+slurmstepd: error: *** JOB 8358947 ON cl01 CANCELLED AT 2021-07-03T18:31:06 ***
+slurmstepd: error: *** JOB 8358956 ON cl01 CANCELLED AT 2021-07-03T18:31:06 ***
+slurmstepd: error: *** JOB 8358950 ON cl01 CANCELLED AT 2021-07-03T18:31:06 ***
+slurmstepd: error: *** JOB 8358952 ON cl01 CANCELLED AT 2021-07-03T18:31:06 ***
+slurmstepd: error: *** JOB 8358948 ON cl01 CANCELLED AT 2021-07-03T18:31:06 ***

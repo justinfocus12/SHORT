@@ -138,7 +138,7 @@ class Model(ABC):
         cvx_long = self.tpt_observables(x_long)
         t_long = load(join(long_simfolder,"t_long.npy"))
         return t_long,cvx_long
-    def load_short_traj(self,short_simfolder,num_traj):
+    def load_short_traj(self,short_simfolder,num_traj,istart=0):
         print("in load_short_traj: num_traj={}".format(num_traj))
         # The directory had better exist and have enough trajectories
         if not exists(short_simfolder):
@@ -147,7 +147,7 @@ class Model(ABC):
         Nt = len(t_short)
         cvx_short = np.zeros((Nt,0,self.tpt_obs_dim))
         num_loaded = 0
-        i = 0
+        i = istart # This had better leave room for all the data to come!
         while num_loaded < num_traj:
             x_short = load(join(short_simfolder,"x_short_{}.npy".format(i)))
             Nx_new = min(x_short.shape[1],num_traj-num_loaded)
@@ -156,7 +156,7 @@ class Model(ABC):
             #sfli = np.concatenate((sfli,load(join(short_simfolder,"short_from_long_idx_{}.npy".format(i)))[:Nx_new]))
             num_loaded += Nx_new
             print("num_loaded = {}".format(num_loaded))
-            i += 1
+            i += 1 
         print("cvx_short.shape = {}".format(cvx_short.shape))
         return t_short,cvx_short  #sfli
     def run_short_traj(self,tmax_short,dt_save,x_seed,short_suffix,seed_weights,nshort,x_savefile=None,t_savefile=None,save_x=False,save_t=False):
