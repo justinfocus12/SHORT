@@ -105,6 +105,18 @@ def sci_fmt_latex(num):
         sci = r"$%.2f$" % mantissa
     return sci
 
+def mean_uncertainty(X,num_blocks=10):
+    # Given a list of numbers X, return the mean and the uncertainty in the mean
+    N = len(X)
+    block_size = int(N/num_blocks)
+    N = block_size*num_blocks # might be less than len(X), but not by more than block_size-1
+    block_means = np.zeros(num_blocks)
+    idx = np.arange(N).reshape((num_blocks,block_size))
+    for i in range(num_blocks):
+        block_means[i] = np.mean(X[idx[i]])
+    unc = np.std(block_means)
+    print("mean(X) = {}. min(block_means) = {}. max(block_means) = {}, unc = {}".format(np.mean(X),np.min(block_means),np.max(block_means),unc))
+    return unc
 
 
 def both_grids(bounds,shp):

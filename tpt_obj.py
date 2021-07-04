@@ -676,111 +676,111 @@ class TPT:
         fig.savefig(join(self.savefolder,"proj_1d_array"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
-    def compute_dam_moments_abba_finlag(self,model,data,function):
-        Nx,Nt,xdim = data.X.shape
-        dam_keys = list(model.dam_dict.keys())
-        num_bvp = len(dam_keys)
-        num_moments = self.num_moments
-        bdy_dist = lambda x: np.minimum(model.adist(x),model.bdist(x))
-        bdy_fun_b = lambda x: 1.0*(model.bdist(x) == 0)
-        bdy_fun_a = lambda x: 1.0*(model.adist(x) == 0)
-        bdy_fun_list_fwd = len(dam_keys)*[bdy_fun_b] + len(dam_keys)*[bdy_fun_a]
-        bdy_fun_list_bwd = len(dam_keys)*[bdy_fun_a] + len(dam_keys)*[bdy_fun_b]
-        dam_fun_list = 2*[model.dam_dict[k]['pay'] for k in dam_keys] 
-        # Forward: x->B and x->A
-        Fp,Pay,resp = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_fwd,dam_fun_list,dirn=1,weights=np.ones(self.nshort)/self.nshort,num_moments=num_moments)
-        # Backward: A->x and B->x
-        Fm,_,resm = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_bwd,dam_fun_list,dirn=-1,weights=self.chom,num_moments=num_moments)
-        # Now combine them to get generalized rates
-        Fmp = np.zeros((2*num_bvp,num_moments+1,Nx,Nt))
-        Fmp[:,0] = Fm[:,0]*Fp[:,0]
-        if num_moments >= 1:
-            Fmp[:,1] = (1*Fm[:,1]*Fp[:,0] + 
-                        1*Fm[:,0]*Fp[:,1])
-        if num_moments >= 2:
-            Fmp[:,2] = (1*Fm[:,2]*Fp[:,0] + 
-                        2*Fm[:,1]*Fp[:,1] + 
-                        1*Fm[:,0]*Fp[:,2])
-        if num_moments >= 3:
-            Fmp[:,3] = (1*Fm[:,3]*Fp[:,0] + 
-                        3*Fm[:,2]*Fp[:,1] + 
-                        3*Fm[:,1]*Fp[:,2] + 
-                        1*Fm[:,0]*Fp[:,3])
-        if num_moments >= 4:
-            Fmp[:,4] = (1*Fm[:,4]*Fp[:,0] + 
-                        4*Fm[:,3]*Fp[:,1] + 
-                        6*Fm[:,2]*Fp[:,2] + 
-                        4*Fm[:,1]*Fp[:,3] + 
-                        1*Fm[:,0]*Fp[:,4])
-        # Unweighted averages
-        adist_x = (model.adist(data.X.reshape((Nt*Nx,xdim)))).reshape((Nx,Nt))
-        bdist_x = (model.bdist(data.X.reshape((Nt*Nx,xdim)))).reshape((Nx,Nt))
-        bdy_dist_x = np.minimum(adist_x,bdist_x)
-        ramp_ab = Fp[0,0,:,:] #adist_x / (adist_x + bdist_x)
-        ramp_ba = 1-Fp[0,0,:,:] #Fm[0,0,:,:] #bdist_x / (adist_x + bdist_x)
-        #data.insert_boundaries(bdy_dist,lag_time_max=self.lag_time_seq[-1])
-        #data.insert_boundaries(bdy_dist,lag_time_max=self.lag_time_current)
-        MFp = np.zeros((2*num_bvp,num_moments+1,Nx))
-        #fd_total_decay = 0.5
-        #fd_weights = fd_total_decay**((np.arange(len(self.lag_time_seq))-1)/(len(self.lag_time_seq)-1))
-        #print("fd_weights = {}".format(fd_weights))
-        #fd_decay_rate = fd_total_decay**(1/(len(self.lag_time_seq)-1))
-        # TODO: figure this the heck out
-        for i in range(num_moments+1):
-            for j in range(len(self.lag_time_seq)-1):
-                data.insert_boundaries_fwd(bdy_dist_x,data.t_x[j],data.t_x[-1])
-                data.insert_boundaries_bwd(bdy_dist_x,data.t_x[j],data.t_x[0])
-                MFp[:num_bvp,i,:] += Fp[:num_bvp,i,np.arange(data.nshort),data.first_exit_idx_fwd]*Fm[:num_bvp,i,np.arange(data.nshort),data.first_exit_idx_bwd]*(ramp_ab[:,j+1] - ramp_ab[:,j])
-                MFp[num_bvp:,i,:] += Fp[num_bvp:,i,np.arange(data.nshort),data.first_exit_idx_fwd]*Fm[num_bvp:,i,np.arange(data.nshort),data.first_exit_idx_bwd]*(ramp_ba[:,j+1] - ramp_ba[:,j])
-                #MFp[:num_bvp,i,:] += (ramp_ab[:,j]*Fp[:num_bvp,i,:,j] - ramp_ab[:,0]*Fp[:num_bvp,i,:,0])/self.lag_time_seq[j] * (j<=data.first_exit_idx) * fd_weights[j]
-                #MFp[num_bvp:,i,:] += (ramp_ba[:,j]*Fp[num_bvp:,i,:,j] - ramp_ba[:,0]*Fp[num_bvp:,i,:,0])/self.lag_time_seq[j] * (j<=data.first_exit_idx) * fd_weights[j]
-                #normalizer += fd_weights[j]*(j<=data.first_exit_idx)
-            #print("normalizer: shp={}, min={}, max={}, mean={}, std={}".format(normalizer.shape,np.min(normalizer),np.max(normalizer),np.mean(normalizer),np.std(normalizer)))
-            MFp[:,i,:] *= 1.0/self.lag_time_seq[-1]
-            #if i > 0:
-            #    MFp[:num_bvp,i] += ramp_ab[:,0]*i*Pay[:num_bvp,:,0]*Fp[:num_bvp,i-1,:,0]
-            #    MFp[num_bvp:,i] += ramp_ba[:,0]*i*Pay[num_bvp:,:,0]*Fp[num_bvp:,i-1,:,0]
-        Fmp_unweighted = np.zeros((2*num_bvp,num_moments+1))
-        Fmp_unweighted[:,0] = np.sum(self.chom*Fm[:,0,:,0]*MFp[:,0,:], 1)
-        if num_moments >= 1:
-            Fmp_unweighted[:,1] = np.sum(self.chom*(
-                1*Fm[:,1,:,0]*MFp[:,0,:] + 
-                1*Fm[:,0,:,0]*MFp[:,1,:]), 1)
-        if num_moments >= 2:
-            Fmp_unweighted[:,2] = np.sum(self.chom*(
-                1*Fm[:,2,:,0]*MFp[:,0,:] + 
-                2*Fm[:,1,:,0]*MFp[:,1,:] +
-                1*Fm[:,0,:,0]*MFp[:,2,:]), 1)
-        if num_moments >= 3:
-            Fmp_unweighted[:,3] = np.sum(self.chom*(
-                1*Fm[:,3,:,0]*MFp[:,0,:] + 
-                3*Fm[:,2,:,0]*MFp[:,1,:] +
-                3*Fm[:,1,:,0]*MFp[:,2,:] +
-                1*Fm[:,0,:,0]*MFp[:,3,:]), 1)
-        if num_moments >= 4:
-            Fmp_unweighted[:,4] = np.sum(self.chom*(
-                1*Fm[:,4,:,0]*MFp[:,0,:] + 
-                4*Fm[:,3,:,0]*MFp[:,1,:] +
-                6*Fm[:,2,:,0]*MFp[:,2,:] +
-                4*Fm[:,1,:,0]*MFp[:,3,:] +
-                1*Fm[:,0,:,0]*MFp[:,4,:]), 1)
-        # Now separate into the AB and BA components
-        self.dam_moments = {}
-        for k in range(num_bvp):
-            self.dam_moments[dam_keys[k]] = {}
-            self.dam_moments[dam_keys[k]]['ax'] = Fm[k]
-            self.dam_moments[dam_keys[k]]['bx'] = Fm[num_bvp+k]
-            self.dam_moments[dam_keys[k]]['xb'] = Fp[k]
-            self.dam_moments[dam_keys[k]]['xa'] = Fp[num_bvp+k]
-            self.dam_moments[dam_keys[k]]['ab'] = Fmp[k]
-            self.dam_moments[dam_keys[k]]['ba'] = Fmp[num_bvp+k]
-            self.dam_moments[dam_keys[k]]['res_ax'] = resm[k]
-            self.dam_moments[dam_keys[k]]['res_bx'] = resm[num_bvp+k]
-            self.dam_moments[dam_keys[k]]['res_xa'] = resp[k]
-            self.dam_moments[dam_keys[k]]['res_xb'] = resp[num_bvp+k]
-            self.dam_moments[dam_keys[k]]['rate_ab'] = Fmp_unweighted[k]
-            self.dam_moments[dam_keys[k]]['rate_ba'] = Fmp_unweighted[num_bvp+k]
-        return
+    #def compute_dam_moments_abba_finlag(self,model,data,function):
+    #    Nx,Nt,xdim = data.X.shape
+    #    dam_keys = list(model.dam_dict.keys())
+    #    num_bvp = len(dam_keys)
+    #    num_moments = self.num_moments
+    #    bdy_dist = lambda x: np.minimum(model.adist(x),model.bdist(x))
+    #    bdy_fun_b = lambda x: 1.0*(model.bdist(x) == 0)
+    #    bdy_fun_a = lambda x: 1.0*(model.adist(x) == 0)
+    #    bdy_fun_list_fwd = len(dam_keys)*[bdy_fun_b] + len(dam_keys)*[bdy_fun_a]
+    #    bdy_fun_list_bwd = len(dam_keys)*[bdy_fun_a] + len(dam_keys)*[bdy_fun_b]
+    #    dam_fun_list = 2*[model.dam_dict[k]['pay'] for k in dam_keys] 
+    #    # Forward: x->B and x->A
+    #    Fp,Pay,resp = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_fwd,dam_fun_list,dirn=1,weights=np.ones(self.nshort)/self.nshort,num_moments=num_moments)
+    #    # Backward: A->x and B->x
+    #    Fm,_,resm = function.solve_damage_function_moments_multiple(data,bdy_dist,bdy_fun_list_bwd,dam_fun_list,dirn=-1,weights=self.chom,num_moments=num_moments)
+    #    # Now combine them to get generalized rates
+    #    Fmp = np.zeros((2*num_bvp,num_moments+1,Nx,Nt))
+    #    Fmp[:,0] = Fm[:,0]*Fp[:,0]
+    #    if num_moments >= 1:
+    #        Fmp[:,1] = (1*Fm[:,1]*Fp[:,0] + 
+    #                    1*Fm[:,0]*Fp[:,1])
+    #    if num_moments >= 2:
+    #        Fmp[:,2] = (1*Fm[:,2]*Fp[:,0] + 
+    #                    2*Fm[:,1]*Fp[:,1] + 
+    #                    1*Fm[:,0]*Fp[:,2])
+    #    if num_moments >= 3:
+    #        Fmp[:,3] = (1*Fm[:,3]*Fp[:,0] + 
+    #                    3*Fm[:,2]*Fp[:,1] + 
+    #                    3*Fm[:,1]*Fp[:,2] + 
+    #                    1*Fm[:,0]*Fp[:,3])
+    #    if num_moments >= 4:
+    #        Fmp[:,4] = (1*Fm[:,4]*Fp[:,0] + 
+    #                    4*Fm[:,3]*Fp[:,1] + 
+    #                    6*Fm[:,2]*Fp[:,2] + 
+    #                    4*Fm[:,1]*Fp[:,3] + 
+    #                    1*Fm[:,0]*Fp[:,4])
+    #    # Unweighted averages
+    #    adist_x = (model.adist(data.X.reshape((Nt*Nx,xdim)))).reshape((Nx,Nt))
+    #    bdist_x = (model.bdist(data.X.reshape((Nt*Nx,xdim)))).reshape((Nx,Nt))
+    #    bdy_dist_x = np.minimum(adist_x,bdist_x)
+    #    ramp_ab = Fp[0,0,:,:] #adist_x / (adist_x + bdist_x)
+    #    ramp_ba = 1-Fp[0,0,:,:] #Fm[0,0,:,:] #bdist_x / (adist_x + bdist_x)
+    #    #data.insert_boundaries(bdy_dist,lag_time_max=self.lag_time_seq[-1])
+    #    #data.insert_boundaries(bdy_dist,lag_time_max=self.lag_time_current)
+    #    MFp = np.zeros((2*num_bvp,num_moments+1,Nx))
+    #    #fd_total_decay = 0.5
+    #    #fd_weights = fd_total_decay**((np.arange(len(self.lag_time_seq))-1)/(len(self.lag_time_seq)-1))
+    #    #print("fd_weights = {}".format(fd_weights))
+    #    #fd_decay_rate = fd_total_decay**(1/(len(self.lag_time_seq)-1))
+    #    # TODO: figure this the heck out
+    #    for i in range(num_moments+1):
+    #        for j in range(len(self.lag_time_seq)-1):
+    #            data.insert_boundaries_fwd(bdy_dist_x,data.t_x[j],data.t_x[-1])
+    #            data.insert_boundaries_bwd(bdy_dist_x,data.t_x[j],data.t_x[0])
+    #            MFp[:num_bvp,i,:] += Fp[:num_bvp,i,np.arange(data.nshort),data.first_exit_idx_fwd]*Fm[:num_bvp,i,np.arange(data.nshort),data.first_exit_idx_bwd]*(ramp_ab[:,j+1] - ramp_ab[:,j])
+    #            MFp[num_bvp:,i,:] += Fp[num_bvp:,i,np.arange(data.nshort),data.first_exit_idx_fwd]*Fm[num_bvp:,i,np.arange(data.nshort),data.first_exit_idx_bwd]*(ramp_ba[:,j+1] - ramp_ba[:,j])
+    #            #MFp[:num_bvp,i,:] += (ramp_ab[:,j]*Fp[:num_bvp,i,:,j] - ramp_ab[:,0]*Fp[:num_bvp,i,:,0])/self.lag_time_seq[j] * (j<=data.first_exit_idx) * fd_weights[j]
+    #            #MFp[num_bvp:,i,:] += (ramp_ba[:,j]*Fp[num_bvp:,i,:,j] - ramp_ba[:,0]*Fp[num_bvp:,i,:,0])/self.lag_time_seq[j] * (j<=data.first_exit_idx) * fd_weights[j]
+    #            #normalizer += fd_weights[j]*(j<=data.first_exit_idx)
+    #        #print("normalizer: shp={}, min={}, max={}, mean={}, std={}".format(normalizer.shape,np.min(normalizer),np.max(normalizer),np.mean(normalizer),np.std(normalizer)))
+    #        MFp[:,i,:] *= 1.0/self.lag_time_seq[-1]
+    #        #if i > 0:
+    #        #    MFp[:num_bvp,i] += ramp_ab[:,0]*i*Pay[:num_bvp,:,0]*Fp[:num_bvp,i-1,:,0]
+    #        #    MFp[num_bvp:,i] += ramp_ba[:,0]*i*Pay[num_bvp:,:,0]*Fp[num_bvp:,i-1,:,0]
+    #    Fmp_unweighted = np.zeros((2*num_bvp,num_moments+1))
+    #    Fmp_unweighted[:,0] = np.sum(self.chom*Fm[:,0,:,0]*MFp[:,0,:], 1)
+    #    if num_moments >= 1:
+    #        Fmp_unweighted[:,1] = np.sum(self.chom*(
+    #            1*Fm[:,1,:,0]*MFp[:,0,:] + 
+    #            1*Fm[:,0,:,0]*MFp[:,1,:]), 1)
+    #    if num_moments >= 2:
+    #        Fmp_unweighted[:,2] = np.sum(self.chom*(
+    #            1*Fm[:,2,:,0]*MFp[:,0,:] + 
+    #            2*Fm[:,1,:,0]*MFp[:,1,:] +
+    #            1*Fm[:,0,:,0]*MFp[:,2,:]), 1)
+    #    if num_moments >= 3:
+    #        Fmp_unweighted[:,3] = np.sum(self.chom*(
+    #            1*Fm[:,3,:,0]*MFp[:,0,:] + 
+    #            3*Fm[:,2,:,0]*MFp[:,1,:] +
+    #            3*Fm[:,1,:,0]*MFp[:,2,:] +
+    #            1*Fm[:,0,:,0]*MFp[:,3,:]), 1)
+    #    if num_moments >= 4:
+    #        Fmp_unweighted[:,4] = np.sum(self.chom*(
+    #            1*Fm[:,4,:,0]*MFp[:,0,:] + 
+    #            4*Fm[:,3,:,0]*MFp[:,1,:] +
+    #            6*Fm[:,2,:,0]*MFp[:,2,:] +
+    #            4*Fm[:,1,:,0]*MFp[:,3,:] +
+    #            1*Fm[:,0,:,0]*MFp[:,4,:]), 1)
+    #    # Now separate into the AB and BA components
+    #    self.dam_moments = {}
+    #    for k in range(num_bvp):
+    #        self.dam_moments[dam_keys[k]] = {}
+    #        self.dam_moments[dam_keys[k]]['ax'] = Fm[k]
+    #        self.dam_moments[dam_keys[k]]['bx'] = Fm[num_bvp+k]
+    #        self.dam_moments[dam_keys[k]]['xb'] = Fp[k]
+    #        self.dam_moments[dam_keys[k]]['xa'] = Fp[num_bvp+k]
+    #        self.dam_moments[dam_keys[k]]['ab'] = Fmp[k]
+    #        self.dam_moments[dam_keys[k]]['ba'] = Fmp[num_bvp+k]
+    #        self.dam_moments[dam_keys[k]]['res_ax'] = resm[k]
+    #        self.dam_moments[dam_keys[k]]['res_bx'] = resm[num_bvp+k]
+    #        self.dam_moments[dam_keys[k]]['res_xa'] = resp[k]
+    #        self.dam_moments[dam_keys[k]]['res_xb'] = resp[num_bvp+k]
+    #        self.dam_moments[dam_keys[k]]['rate_ab'] = Fmp_unweighted[k]
+    #        self.dam_moments[dam_keys[k]]['rate_ba'] = Fmp_unweighted[num_bvp+k]
+    #    return
     def compute_mfpt_unconditional(self,model,data,function):
         # Compute mean passage times and/or other functions, not caring it hits first
         Nx,Nt,xdim = data.X.shape
@@ -1140,6 +1140,8 @@ class TPT:
             # Collect the whole array for plotting
             dga_moments_trajwise = np.zeros((2,num_moments+1))
             emp_moments_trajwise = np.zeros((2,num_moments+1))
+            emp_moments_trajwise_unc_lower = np.zeros((2,num_moments+1)) # for error bars
+            emp_moments_trajwise_unc_upper = np.zeros((2,num_moments+1)) # for error bars
             self.dam_moments[keys[k]]['rate_avg'] = 0.5*(self.dam_moments[keys[k]]['rate_ab'] + self.dam_moments[keys[k]]['rate_ba'])
             f.write("Damage function %s\n"%model.dam_dict[keys[k]]['name_full'])
             f.write("\tA->B\n")
@@ -1199,6 +1201,9 @@ class TPT:
                 f.write("\t\tMoment %d: DGA/time (t-weighted) = %3.3e, DGA/traj (t-weighted) = %3.3e,  DGA/time = %3.3e, DGA/traj = %3.3e, EMP/time (t-weighted) = %3.3e, EMP/traj (t-weighted) = %3.3e, EMP/time = %3.3e, EMP/traj = %3.3e\n" % (i,dga_avg_per_time_tweighted,dga_avg_per_traj_tweighted,dga_avg_per_time,dga_avg_per_traj,emp_avg_per_time_tweighted,emp_avg_per_traj_tweighted,emp_avg_per_time,emp_avg_per_traj))
                 dga_moments_trajwise[0,i] = dga_avg_per_traj
                 emp_moments_trajwise[0,i] = emp_avg_per_traj
+                unc = units_k**i*helper.mean_uncertainty(self.dam_emp[keys[k]]['ab']**i)
+                emp_moments_trajwise_unc_upper[0,i] = emp_avg_per_traj+unc
+                emp_moments_trajwise_unc_lower[0,i] = emp_avg_per_traj-unc
             f.write("\tB->A\n")
             dga_rate = self.dam_moments[keys[k]]['rate_avg'][0] #['rate_ba'][0]
             emp_rate = len(self.dam_emp[keys[k]]['ba'])/(t_long[-1] - t_long[0])
@@ -1251,13 +1256,21 @@ class TPT:
                 dga_avg_per_traj = units_t*dga_avg_per_time / dga_rate
                 emp_avg_per_time = units_k**i/units_t*np.sum(self.dam_emp[keys[k]]['ba']**i)/(t_long[-1] - t_long[0])
                 emp_avg_per_traj = units_k**i*np.mean(self.dam_emp[keys[k]]['ba']**i)
+                # Also estimate the error in emp_avg_per_traj
                 f.write("\t\tMoment %d: DGA/time (t-weighted) = %3.3e, DGA/traj (t-weighted) = %3.3e,  DGA/time = %3.3e, DGA/traj = %3.3e, EMP/time (t-weighted) = %3.3e, EMP/traj (t-weighted) = %3.3e, EMP/time = %3.3e, EMP/traj = %3.3e\n" % (i,dga_avg_per_time_tweighted,dga_avg_per_traj_tweighted,dga_avg_per_time,dga_avg_per_traj,emp_avg_per_time_tweighted,emp_avg_per_traj_tweighted,emp_avg_per_time,emp_avg_per_traj))
                 dga_moments_trajwise[1,i] = dga_avg_per_traj
                 emp_moments_trajwise[1,i] = emp_avg_per_traj
-            # Plot the moments for validation
+                unc = units_k**i*helper.mean_uncertainty(self.dam_emp[keys[k]]['ba']**i)
+                emp_moments_trajwise_unc_upper[1,i] = emp_avg_per_traj+unc
+                emp_moments_trajwise_unc_lower[1,i] = emp_avg_per_traj-unc
+            # Plot the moments for validation -- this time with error bars!
             fig,ax = plt.subplots(ncols=2,figsize=(12,6),tight_layout=True,sharey=True)
+            bounds = np.array([emp_moments_trajwise_unc_lower[0,1:]**(1/np.arange(1,num_moments+1)),emp_moments_trajwise_unc_upper[0,1:]**(1/np.arange(1,num_moments+1))])
+            y = emp_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1))
+            yerr = np.array([y-bounds[0],bounds[1]-y])
+            print("y = {}, yerr = {}".format(y,yerr))
+            hemp,_,_ = ax[0].errorbar(np.arange(1,num_moments+1),y,yerr=yerr,ecolor='black',elinewidth=2,capsize=3.0,color='black',marker='o',linewidth=2,label='DNS')
             hdga, = ax[0].plot(np.arange(1,num_moments+1),dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',linewidth=2,label='DGA')
-            hemp, = ax[0].plot(np.arange(1,num_moments+1),emp_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),color='black',marker='o',linewidth=2,label='DNS')
             ax[0].legend(handles=[hdga,hemp],prop={'size':18})
             ax[0].set_title(r"%s $(A\to B)$ moments"%model.dam_dict[keys[k]]['name'],fontdict=font)
             ax[0].set_xlabel("Moment number $k$",fontdict=font)
@@ -1265,8 +1278,12 @@ class TPT:
             #ax[0].set_yscale('log')
             ax[0].xaxis.set_major_locator(ticker.FixedLocator(np.arange(1,num_moments+1)))
             ax[0].tick_params(axis='both',labelsize=14)
+            bounds = np.array([emp_moments_trajwise_unc_lower[1,1:]**(1/np.arange(1,num_moments+1)),emp_moments_trajwise_unc_upper[1,1:]**(1/np.arange(1,num_moments+1))])
+            y = emp_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1))
+            yerr = np.array([y-bounds[0],bounds[1]-y])
+            print("y = {}, yerr = {}".format(y,yerr))
+            hemp,_,_ = ax[1].errorbar(np.arange(1,num_moments+1),y,yerr=yerr,ecolor='black',elinewidth=2,capsize=3.0,color='black',marker='o',linewidth=2,label='DNS')
             hdga, = ax[1].plot(np.arange(1,num_moments+1),dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',linewidth=2,label='DGA')
-            hemp, = ax[1].plot(np.arange(1,num_moments+1),emp_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1)),color='black',marker='o',linewidth=2,label='DNS')
             ax[1].legend(handles=[hdga,hemp],prop={'size':18})
             ax[1].set_title(r"%s $(B\to A)$ moments"%model.dam_dict[keys[k]]['name'],fontdict=font)
             ax[1].set_xlabel(r"Moment number $k$",fontdict=font)
@@ -1476,6 +1493,10 @@ class TPT:
                     fsuff = 'cast_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                     fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                     plt.close(fig)
+                    # Now plot divided by time
+                    if j == 1 and keys[k] != 'one':
+                        fieldname = r"$E_x[%s|A\to B]/E_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
+                        field = field/(self.dam_moments['one']['ab'][1])
                     # ---------------------------------
                     # B->A
                     comm_bwd = self.dam_moments[keys[k]]['bx'][0]
