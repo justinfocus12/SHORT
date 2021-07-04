@@ -1,276 +1,182 @@
+/home/jf4241/SHORT/tpt_obj.py:1274: UserWarning: The handle <matplotlib.lines.Line2D object at 0x1517c56fab80> has a label of '_nolegend_' which cannot be automatically added to the legend.
+  ax[0].legend(handles=[hdga,hemp],prop={'size':18})
+/home/jf4241/SHORT/tpt_obj.py:1287: UserWarning: The handle <matplotlib.lines.Line2D object at 0x1517be49a0d0> has a label of '_nolegend_' which cannot be automatically added to the legend.
+  ax[1].legend(handles=[hdga,hemp],prop={'size':18})
+/home/jf4241/SHORT/tpt_obj.py:1274: UserWarning: The handle <matplotlib.lines.Line2D object at 0x150dec62aaf0> has a label of '_nolegend_' which cannot be automatically added to the legend.
+  ax[0].legend(handles=[hdga,hemp],prop={'size':18})
+/home/jf4241/SHORT/tpt_obj.py:1287: UserWarning: The handle <matplotlib.lines.Line2D object at 0x1517c04bc520> has a label of '_nolegend_' which cannot be automatically added to the legend.
+  ax[1].legend(handles=[hdga,hemp],prop={'size':18})
 /share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 3.781640614736716, tolerance: 2.876845478103862
   model = cd_fast.enet_coordinate_descent(
-/home/jf4241/SHORT/tpt_obj.py:1677: RuntimeWarning: invalid value encountered in greater
-  # Identify two bins in CV space: (1) (q_th0,q_th1) = (1/2,1/3) and (2) (q_th0,q_th1) = (2/3,1/2)
-/home/jf4241/SHORT/tpt_obj.py:1677: RuntimeWarning: invalid value encountered in less
-  # Identify two bins in CV space: (1) (q_th0,q_th1) = (1/2,1/3) and (2) (q_th0,q_th1) = (2/3,1/2)
-/home/jf4241/SHORT/tpt_obj.py:1472: RuntimeWarning: invalid value encountered in greater
-  field[np.where(prob==0)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1473: RuntimeWarning: invalid value encountered in less
-  field *= 1.0/(prob + 1*(prob == 0))
-/home/jf4241/SHORT/tpt_obj.py:1499: RuntimeWarning: invalid value encountered in greater
-  field *= 1.0/(prob + 1*(prob == 0))
-/home/jf4241/SHORT/tpt_obj.py:1500: RuntimeWarning: invalid value encountered in less
-  # Bring within range only if j>=1
-/home/jf4241/SHORT/tpt_obj.py:1524: RuntimeWarning: invalid value encountered in greater
-  field[np.where(prob==0)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1525: RuntimeWarning: invalid value encountered in less
-  field *= 1.0/(prob + 1*(prob == 0))
-/home/jf4241/SHORT/tpt_obj.py:1551: RuntimeWarning: invalid value encountered in greater
-  field *= 1.0/(prob + 1*(prob == 0))
-/home/jf4241/SHORT/tpt_obj.py:1552: RuntimeWarning: invalid value encountered in less
-  # Bring within range only if j>=1
-/home/jf4241/SHORT/tpt_obj.py:1577: RuntimeWarning: invalid value encountered in greater
-  field[np.where(prob==0)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1578: RuntimeWarning: invalid value encountered in less
-  field *= 1.0/(prob + 1*(prob == 0))
-/home/jf4241/SHORT/tpt_obj.py:1604: RuntimeWarning: invalid value encountered in greater
-  field *= 1.0/(prob + 1*(prob == 0))
-/home/jf4241/SHORT/tpt_obj.py:1605: RuntimeWarning: invalid value encountered in less
-  # Bring within range only if j>=1
-/home/jf4241/SHORT/tpt_obj.py:2859: RuntimeWarning: invalid value encountered in less
-  print("theta_level = {}".format(theta_level))
-/home/jf4241/SHORT/tpt_obj.py:2859: RuntimeWarning: invalid value encountered in less
-  print("theta_level = {}".format(theta_level))
-/home/jf4241/SHORT/tpt_obj.py:2859: RuntimeWarning: invalid value encountered in less
-  print("theta_level = {}".format(theta_level))
-/home/jf4241/SHORT/tpt_obj.py:2859: RuntimeWarning: invalid value encountered in less
-  print("theta_level = {}".format(theta_level))
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
+/home/jf4241/SHORT/tpt_obj.py:1698: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1698: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1489: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1490: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1520: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1521: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1545: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1546: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1572: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1573: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1598: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1599: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1625: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1626: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1274: UserWarning: The handle <matplotlib.lines.Line2D object at 0x150d206021c0> has a label of '_nolegend_' which cannot be automatically added to the legend.
+  ax[0].legend(handles=[hdga,hemp],prop={'size':18})
+/home/jf4241/SHORT/tpt_obj.py:1287: UserWarning: The handle <matplotlib.lines.Line2D object at 0x1518a804c220> has a label of '_nolegend_' which cannot be automatically added to the legend.
+  ax[1].legend(handles=[hdga,hemp],prop={'size':18})
+/home/jf4241/SHORT/tpt_obj.py:1274: UserWarning: The handle <matplotlib.lines.Line2D object at 0x1517be2b6d30> has a label of '_nolegend_' which cannot be automatically added to the legend.
+  ax[0].legend(handles=[hdga,hemp],prop={'size':18})
+/home/jf4241/SHORT/tpt_obj.py:1287: UserWarning: The handle <matplotlib.lines.Line2D object at 0x1517c80e27f0> has a label of '_nolegend_' which cannot be automatically added to the legend.
+  ax[1].legend(handles=[hdga,hemp],prop={'size':18})
+/home/jf4241/SHORT/tpt_obj.py:2880: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2880: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2880: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2880: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:364: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
 /share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
   z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  #sys.exit()
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  fig.colorbar(im,ax=ax[0],orientation='horizontal')
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
+/home/jf4241/SHORT/tpt_obj.py:2083: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:2088: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:364: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
 /share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
   z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  #sys.exit()
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  fig.colorbar(im,ax=ax[0],orientation='horizontal')
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
+/home/jf4241/SHORT/tpt_obj.py:2083: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:2088: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:364: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
 /share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
   z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  #sys.exit()
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  fig.colorbar(im,ax=ax[0],orientation='horizontal')
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
+/home/jf4241/SHORT/tpt_obj.py:2083: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:2088: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:364: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
 /share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
   z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  #sys.exit()
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  fig.colorbar(im,ax=ax[0],orientation='horizontal')
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
+/home/jf4241/SHORT/tpt_obj.py:2083: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:2088: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:364: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
 /share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
   z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  #sys.exit()
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  fig.colorbar(im,ax=ax[0],orientation='horizontal')
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  _,_,_,_,w_long_grid,w_short_grid = helper.compare_fields(theta_2d_long,theta_2d_short,np.ones(nlong),np.ones(self.nshort),np.ones(nlong)/nlong,self.chom,shp=shp_2d,avg_flag=False)
+/home/jf4241/SHORT/tpt_obj.py:2083: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:2088: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:364: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
 /share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
   z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  #sys.exit()
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  fig.colorbar(im,ax=ax[0],orientation='horizontal')
- This problem is unconstrained.
- This problem is unconstrained.
-/home/jf4241/SHORT/tpt_obj.py:1677: RuntimeWarning: invalid value encountered in greater
-  print("theta2D.shape = {}".format(theta2d.shape))
-/home/jf4241/SHORT/tpt_obj.py:1677: RuntimeWarning: invalid value encountered in less
-  print("theta2D.shape = {}".format(theta2d.shape))
-/home/jf4241/SHORT/tpt_obj.py:1472: RuntimeWarning: invalid value encountered in greater
-  prob = comm_bwd*comm_fwd
-/home/jf4241/SHORT/tpt_obj.py:1473: RuntimeWarning: invalid value encountered in less
-  if j == 1:
-/home/jf4241/SHORT/tpt_obj.py:1499: RuntimeWarning: invalid value encountered in greater
-  if j == 1:
-/home/jf4241/SHORT/tpt_obj.py:1500: RuntimeWarning: invalid value encountered in less
-  fieldname = r"$E_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full'])
-/home/jf4241/SHORT/tpt_obj.py:1524: RuntimeWarning: invalid value encountered in greater
-  prob = comm_bwd*comm_fwd
-/home/jf4241/SHORT/tpt_obj.py:1525: RuntimeWarning: invalid value encountered in less
-  if j == 1:
-/home/jf4241/SHORT/tpt_obj.py:1551: RuntimeWarning: invalid value encountered in greater
-  if j == 1:
-/home/jf4241/SHORT/tpt_obj.py:1552: RuntimeWarning: invalid value encountered in less
-  fieldname = r"$E_x[%s|x\to A]$"%(model.dam_dict[keys[k]]['name_fwd'])
-/home/jf4241/SHORT/tpt_obj.py:1577: RuntimeWarning: invalid value encountered in greater
-  prob = comm_bwd*comm_fwd
-/home/jf4241/SHORT/tpt_obj.py:1578: RuntimeWarning: invalid value encountered in less
-  if j == 1:
-/home/jf4241/SHORT/tpt_obj.py:1604: RuntimeWarning: invalid value encountered in greater
-  if j == 1:
-/home/jf4241/SHORT/tpt_obj.py:1605: RuntimeWarning: invalid value encountered in less
-  fieldname = r"$E_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_fwd'])
-/home/jf4241/SHORT/tpt_obj.py:2859: RuntimeWarning: invalid value encountered in less
-  plt.close(fig)
-/home/jf4241/SHORT/tpt_obj.py:2859: RuntimeWarning: invalid value encountered in less
-  plt.close(fig)
-/home/jf4241/SHORT/tpt_obj.py:2859: RuntimeWarning: invalid value encountered in less
-  plt.close(fig)
-/home/jf4241/SHORT/tpt_obj.py:2859: RuntimeWarning: invalid value encountered in less
-  plt.close(fig)
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
+/home/jf4241/SHORT/tpt_obj.py:2083: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:2088: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:364: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
 /share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
   z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Teps_short: min={}, max={}".format(np.nanmin(Teps_short),np.nanmax(Teps_short)))
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Ttot_short = {}".format(Ttot_short))
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
+/home/jf4241/SHORT/tpt_obj.py:2083: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:2088: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:364: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/helper.py:399: RuntimeWarning: invalid value encountered in greater
+  scatter_subset = np.where((u0_grid>0)*(u1_grid>0))[0] if logscale else np.arange(len(u0_grid))
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in greater
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
+/home/jf4241/SHORT/tpt_obj.py:2065: RuntimeWarning: invalid value encountered in less
+  eps_grid += 1e-3*(eps_grid > 0)*(eps_grid < 1e-3)
 /share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
   z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Teps_short: min={}, max={}".format(np.nanmin(Teps_short),np.nanmax(Teps_short)))
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Ttot_short = {}".format(Ttot_short))
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
-/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
-  z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Teps_short: min={}, max={}".format(np.nanmin(Teps_short),np.nanmax(Teps_short)))
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Ttot_short = {}".format(Ttot_short))
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
-/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
-  z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Teps_short: min={}, max={}".format(np.nanmin(Teps_short),np.nanmax(Teps_short)))
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Ttot_short = {}".format(Ttot_short))
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
-/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
-  z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Teps_short: min={}, max={}".format(np.nanmin(Teps_short),np.nanmax(Teps_short)))
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Ttot_short = {}".format(Ttot_short))
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:387: RuntimeWarning: invalid value encountered in greater
-  return fig,ax
-/home/jf4241/SHORT/helper.py:352: RuntimeWarning: invalid value encountered in greater
-  _,_,_,_,u1_grid,_,_,_,_ = project_field(u1[ss1],weights1[ss1]/np.sum(weights1[ss1]),theta1[ss1],avg_flag=avg_flag,shp=shp,bounds=bounds)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in greater
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
-/home/jf4241/SHORT/tpt_obj.py:2044: RuntimeWarning: invalid value encountered in less
-  ax.set_title("Sim. time req. for $Err_{emp}\leq Err_{DGA}$",fontdict=font)
-/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1486: RuntimeWarning: invalid value encountered in less_equal
-  z = ma.masked_where(z <= 0, z)
-/home/jf4241/SHORT/tpt_obj.py:2062: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Teps_short: min={}, max={}".format(np.nanmin(Teps_short),np.nanmax(Teps_short)))
-/home/jf4241/SHORT/tpt_obj.py:2067: UserWarning: Log scale: values of z <= 0 have been masked
-  print("Ttot_short = {}".format(Ttot_short))
- This problem is unconstrained.
- This problem is unconstrained.
+/home/jf4241/SHORT/tpt_obj.py:2083: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[0].contourf(th01,th10,Teps_short.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)
+/home/jf4241/SHORT/tpt_obj.py:2088: UserWarning: Log scale: values of z <= 0 have been masked
+  im = ax[1].contourf(th01,th10,Teps_long.reshape(shp_2d),locator=locator,cmap=plt.cm.coolwarm)

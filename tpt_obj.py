@@ -1264,13 +1264,29 @@ class TPT:
                 emp_moments_trajwise_unc_upper[1,i] = emp_avg_per_traj+unc
                 emp_moments_trajwise_unc_lower[1,i] = emp_avg_per_traj-unc
             # Plot the moments for validation -- this time with error bars!
-            fig,ax = plt.subplots(ncols=2,figsize=(12,6),tight_layout=True,sharey=True)
+            fig,ax = plt.subplots(ncols=2,figsize=(12,6),sharey=True)
             bounds = np.array([emp_moments_trajwise_unc_lower[0,1:]**(1/np.arange(1,num_moments+1)),emp_moments_trajwise_unc_upper[0,1:]**(1/np.arange(1,num_moments+1))])
             y = emp_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1))
             yerr = np.array([y-bounds[0],bounds[1]-y])
             print("y = {}, yerr = {}".format(y,yerr))
-            hemp,_,_ = ax[0].errorbar(np.arange(1,num_moments+1),y,yerr=yerr,ecolor='black',elinewidth=2,capsize=3.0,color='black',marker='o',linewidth=2,label='DNS')
-            hdga, = ax[0].plot(np.arange(1,num_moments+1),dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',linewidth=2,label='DGA')
+            # TODO: make a data frame and plot the moments as bars
+            #df_moments = pd.DataFrame(index=np.arange(1,num_moments+1),
+            #        data = {
+            #            "Moment": np.arange(1,num_moments+1),
+            #            "DNS": y,
+            #            "DNS_errlo": yerr[0],
+            #            "DNS_errhi": yerr[1],
+            #            "DGA": dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),
+            #            "DGA_errlo": np.zeros(num_moments),
+            #            "DGA_errhi": np.zeros(num_moments),
+            #            })
+            #print(df_moments)
+            #df_moments.plot(y=["DNS","DGA"],yerr=["DNS_errlo","DGA_errlo"],kind='bar',ax=ax[0],color=['red','skyblue'],rot=0)
+            #df_moments = pd.DataFrame(data=np.array([y,y-bounds[0],bounds[1]-y,dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1))]).T,index=np.arange(1,num_moments+1),columns=["DNS","DNS_errlo","DNS_errhi","DGA"])
+            #df_moments[["DGA","DNS"]].plot.bar(ax=ax[0],color=['red','skyblue'],rot=0,capsize=4)
+            hemp, = ax[0].plot(np.arange(1,num_moments+1),y,color='black',marker='o',markersize=20,linewidth=2,label='DNS')
+            hdga, = ax[0].plot(np.arange(1,num_moments+1),dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',markersize=20,linewidth=2,label='DGA')
+            ax[0].errorbar(np.arange(1,num_moments+1),y,yerr=yerr,ecolor='black',elinewidth=2,capsize=3.0,color='black',marker='o',markersize=20,linewidth=2,zorder=10)
             ax[0].legend(handles=[hdga,hemp],prop={'size':18})
             ax[0].set_title(r"%s $(A\to B)$ moments"%model.dam_dict[keys[k]]['name'],fontdict=font)
             ax[0].set_xlabel("Moment number $k$",fontdict=font)
@@ -1282,8 +1298,11 @@ class TPT:
             y = emp_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1))
             yerr = np.array([y-bounds[0],bounds[1]-y])
             print("y = {}, yerr = {}".format(y,yerr))
-            hemp,_,_ = ax[1].errorbar(np.arange(1,num_moments+1),y,yerr=yerr,ecolor='black',elinewidth=2,capsize=3.0,color='black',marker='o',linewidth=2,label='DNS')
-            hdga, = ax[1].plot(np.arange(1,num_moments+1),dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',linewidth=2,label='DGA')
+            #df_moments = pd.DataFrame(data=np.array([y,y-bounds[0],bounds[1]-y,dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1))]).T,index=np.arange(1,num_moments+1),columns=["DNS","DNS_errlo","DNS_errhi","DGA"])
+            #df_moments[["DGA","DNS"]].plot.bar(ax=ax[1],color=['red','skyblue'],rot=0,capsize=4)
+            hemp, = ax[1].plot(np.arange(1,num_moments+1),y,color='black',marker='o',markersize=20,linewidth=2,label='DNS')
+            hdga, = ax[1].plot(np.arange(1,num_moments+1),dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',markersize=20,linewidth=2,label='DNS')
+            ax[1].errorbar(np.arange(1,num_moments+1),y,yerr=yerr,ecolor='black',elinewidth=2,capsize=3.0,color='black',marker='o',markersize=20,linewidth=2,zorder=10)
             ax[1].legend(handles=[hdga,hemp],prop={'size':18})
             ax[1].set_title(r"%s $(B\to A)$ moments"%model.dam_dict[keys[k]]['name'],fontdict=font)
             ax[1].set_xlabel(r"Moment number $k$",fontdict=font)
