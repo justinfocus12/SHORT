@@ -6,10 +6,10 @@ def get_algo_params():
     tmax_long = 200000.0
     tmax_short = 20.0
     dt_save = 0.5
-    nshort = 100000 
+    nshort = 250000 
     istart = 0 # Highly dependent on the existing static database
     basis_type = 'MSM'
-    basis_size = 500 
+    basis_size = 1200 
     lag_time = 20.0 
     nlags = 21 
     num_moments = 2

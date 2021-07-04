@@ -324,9 +324,25 @@ class HoltonMassModel(Model):
                     'pay': funlib['vTref']['fun'], 
                     'name': funlib['vTref']['name'],
                     },
+                'heatflux_g1em5': {
+                    'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 1e-5),
+                    'name':  r"$1\{$%s$ > 1\times10^{-5}\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
+                    },
+                'heatflux_g1p5em5': {
+                    'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 1.5e-5),
+                    'name':  r"$1\{$%s$ > 1.5\times10^{-5}\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
+                    },
                 'heatflux_g2em5': {
                     'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 2e-5),
                     'name':  r"$1\{$%s$ > 2\times10^{-5}\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
+                    },
+                'heatflux_g2p5em5': {
+                    'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 2.5e-5),
+                    'name':  r"$1\{$%s$ > 2.5\times10^{-5}\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
+                    },
+                'heatflux_g3em5': {
+                    'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 3e-5),
+                    'name':  r"$1\{$%s$ > 3\times10^{-5}\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
                     },
                 'heatflux_g5em5': {
                     'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 5e-5),
@@ -335,6 +351,10 @@ class HoltonMassModel(Model):
                 'magref': {
                     'pay': funlib['magref']['fun'],
                     'name': funlib['magref']['name'],
+                    },
+                'magref_g6e6': {
+                    'pay': lambda x: 1.0*(funlib['magref']['fun'](x)*funlib['magref']['units'] > 6e6),
+                    'name': r"$1\{$%s$ > 6\times 10^6\ \mathrm{m}^2/\mathrm{s}\}$"%funlib['magref']['name'],
                     },
                 'magref_g8e6': {
                     'pay': lambda x: 1.0*(funlib['magref']['fun'](x)*funlib['magref']['units'] > 8e6),
@@ -350,7 +370,7 @@ class HoltonMassModel(Model):
                     },
                 'Uref_l0': {
                     'pay': lambda x: 1.0*(funlib['Uref']['fun'](x) < 0),
-                    'name': r"$1\{$%s$ < 0\}$"%funlib['Uref']['name'],
+                    'name': r"$1\{$%s$ < 0\ \mathrm{m/s}\}$"%funlib['Uref']['name'],
                     },
                 'Uref_ln10': {
                     'pay': lambda x: 1.0*(funlib['Uref']['fun'](x)*funlib['Uref']['units'] < -10),

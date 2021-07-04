@@ -464,12 +464,13 @@ class TPT:
         #ax[1].tick_params(axis='y',labelsize=40)
         #fig.savefig(join(self.savefolder,"{}_ensemble_ab".format(field_abb)))
         return fig,ax
-    def plot_field_long(self,model,data,field,fieldname,field_abb,field_fun=None,units=1.0,tmax=70,field_unit_symbol=None,time_unit_symbol=None,include_reactive=True):
+    def plot_field_long(self,model,data,field,fieldname,field_abb,field_fun=None,units=1.0,tmax=70,field_unit_symbol=None,time_unit_symbol=None,phases=['aa','ab','ba','bb']):
         print("Beginning plot field long")
         t_long,x_long = model.load_long_traj(self.long_simfolder)
+        self.display_1d_densities_emp(model,data,[field_abb],'vertial',phases=phases,save_flag=True)
         tmax = min(tmax,t_long[-1])
-        ab_reactive_flag = 1*(self.long_from_label==-1)*(self.long_to_label==1)
-        ba_reactive_flag = 1*(self.long_from_label==1)*(self.long_to_label==-1)
+        ab_reactive_flag = 1.0*(self.long_from_label==-1)*(self.long_to_label==1)
+        ba_reactive_flag = 1.0*(self.long_from_label==1)*(self.long_to_label==-1)
         #sys.exit("sum(ab_reactive_flag) = {}".format(np.sum(ab_reactive_flag)))
         any_trans = (np.sum(ab_reactive_flag) > 0) and (np.sum(ba_reactive_flag) > 0)
         if any_trans:
@@ -495,7 +496,7 @@ class TPT:
             field_long = field_fun(x_long[tsubset]).flatten()
             ab_long = field_fun(model.tpt_obs_xst).flatten()
         print("field_long.shape = {}".format(field_long.shape))
-        fig,ax = plt.subplots(ncols=2,figsize=(22,7),gridspec_kw={'width_ratios': [3,1]},tight_layout=True,sharey=True)
+        fig,ax = plt.subplots(ncols=2,figsize=(22,7),gridspec_kw={'width_ratios': [3,1]},sharey=True)
         ax[0].plot(t_long[tsubset],units*field_long,color='black')
         ax[0].plot(t_long[[tsubset[0],tsubset[-1]]],ab_long[0]*np.ones(2)*units,color='skyblue',linewidth=2.5)
         ax[0].plot(t_long[[tsubset[0],tsubset[-1]]],ab_long[1]*np.ones(2)*units,color='red',linewidth=2.5)
@@ -522,7 +523,7 @@ class TPT:
         ax[0].tick_params(axis='both',labelsize=25)
         #ax.yaxis.set_major_locator(ticker.NullLocator())
         # Now plot the densities in y
-        self.display_1d_densities(model,data,[field_abb],'vertical',fig=fig,ax=ax[1],include_reactive=include_reactive)
+        self.display_1d_densities(model,data,[field_abb],'vertical',fig=fig,ax=ax[1],phases=phases)
         ax[1].yaxis.set_visible(False)
         ax[1].set_xlabel("Probability density",fontdict=bigfont)
         ax[1].tick_params(axis='both',labelsize=25)
@@ -951,6 +952,7 @@ class TPT:
             print(df)
             error_df = df['DNS_unc'].to_frame('DNS')
             df[['DGA','DNS']].plot.bar(yerr=error_df,ax=ax[k],color=['red','skyblue'],rot=0,capsize=4)
+            ax[k].plot(names,np.zeros(len(names)),linestyle='--',color='black')
             ax[k].set_title(r"$\Gamma = $%s"%model.corr_dict[keys[k]]['name'])
             ax[k].set_ylabel(r"$\langle\Gamma\rangle$ by phase")
         fig.savefig(join(self.savefolder,"lifecycle_mean"),bbox_inches="tight",pad_inches=0.2)
@@ -1038,8 +1040,9 @@ class TPT:
                 comm_fwd = self.dam_moments[dk0][fwd_symbols[i]][0,:,0]
                 reactive_flag = 1*(self.long_from_label==bwd_ints[i])*(self.long_to_label==fwd_ints[i])
                 Zab = np.sum(self.chom*comm_bwd*comm_fwd)
-                mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)/Zab #np.sum(self.chom*comm_bwd*comm_fwd)
-                corr_dga = (mean_trans_dga*Zab - Zab*np.sum(self.chom*Pay))/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
+                ZPay = np.sum(self.chom*Pay)
+                mean_trans_dga = np.sum(self.chom*comm_bwd*comm_fwd*Pay)/(ZPay*Zab)
+                corr_dga = (mean_trans_dga*ZPay*Zab - Zab*ZPay)/np.sqrt(np.sum(self.chom*(comm_bwd*comm_fwd)**2)*np.sum(self.chom*Pay**2))
                 self.lifecycle_corr_dga[keys[k]][phase_symbols[i]] = corr_dga #
                 self.lifecycle_mean_dga[keys[k]][phase_symbols[i]] = mean_trans_dga #
                 self.lifecycle_corr_dga_unc[keys[k]][phase_symbols[i]] = 0.0
@@ -1047,7 +1050,8 @@ class TPT:
                 f.write("DGA: Z = %3.3e, mean = %3.3e, corr = %3.3e, "%(Zab,mean_trans_dga,corr_dga))
                 # Empirical
                 # First a point estimate
-                mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
+                #mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
+                mean_trans_emp = np.mean(reactive_flag*Pay_long)/(np.mean(reactive_flag)*np.mean(Pay_long))
                 corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
                 # Then uncertainty bounds. Do this by blocking up data, say into tenths
                 Nlong = len(t_long)
@@ -1059,7 +1063,8 @@ class TPT:
                 corr_emp_blocks = np.zeros(num_blocks)
                 for j in range(num_blocks):
                     idx = block_indices[j]
-                    mean_trans_emp_blocks[j] = np.sum(reactive_flag[idx]*Pay_long[idx])/np.sum(reactive_flag[idx])
+                    #mean_trans_emp_blocks[j] = np.sum(reactive_flag[idx]*Pay_long[idx])/np.sum(reactive_flag[idx])
+                    mean_trans_emp_blocks[j] = np.mean(reactive_flag[idx]*Pay_long[idx])/(np.mean(reactive_flag[idx])*np.mean(Pay_long[idx]))
                     corr_emp_blocks[j] = (np.mean(reactive_flag[idx]*Pay_long[idx]) - np.mean(reactive_flag[idx])*np.mean(Pay_long[idx]))/np.sqrt(np.mean(reactive_flag[idx]**2)*np.mean(Pay_long[idx]**2))
                 f.write("EMP: Z = %3.3e, mean = %3.3e, corr = %3.3e\n"%(np.mean(reactive_flag),mean_trans_emp,corr_emp))
                 print("phase_symbols[i] = {}".format(phase_symbols[i]))
@@ -2118,7 +2123,68 @@ class TPT:
             # Compare the field from A, from B, to A, to B, from A to B, and from B to A
             # Forward-in-time
         return
-    def display_1d_densities(self,model,data,theta_1d_abbs,theta_1d_orientations,fig=None,ax=None,include_reactive=True):
+    def display_1d_densities_emp(self,model,data,theta_1d_abbs,theta_1d_orientations,fig=None,ax=None,include_reactive=True,phases=['aa','ab','bb','ba'],save_flag=False):
+        funlib = model.observable_function_library()
+        keys = list(model.dam_dict.keys())
+        t_long,x_long = model.load_long_traj(self.long_simfolder)
+        comm_bwd = 1.0*(self.long_from_label==-1)
+        comm_fwd = 1.0*(self.long_to_label==1)
+        field = self.dam_moments[keys[0]]['ab'][0] # just (q-)*(q+)
+        piab = comm_fwd*comm_bwd
+        piab *= 1.0/np.mean(piab)
+        piba = (1-comm_fwd)*(1-comm_bwd)
+        piba *= 1.0/np.mean(piba)
+        piaa = (1-comm_fwd)*comm_bwd
+        piaa *= 1.0/np.mean(piaa)
+        pibb = comm_fwd*(1-comm_bwd)
+        pibb *= 1.0/np.mean(pibb)
+        weight = np.ones(len(t_long))/len(t_long)
+        for k in range(len(theta_1d_abbs)):
+            fun0 = funlib[theta_1d_abbs[k]]
+            def theta_1d_fun(x):
+                th = fun0["fun"](x).reshape((len(x),1))
+                return th
+            theta_a,theta_b = theta_1d_fun(model.xst).flatten()
+            theta_1d_name = fun0["name"]
+            theta_1d_units = fun0["units"]
+            theta_1d_unit_symbol = fun0["unit_symbol"]
+            theta_x = theta_1d_fun(x_long)
+            print("theta_x.shape = {}".format(theta_x.shape))
+            if fig is None or ax is None:
+                fig,ax = plt.subplots(figsize=(6,6))
+            _,_,hpi = helper.plot_field_1d(theta_x,np.ones(len(t_long)),weight,avg_flag=False,color='black',label=r"$\pi$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,thetaname=theta_1d_name,density_flag=True,fig=fig,ax=ax,linewidth=2.5)
+            handles = [hpi]
+            if 'ab' in phases:
+                _,_,hpiab = helper.plot_field_1d(theta_x,piab,weight,avg_flag=False,color='darkorange',label=r"$\pi_{AB}$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,fig=fig,ax=ax,thetaname=theta_1d_name,density_flag=True,linewidth=2.5)
+                handles += [hpiab]
+            if 'ba' in phases:
+                _,_,hpiba = helper.plot_field_1d(theta_x,piba,weight,avg_flag=False,color='springgreen',label=r"$\pi_{BA}$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,fig=fig,ax=ax,thetaname=theta_1d_name,density_flag=True,linewidth=2.5)
+                handles += [hpiba]
+            if 'aa' in phases:
+                _,_,hpiaa = helper.plot_field_1d(theta_x,piaa,weight,avg_flag=False,color='skyblue',label=r"$\pi_{AA}$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,fig=fig,ax=ax,thetaname=theta_1d_name,density_flag=True,linewidth=2.5)
+                handles += [hpiaa]
+            if 'bb' in phases:
+                _,_,hpibb = helper.plot_field_1d(theta_x,pibb,weight,avg_flag=False,color='red',label=r"$\pi_{BB}$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,fig=fig,ax=ax,thetaname=theta_1d_name,density_flag=True,linewidth=2.5)
+                handles += [hpibb]
+            ax.legend(handles=handles,prop={'size': 25})
+            ax.set_xlabel("DNS Probability density",fontdict=font)
+            ax.tick_params(axis='both', which='major', labelsize=35)
+            # Plot the lines for A and B
+            print("Plotting lines for A and B")
+            if theta_1d_orientations[k] == 'horizontal':
+                ylim = ax.get_ylim()
+                ax.plot(theta_a*theta_1d_units*np.ones(2),ylim,color='deepskyblue')
+                ax.plot(theta_b*theta_1d_units*np.ones(2),ylim,color='red')
+            elif theta_1d_orientations[k] == 'vertical':
+                xlim = ax.get_xlim()
+                ax.plot(xlim,theta_a*theta_1d_units*np.ones(2),color='deepskyblue')
+                ax.plot(xlim,theta_b*theta_1d_units*np.ones(2),color='red')
+            if save_flag:
+                fig.savefig(join(self.savefolder,"dens1d_{}_emp".format(theta_1d_abbs[k])))
+                plt.close(fig)
+            plt.close(fig)
+        return
+    def display_1d_densities(self,model,data,theta_1d_abbs,theta_1d_orientations,fig=None,ax=None,include_reactive=True,phases=['aa','ab','bb','ba'],save_flag=False):
         funlib = model.observable_function_library()
         keys = list(model.dam_dict.keys())
         field = self.dam_moments[keys[0]]['ab'][0] # just (q-)*(q+)
@@ -2128,6 +2194,10 @@ class TPT:
         piab *= 1.0/np.sum(piab*self.chom)
         piba = (1-comm_fwd)*(1-comm_bwd)
         piba *= 1.0/np.sum(piba*self.chom)
+        piaa = (1-comm_fwd)*comm_bwd
+        piaa *= 1.0/np.sum(piaa*self.chom)
+        pibb = comm_fwd*(1-comm_bwd)
+        pibb *= 1.0/np.sum(pibb*self.chom)
         weight = self.chom
         for k in range(len(theta_1d_abbs)):
             fun0 = funlib[theta_1d_abbs[k]]
@@ -2144,10 +2214,18 @@ class TPT:
                 fig,ax = plt.subplots(figsize=(6,6))
             _,_,hpi = helper.plot_field_1d(theta_x,np.ones(data.nshort),weight,avg_flag=False,color='black',label=r"$\pi$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,thetaname=theta_1d_name,density_flag=True,fig=fig,ax=ax,linewidth=2.5)
             handles = [hpi]
-            if include_reactive:
+            if 'ab' in phases:
                 _,_,hpiab = helper.plot_field_1d(theta_x,piab,weight,avg_flag=False,color='darkorange',label=r"$\pi_{AB}$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,fig=fig,ax=ax,thetaname=theta_1d_name,density_flag=True,linewidth=2.5)
+                handles += [hpiab]
+            if 'ba' in phases:
                 _,_,hpiba = helper.plot_field_1d(theta_x,piba,weight,avg_flag=False,color='springgreen',label=r"$\pi_{BA}$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,fig=fig,ax=ax,thetaname=theta_1d_name,density_flag=True,linewidth=2.5)
-                handles += [hpiab,hpiba]
+                handles += [hpiba]
+            if 'aa' in phases:
+                _,_,hpiaa = helper.plot_field_1d(theta_x,piaa,weight,avg_flag=False,color='skyblue',label=r"$\pi_{AA}$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,fig=fig,ax=ax,thetaname=theta_1d_name,density_flag=True,linewidth=2.5)
+                handles += [hpiaa]
+            if 'bb' in phases:
+                _,_,hpibb = helper.plot_field_1d(theta_x,pibb,weight,avg_flag=False,color='red',label=r"$\pi_{BB}$",orientation=theta_1d_orientations[k],unit_symbol=theta_1d_unit_symbol,units=theta_1d_units,fig=fig,ax=ax,thetaname=theta_1d_name,density_flag=True,linewidth=2.5)
+                handles += [hpibb]
             ax.legend(handles=handles,prop={'size': 25})
             ax.set_xlabel("Probability density",fontdict=giantfont)
             ax.tick_params(axis='both', which='major', labelsize=35)
@@ -2161,8 +2239,9 @@ class TPT:
                 xlim = ax.get_xlim()
                 ax.plot(xlim,theta_a*theta_1d_units*np.ones(2),color='deepskyblue')
                 ax.plot(xlim,theta_b*theta_1d_units*np.ones(2),color='red')
-            fig.savefig(join(self.savefolder,"dens1d_{}".format(theta_1d_abbs[k])))
-            plt.close(fig)
+            if save_flag:
+                fig.savefig(join(self.savefolder,"dens1d_{}".format(theta_1d_abbs[k])))
+                plt.close(fig)
         return
     def display_2d_currents(self,model,data,theta_2d_abbs):
         funlib = model.observable_function_library()

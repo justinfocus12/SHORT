@@ -35,7 +35,7 @@ simfolder = join(datafolder,"runs")
 if not exists(simfolder): mkdir(simfolder)
 resultfolder = join(datafolder,"results")
 if not exists(resultfolder): mkdir(resultfolder)
-dayfolder = join(resultfolder,"2021-07-03")
+dayfolder = join(resultfolder,"2021-07-04")
 if not exists(dayfolder): mkdir(dayfolder)
 expfolder = join(dayfolder,"0")
 if not exists(expfolder): mkdir(expfolder)
@@ -45,21 +45,21 @@ asymb = r"$\mathbf{a}$"
 bsymb = r"$\mathbf{b}$"
 
 # ---------- Decide what to do ----------
-least_action_flag = 0
+least_action_flag = 1
 run_long_flag =     0
 run_short_flag =    0
-compute_tpt_flag =  0
-regression_flag =   0
-proj_1d_flag =      0
-demo_flag =         0
-qp_tb_coords_flag = 0
-trans_state_flag =  0
-plot_long_2d_flag = 0
-display_cast_flag = 0
+compute_tpt_flag =  1
+regression_flag =   1
+proj_1d_flag =      1
+demo_flag =         1
+qp_tb_coords_flag = 1
+trans_state_flag =  1
+plot_long_2d_flag = 1
+display_cast_flag = 1
 lifecycle_flag =    1
-gen_rates_flag =    0
-plot_long_1d_flag = 0
-validation_flag =   0
+gen_rates_flag =    1
+plot_long_1d_flag = 1
+validation_flag =   1
 # ---------------------------------------
 
 # ---------- Set parameters --------------------------
@@ -178,12 +178,6 @@ if qp_tb_coords_flag:
     tpt.plot_prediction_curves_colored(model,data)
 # -----------------------------------------------------------------
 
-# ---------- Plot dominant transition states-----------
-if trans_state_flag:
-    tpt.plot_transition_states_all(model,data,collect_flag=True)
-    #tpt.plot_transition_states_committor(model,data,preload_idx=True)
-    #tpt.plot_transition_states_leadtime(model,data,preload_idx=True)
-# -------------------------------------------------
 
 # ------------- Plot long trajectory in 2D -----------
 if plot_long_2d_flag:
@@ -212,7 +206,7 @@ if display_cast_flag:
 
 # ----------- Display lifecycle correlations -----------
 if lifecycle_flag:
-    keys=['Uref_ln20','magref_g1e7','heatflux_g5em5','vTintref_l0']
+    keys=['Uref_ln20','heatflux_g3em5','vTintref_l0']
     tpt.write_compare_lifecycle_correlations(model,data)
     tpt.plot_lifecycle_correlations_bar(model,keys=keys)
 # ------------------------------------------------------
@@ -234,6 +228,12 @@ if plot_long_1d_flag:
     tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"magref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
 # ------------------------------------------------------
 
+# ---------- Plot dominant transition states-----------
+if trans_state_flag:
+    tpt.plot_transition_states_all(model,data,collect_flag=True)
+    #tpt.plot_transition_states_committor(model,data,preload_idx=True)
+    #tpt.plot_transition_states_leadtime(model,data,preload_idx=True)
+# -------------------------------------------------
 
 # ------------------- Validation -----------------------
 if validation_flag:
