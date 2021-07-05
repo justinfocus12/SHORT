@@ -1268,62 +1268,63 @@ class TPT:
             yerr = np.array([y-bounds[0],bounds[1]-y])
             print("y = {}, yerr = {}".format(y,yerr))
             # TODO: make a data frame and plot the moments as bars
-            #df_moments = pd.DataFrame(index=np.arange(1,num_moments+1),
-            #        data = {
-            #            "Moment": np.arange(1,num_moments+1),
-            #            "DNS": y,
-            #            "DNS_errlo": yerr[0],
-            #            "DNS_errhi": yerr[1],
-            #            "DGA": dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),
-            #            "DGA_errlo": np.zeros(num_moments),
-            #            "DGA_errhi": np.zeros(num_moments),
-            #            })
-            #print(df_moments)
-            #df_moments.plot(y=["DNS","DGA"],yerr=["DNS_errlo","DGA_errlo"],kind='bar',ax=ax[0],color=['red','skyblue'],rot=0)
-            #df_moments = pd.DataFrame(data=np.array([y,y-bounds[0],bounds[1]-y,dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1))]).T,index=np.arange(1,num_moments+1),columns=["DNS","DNS_errlo","DNS_errhi","DGA"])
-            #df_moments[["DGA","DNS"]].plot.bar(ax=ax[0],color=['red','skyblue'],rot=0,capsize=4)
-            hemp, = ax[0].plot(np.arange(1,num_moments+1),y,color='black',marker='o',markersize=20,linewidth=2,label='DNS')
-            hdga, = ax[0].plot(np.arange(1,num_moments+1),dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',markersize=20,linewidth=2,label='DGA')
-            ax[0].errorbar(np.arange(1,num_moments+1),y,yerr=yerr,ecolor='black',elinewidth=2,capsize=3.0,color='black',marker='o',markersize=20,linewidth=2,zorder=10)
-            ax[0].legend(handles=[hdga,hemp],prop={'size':18})
+            # ---- dataframe plotting method ------
+            df_moments = pd.DataFrame(index=np.arange(1,num_moments+1),
+                    data = {
+                        "Moment": np.arange(1,num_moments+1),
+                        "DGA": dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),
+                        "DGA_errlo": np.zeros(num_moments),
+                        "DGA_errhi": np.zeros(num_moments),
+                        "DNS": y,
+                        "DNS_errlo": yerr[0],
+                        "DNS_errhi": yerr[1],
+                        })
+            print(df_moments)
+            df_moments.plot(x="Moment",y=["DGA","DNS"],yerr=df_moments[["DGA_errlo","DGA_errhi","DNS_errlo","DNS_errhi"]].to_numpy().T.reshape((2,2,num_moments)),kind='bar',ax=ax[0],color=['red','black'],rot=0,error_kw=dict(ecolor='skyblue',lw=3,capsize=6,capthick=3))
+            # ---- Line plotting method -----------
+            #hemp, = ax[0].plot(np.arange(1,num_moments+1),y,color='black',marker='o',markersize=20,linewidth=2,label='DNS')
+            #hdga, = ax[0].plot(np.arange(1,num_moments+1),dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',markersize=20,linewidth=2,label='DGA')
+            #ax[0].errorbar(np.arange(1,num_moments+1),y,yerr=yerr,ecolor='black',elinewidth=2,capsize=3.0,color='black',marker='o',markersize=20,linewidth=2,zorder=10)
+            #ax[0].legend(handles=[hdga,hemp],prop={'size':18})
+            # ----------------------------
             ax[0].set_title(r"%s $(A\to B)$ moments"%model.dam_dict[keys[k]]['name'],fontdict=font)
             ax[0].set_xlabel("Moment number $k$",fontdict=font)
             ax[0].set_ylabel(r"$(E[(\int%s\,dt)^k])^{1/k}$"%model.dam_dict[keys[k]]['pay_symbol'],fontdict=font)
-            #ax[0].set_yscale('log')
-            ax[0].xaxis.set_major_locator(ticker.FixedLocator(np.arange(1,num_moments+1)))
             ax[0].tick_params(axis='both',labelsize=14)
+            # -------- B -> A moments -----------
             bounds = np.array([emp_moments_trajwise_unc_lower[1,1:]**(1/np.arange(1,num_moments+1)),emp_moments_trajwise_unc_upper[1,1:]**(1/np.arange(1,num_moments+1))])
             y = emp_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1))
             yerr = np.array([y-bounds[0],bounds[1]-y])
             print("y = {}, yerr = {}".format(y,yerr))
-            #df_moments = pd.DataFrame(data=np.array([y,y-bounds[0],bounds[1]-y,dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1))]).T,index=np.arange(1,num_moments+1),columns=["DNS","DNS_errlo","DNS_errhi","DGA"])
-            #df_moments[["DGA","DNS"]].plot.bar(ax=ax[1],color=['red','skyblue'],rot=0,capsize=4)
-            hemp, = ax[1].plot(np.arange(1,num_moments+1),y,color='black',marker='o',markersize=20,linewidth=2,label='DNS')
-            hdga, = ax[1].plot(np.arange(1,num_moments+1),dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',markersize=20,linewidth=2,label='DNS')
-            ax[1].errorbar(np.arange(1,num_moments+1),y,yerr=yerr,ecolor='black',elinewidth=2,capsize=3.0,color='black',marker='o',markersize=20,linewidth=2,zorder=10)
-            ax[1].legend(handles=[hdga,hemp],prop={'size':18})
+            # ---- dataframe plotting method ------
+            df_moments = pd.DataFrame(index=np.arange(1,num_moments+1),
+                    data = {
+                        "Moment": np.arange(1,num_moments+1),
+                        "DGA": dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1)),
+                        "DGA_errlo": np.zeros(num_moments),
+                        "DGA_errhi": np.zeros(num_moments),
+                        "DNS": y,
+                        "DNS_errlo": yerr[0],
+                        "DNS_errhi": yerr[1],
+                        })
+            print(df_moments)
+            df_moments.plot(x="Moment",y=["DGA","DNS"],yerr=df_moments[["DGA_errlo","DGA_errhi","DNS_errlo","DNS_errhi"]].to_numpy().T.reshape((2,2,num_moments)),kind='bar',ax=ax[1],color=['red','black'],rot=0,error_kw=dict(ecolor='skyblue',lw=3,capsize=6,capthick=3))
+            # ----- Line plotting method ----------
+            #hemp, = ax[1].plot(np.arange(1,num_moments+1),y,color='black',marker='o',markersize=20,linewidth=2,label='DNS')
+            #hdga, = ax[1].plot(np.arange(1,num_moments+1),dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',markersize=20,linewidth=2,label='DNS')
+            #ax[1].errorbar(np.arange(1,num_moments+1),y,yerr=yerr,ecolor='black',elinewidth=2,capsize=3.0,color='black',marker='o',markersize=20,linewidth=2,zorder=10)
+            #ax[1].legend(handles=[hdga,hemp],prop={'size':18})
+            # ---------------------------
             ax[1].set_title(r"%s $(B\to A)$ moments"%model.dam_dict[keys[k]]['name'],fontdict=font)
             ax[1].set_xlabel(r"Moment number $k$",fontdict=font)
             #ax[1].set_ylabel(r"$E[(\int_B^A%s\,dt)^n]$"%model.dam_dict[keys[k]]['pay_symbol'],fontdict=font)
-            #ax[1].set_yscale('log')
-            ax[1].xaxis.set_major_locator(ticker.FixedLocator(np.arange(1,num_moments+1)))
             ax[1].tick_params(axis='both',labelsize=14)
             fig.savefig(join(self.savefolder,"moments_abba_log_{}".format(model.dam_dict[keys[k]]['abb_full'])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
-            fig,ax = plt.subplots()# ncols=2,figsize=(12,6),tight_layout=True,sharey=True)
-            hab, = ax.plot(np.arange(1,num_moments+1),dga_moments_trajwise[0,1:]/emp_moments_trajwise[0,1:],color='red',marker='o',linewidth=2,label=r"$\frac{DGA}{Emp.}\,(A\to B)$")
-            hba, = ax.plot(np.arange(1,num_moments+1),dga_moments_trajwise[1,1:]/emp_moments_trajwise[1,1:],color='blue',marker='o',linewidth=2,label=r"$\frac{DGA}{Emp.}\,(B\to A)$")
-            ax.plot(np.arange(1,num_moments+1),np.ones(num_moments),color='black',linestyle='--')
-            ax.legend(handles=[hab,hba],prop={'size': 18})
-            ax.xaxis.set_major_locator(ticker.FixedLocator(np.arange(1,num_moments+1)))
-            ax.set_xlabel(r"Moment number $k$", fontdict=font)
-            ax.tick_params(axis='both',labelsize=14)
-            #ax[0].set_title("DGA/Empirical moment ratios",fontdict=font)
-            ax.set_title(r"%s moment ratios"%model.dam_dict[keys[k]]["name"],fontsize='medium')
-            fig.savefig(join(self.savefolder,"moments_abba_ratios_{}".format(model.dam_dict[keys[k]]['abb_full'])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
+            # ----------------- Inferring PDFs -----------------
             # Also plot the full distribution and its approximation as Gamma
             fig,ax = plt.subplots(ncols=2,figsize=(12,6),tight_layout=True,sharey=True)
+            # A -> B 
             hist,bin_edges = np.histogram(self.dam_emp[keys[k]]['ab'],bins=15,density=True)
             emp_mean = np.mean(self.dam_emp[keys[k]]['ab'])
             emp_meansq = np.mean(self.dam_emp[keys[k]]['ab']**2)
@@ -1350,9 +1351,7 @@ class TPT:
             #ax[0].legend(handles=[hemp_pdf_ab,hdga_gamma_ab],prop={'size': 16})
             ax[0].tick_params(axis='both',labelsize=14)
             ax[0].set_xlabel(r"%s ($%s$)"%(model.dam_dict[keys[k]]["name"],model.dam_dict[keys[k]]["unit_symbol"]),fontdict=font)
-            
             #  B -> A
-
             hist,bin_edges = np.histogram(self.dam_emp[keys[k]]['ba'],bins=15,density=True)
             emp_mean = np.mean(self.dam_emp[keys[k]]['ba'])
             emp_meansq = np.mean(self.dam_emp[keys[k]]['ba']**2)
