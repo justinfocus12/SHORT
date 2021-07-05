@@ -1005,6 +1005,35 @@ class HoltonMassModel(Model):
         def funz(x):
             return np.mean(fun(x),1).reshape((len(x),1))
         return funz
+    def plot_state_distribution(self,X,rflux_idx,qlevels,qsymbol,colors=None,key="U",labels=None):
+        # Given a sequence of states (X) plot their mean and std on the same graph. For the Holton-Mass model, this means different zonal wind profiles.
+        #key = "U"
+        num_levels = len(qlevels)
+        funlib = self.observable_function_library()
+        Ua,Ub = funlib[key]["fun"](self.xst)
+        units = funlib[key]["units"]
+        q = self.q
+        fig,ax = plt.subplots(figsize=(6,6))
+        # Plot a bunch of zonal wind profiles
+        #N = len(cv_x)
+        z = q['z_d'][1:-1]/1000
+        ax.plot(units*Ua,z,color='blue',linestyle='--',linewidth=4)
+        ax.plot(units*Ub,z,color='red',linestyle='--',linewidth=4)
+        if colors is None: colorlist = plt.cm.coolwarm(qlevels)
+        if labels is None: labellist = ["" for i in range(num_levels)]
+        handles = []
+        for i in range(num_levels):
+            if len(rflux_idx[i]) > 0:
+                U = funlib[key]["fun"](X[rflux_idx[i]])
+                Umean = np.mean(U,axis=0)
+                Ustd = np.std(U,axis=0)
+                handle, = ax.plot(units*Umean,z,color=colors[i],linewidth=3,label=labels[i])
+                handles += [handle]
+                ax.fill_betweenx(z,x1=units*(Umean-Ustd),x2=units*(Umean+Ustd),color=colors[i],alpha=0.5)
+        ax.legend(handles=handles,prop={'size':13})
+        ax.set_ylabel(r"$z$ (km)",fontdict=font)
+        ax.set_xlabel("{} ({})".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
+        return fig,ax
     def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None,zorderlist=None,key="U",labellist=None):
     #def plot_zdep_family_weighted(self,cv_x,cv_a,cv_b,labels,weights=None,cv_name=None,colorlist=None,units=1.0,unit_symbol=""):
         # Given a sequence of states (X) plot them all on the same graph. For the Holton-Mass model, this means different zonal wind profiles.

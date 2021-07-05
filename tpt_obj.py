@@ -906,7 +906,7 @@ class TPT:
         index = ['aa','ab','bb','ba']
         # Correlations
         maxcorr = 0
-        fig,ax = plt.subplots(nrows=len(keys),figsize=(6,3*len(keys)),tight_layout=True,sharex=True)
+        fig,ax = plt.subplots(nrows=len(keys),figsize=(6,3*len(keys)),sharex=True)
         for k in range(len(keys)):
             print("key = {}. corr_dga range = ({},{}). corr_emp range = ({},{})".format(keys[k],np.min(self.lifecycle_corr_dga[keys[k]]),np.max(self.lifecycle_corr_dga[keys[k]]),np.min(self.lifecycle_corr_emp[keys[k]]),np.max(self.lifecycle_corr_emp[keys[k]])))
             data = []
@@ -923,8 +923,7 @@ class TPT:
             print(df)
             #df.plot(x="Phase",y=["DGA","DNS"], yerr=["DGA_unc","DNS_unc"], kind='bar', ax=ax[k], color=['red','skyblue'], rot=0)
             #df.plot(x="Phase",y=["DGA","DNS"],yerr=["DGA_unc","DNS_unc"],kind='bar',ax=ax[k], color=['red','skyblue'],rot=0)
-            error_df = df['DNS_unc'].to_frame('DNS')
-            df[['DGA','DNS']].plot.bar(yerr=error_df,ax=ax[k],color=['red','skyblue'],rot=0,capsize=4)
+            df.plot.bar(x="Phase",y=['DGA','DNS'],yerr=df[["DGA_unc","DNS_unc"]].to_numpy().T,ax=ax[k],color=['red','skyblue'],rot=0,capsize=4)
             ax[k].set_title(r"$\Gamma = $%s"%model.corr_dict[keys[k]]['name'])
             ax[k].set_ylabel(r"Corr($\Gamma,q^+q^-$)")
             ax[k].plot(names,np.zeros(len(names)),linestyle='--',color='black')
@@ -950,11 +949,10 @@ class TPT:
                 maxcorr = max(maxmean,np.max(np.abs(data[-1][1:])))
             df = pd.DataFrame(data,index=index,columns=["Phase","DGA","DNS","DGA_unc","DNS_unc"])
             print(df)
-            error_df = df['DNS_unc'].to_frame('DNS')
-            df[['DGA','DNS']].plot.bar(yerr=error_df,ax=ax[k],color=['red','skyblue'],rot=0,capsize=4)
+            df.plot.bar(x="Phase",y=['DGA','DNS'],yerr=df[["DGA_unc","DNS_unc"]].to_numpy().T,ax=ax[k],color=['red','skyblue'],rot=0,capsize=4)
             ax[k].plot(names,np.zeros(len(names)),linestyle='--',color='black')
             ax[k].set_title(r"$\Gamma = $%s"%model.corr_dict[keys[k]]['name'])
-            ax[k].set_ylabel(r"$\langle\Gamma\rangle$ by phase")
+            ax[k].set_ylabel(r"$\langle\Gamma\rangle$ (phase/total)")
         fig.savefig(join(self.savefolder,"lifecycle_mean"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
@@ -2928,7 +2926,7 @@ class TPT:
     def plot_transition_states_all(self,model,data,collect_flag=True):
         for dirn in ['ab','ba']:
             # First plot the profiles with a small number of levels
-            num_levels = 4
+            num_levels = 3
             num_per_level = 5
             if collect_flag: 
                 _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.1,0.9])
@@ -2936,6 +2934,7 @@ class TPT:
             for func_key in ["U","vT","mag"]:
                 self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,func_key=func_key)
                 self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
+            sys.exit()
             # Next plot the evolution
             num_levels = 15
             num_per_level = 5
@@ -2949,6 +2948,7 @@ class TPT:
     def collect_transition_states(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,tolerance=np.inf,ramp_bounds=None):
         # ramp_name can be either committor or leadtime
         # dirn is 'ab' or 'ba'
+        # Collect all states down to a given fraction of the maximum
         Nx,Nt,xdim = data.X.shape
         key = list(self.dam_moments.keys())[0]
         fwd_key = 'xb' if dirn=='ab' else 'xa'
@@ -3040,6 +3040,8 @@ class TPT:
         num_total_states = 0
         colorlist = []
         labellist = []
+        labellist_unique = []
+        colorlist_unique = []
         real_levels = [] #np.zeros((num_levels,num_per_level))
         rflux_idx_flat = []
         print("levels = {}, minlevel = {}, maxlevel = {}".format(levels,minlevel,maxlevel))
@@ -3055,8 +3057,11 @@ class TPT:
             rflux_idx_flat += rflux_idx[plsi]
             norm_level = (levels[plsi]-minlevel)/(maxlevel-minlevel)
             color = cmap(norm_level) if norm_level != 0.5 else 'gold'
+            colorlist_unique += [color]
             colorlist += [color for j in range(numi)]
-            if numi > 0: labellist += [r"$%s=%.1f$"%(flux_dict["symbol"],levels[plsi])] + ["" for j in range(numi-1)]
+            if numi > 0: 
+                labellist_unique += [r"$%s=%.1f$"%(flux_dict["symbol"],levels[plsi])]
+                labellist += [labellist_unique[-1]] + ["" for j in range(numi-1)]
             real_levels += [levels[plsi] for j in range(numi)] #[i,:] = levels[plot_level_subset[i]]
         zorderlist = np.random.permutation(np.arange(num_total_states))
         # Plot now
@@ -3065,6 +3070,9 @@ class TPT:
         ax.set_title(title,fontdict=font)
         fig.savefig(join(self.savefolder,"trans_states_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
+        # Plot mean and standard deviation
+        fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux_idx,levels[plot_level_subset],ramp_name,colors=colorlist_unique,key=func_key,labels=labellist_unique)
+        fig.savefig(join(self.savefolder,"trans_state_dist_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
         return
     def plot_transition_states_committor(self,model,data,preload_idx=False):
         # First, the finest-grained num_per_level and num_levels
