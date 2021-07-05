@@ -1,0 +1,182 @@
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1505: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1506: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1536: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1537: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1561: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1562: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1588: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1589: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1614: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1615: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1641: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1230: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1231: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1303: RuntimeWarning: invalid value encountered in power
+  "DGA": dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1)),
+/home/jf4241/SHORT/tpt_obj.py:1368: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:1216: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1230: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 4.588078509026673, tolerance: 1.643922250801065
+  model = cd_fast.enet_coordinate_descent(
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 2.4270136270915827, tolerance: 1.7259122366944646
+  model = cd_fast.enet_coordinate_descent(
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 6.197003211949777, tolerance: 1.85654602486536
+  model = cd_fast.enet_coordinate_descent(
+/home/jf4241/SHORT/tpt_obj.py:2896: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 6.940416555969932, tolerance: 2.348626733591184
+  model = cd_fast.enet_coordinate_descent(
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1505: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1506: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1536: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1537: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1561: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1562: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1588: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1589: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1614: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1615: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1641: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1505: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1506: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1536: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1537: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1561: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1562: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1588: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1589: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1614: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1615: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1641: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1505: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1506: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1536: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1537: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1561: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1562: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1588: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1589: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1614: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1615: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1641: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1505: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1506: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1536: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1537: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1561: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1562: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1588: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1589: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1614: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1615: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1641: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1230: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1231: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1303: RuntimeWarning: invalid value encountered in power
+  "DGA": dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1)),
+/home/jf4241/SHORT/tpt_obj.py:1368: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:1216: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1230: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:2896: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2896: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2896: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2896: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
