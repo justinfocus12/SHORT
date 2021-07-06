@@ -16,6 +16,7 @@ bigfont = {'family': 'serif', 'size': 40}
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import scipy.sparse as sps
+from scipy.interpolate import interp1d
 import time
 import os
 from os.path import join,exists
@@ -1033,6 +1034,23 @@ class HoltonMassModel(Model):
         ax.legend(handles=handles,prop={'size':13})
         ax.set_ylabel(r"$z$ (km)",fontdict=font)
         ax.set_xlabel("{} ({})".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
+        return fig,ax
+    def plot_profile_evolution(self,prof,levels,func_key):
+        # Plot a sequence of profiles, smoothly, as in the least action path.
+        print("prof.shape = {}".format(prof.shape))
+        print("levels.shape = {}".format(levels.shape))
+        funlib = self.observable_function_library()
+        n = prof.shape[1]
+        num_snaps = 50
+        levels_interp = np.linspace(levels[0],levels[-1],num_snaps)
+        prof_interp = np.zeros((num_snaps,n))
+        for i in range(n):
+            prof_interp[:,i] = interp1d(levels,prof[:,i],kind='cubic')(levels_interp)
+        z = self.q['z_d'][1:-1]/1000
+        lz,zl = np.meshgrid(levels_interp,z,indexing='ij')
+        fig,ax = plt.subplots()
+        im = ax.contourf(lz,zl,prof_interp*funlib[func_key]["units"],cmap=plt.cm.coolwarm)
+        ax.set_ylabel(r"$z$ (km)",fontdict=font)
         return fig,ax
     def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None,zorderlist=None,key="U",labellist=None):
     #def plot_zdep_family_weighted(self,cv_x,cv_a,cv_b,labels,weights=None,cv_name=None,colorlist=None,units=1.0,unit_symbol=""):

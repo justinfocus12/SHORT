@@ -1505,7 +1505,7 @@ class TPT:
                     if j == 1 and keys[k] != 'one':
                         fieldname = r"$E_x[%s|A\to B]/E_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
                         field = field/(self.dam_moments['one']['ab'][1])
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
                         fsuff = 'castpertime_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
                         plt.close(fig)
@@ -1540,7 +1540,7 @@ class TPT:
                     if j == 1 and keys[k] != 'one':
                         fieldname = r"$E_x[%s|B\to A]/E_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
                         field = field/(self.dam_moments['one']['ba'][1])
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
                         fsuff = 'castpertime_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
                         plt.close(fig)
@@ -2934,7 +2934,7 @@ class TPT:
             if collect_flag: 
                 _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.1,0.9])
                 _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,tolerance=5.0,ramp_bounds=[0.25,0.75])
-            for func_key in ["U","vT","mag"]:
+            for func_key in ["U","vT"]:
                 self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,func_key=func_key)
                 self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
             # Next plot the evolution
@@ -2943,9 +2943,11 @@ class TPT:
             if collect_flag: 
                 _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.05,0.95])
                 _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,tolerance=5.0,ramp_bounds=[0.01,0.99])
-            for func_key in ["Uref","magref","vTref"]:
+            for func_key in ["Uref"]:
                 self.plot_maxflux_path(model,data,'committor',dirn,num_per_level,num_levels,func_key=func_key)
                 self.plot_maxflux_path(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
+            for func_key in ["U"]:
+                self.plot_maxflux_profile(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
         return
     def collect_transition_states(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,tolerance=np.inf,ramp_bounds=None):
         # ramp_name can be either committor or leadtime
@@ -3000,6 +3002,26 @@ class TPT:
             })
         pickle.dump(flux_dict,open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"wb"))
         return rflux_idx
+    def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,func_key="U"):
+        # Plot the mean profile evolving over time (not committor)
+        funlib = model.observable_function_library()
+        flux_dict = pickle.load(open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"rb"))
+        rflux_idx = flux_dict["idx"]
+        levels = flux_dict["levels"]
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
+        fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
+        n = len(fxa) # Number of entries in a profile
+        fx_mean = np.zeros((num_levels,n))
+        for i in range(num_levels):
+            fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
+            fx_mean[i] = np.nanmean(fxi,axis=0)
+        fig,ax = model.plot_profile_evolution(fx_mean,levels,func_key)
+        ax.set_title("Max-flux %s$(z)$ profile"%(funlib[func_key]["name"]))
+        fig.savefig(join(self.savefolder,"maxflux_profile_%s_funckey%s"%(dirn,func_key)))
+        plt.close(fig)
+        print("Just saved in {}".format(self.savefolder))
+        return
     def plot_maxflux_path(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,func_key="Uref"):
         # Plot any observable function at the gates, as a timeseries.
         funlib = model.observable_function_library()
@@ -3008,11 +3030,8 @@ class TPT:
         rflux_idx = flux_dict["idx"]
         levels = flux_dict["levels"]
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-        fig,ax = plt.subplots()
         print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
         fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
-        ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
-        ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
         # Instead of a scatter plot, make a mean-std plot
         fx_mean = np.zeros(num_levels)
         fx_std = np.zeros(num_levels)
@@ -3023,11 +3042,14 @@ class TPT:
             fx_std[i] = np.std(fxi)
             #ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
         levels_interp = np.linspace(levels[0],levels[-1],50)
-        fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean*funlib[func_key]["units"])(levels_interp)
-        fx_std_interp = scipy.interpolate.interp1d(levels,fx_std*funlib[func_key]["units"])(levels_interp)
+        fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean)(levels_interp)
+        fx_std_interp = scipy.interpolate.interp1d(levels,fx_std)(levels_interp)
+        fig,ax = plt.subplots()
+        ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
+        ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
         ax.scatter(levels,fx_mean*funlib[func_key]["units"],color='black',marker='o')
         color = 'darkorange' if dirn=='ab' else 'mediumspringgreen'
-        ax.fill_between(levels_interp,(fx_mean_interp-fx_std_interp)*funlib[func_key]["units"],(fx_mean_interp+fx_std_interp)*funlib[func_key]["units"],color='green',alpha=0.5)
+        ax.fill_between(levels_interp,(fx_mean_interp-fx_std_interp)*funlib[func_key]["units"],(fx_mean_interp+fx_std_interp)*funlib[func_key]["units"],color=color,alpha=0.5)
         if ramp_name == "committor":
             xlab = r"$P_x\{x\to B\}$" if dirn=='ab' else r"$P_x\{x\to A\}$"
         elif ramp_name == "leadtime":
