@@ -517,7 +517,7 @@ class TPT:
         if field_unit_symbol is not None: ylab += " ({})".format(field_unit_symbol)
         ax[0].set_ylabel(ylab,fontdict=bigfont)
         ylim = ax[0].get_ylim()
-        fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1],8)
+        fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
         ax[0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
         #ax.set_title("Long integration",fontdict=font)
         ax[0].tick_params(axis='both',labelsize=25)
@@ -918,7 +918,7 @@ class TPT:
                 }))
             maxcorr = 1.1*np.nanmax(np.abs(df[["DGA","DNS"]].to_numpy() + df[["DGA_unc","DNS_unc"]].to_numpy()))
             print(df)
-            df.plot(kind="bar",x="Phase",y=['DGA','DNS'],yerr=df[["DGA_unc","DNS_unc"]].to_numpy().T,ax=ax[k],color=['red','black'],rot=0,error_kw=dict(ecolor='skyblue',lw=3,capsize=6,capthick=3))
+            df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=df[["DNS_unc","DGA_unc"]].to_numpy().T,ax=ax[k],color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
             ax[k].set_title(r"$\Gamma = $%s"%model.corr_dict[keys[k]]['name'])
             ax[k].set_ylabel(r"Corr($\Gamma,q^+q^-$)")
             ax[k].plot(names,np.zeros(len(names)),linestyle='--',color='black')
@@ -940,10 +940,10 @@ class TPT:
                 }))
             maxmean = 1.1*np.nanmax(np.abs(df[["DGA","DNS"]].to_numpy() + df[["DGA_unc","DNS_unc"]].to_numpy()))
             print(df)
-            df.plot(kind="bar",x="Phase",y=['DGA','DNS'],yerr=df[["DGA_unc","DNS_unc"]].to_numpy().T,ax=ax[k],color=['red','black'],rot=0,error_kw=dict(ecolor='skyblue',lw=3,capsize=6,capthick=3))
+            df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=df[["DNS_unc","DGA_unc"]].to_numpy().T,ax=ax[k],color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
             ax[k].plot(names,np.ones(len(names)),linestyle='--',color='black')
             ax[k].set_title(r"$\Gamma = $%s"%model.corr_dict[keys[k]]['name'])
-            ax[k].set_ylabel(r"$\langle\Gamma\rangle$ (phase/total)")
+            ax[k].set_ylabel(r"Phase overrepresentation")
             ax[k].set_yscale('log')
         fig.savefig(join(self.savefolder,"lifecycle_mean"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
@@ -1164,8 +1164,8 @@ class TPT:
                 ax.set_xlabel(r"$%s (%s)$"%(model.dam_dict[keys[k]]['name_full'],unit_symbol_k),fontdict=font)
                 ax.set_ylabel(r"$%s (%s)$"%(model.dam_dict['one']['name_full'],unit_symbol_t),fontdict=font)
                 xlim,ylim = ax.get_xlim(),ax.get_ylim()
-                fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
-                fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+                fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1],numdiv=100)
+                fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1],numdiv=100)
                 ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
                 ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
                 ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=4))
@@ -2928,6 +2928,7 @@ class TPT:
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
     def plot_transition_states_all(self,model,data,collect_flag=True):
+        # TODO: put FW and TPT results side by side as parallel as possible
         for dirn in ['ab','ba']:
             # First plot the profiles with a small number of levels
             num_levels = 3

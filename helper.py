@@ -23,10 +23,10 @@ def mantexp(num):
     exponent = int(np.log10(np.abs(num)))
     mantissa = num/(10**exponent)
     if np.abs(mantissa) < 1:
-        mantissa += np.sign(mantissa)
+        mantissa *= 10
         exponent -= 1
     return mantissa,exponent
-def generate_sci_fmt(xmin,xmax,numdiv=10):
+def generate_sci_fmt(xmin,xmax,numdiv=100):
     # Print to two sig figs
     eps = (xmax-xmin)/numdiv
     print("eps = {}".format(eps))
@@ -290,8 +290,8 @@ def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldnam
     ax0.tick_params(axis='x',labelsize=14)
     ax0.tick_params(axis='y',labelsize=14)
     xlim,ylim = ax0.get_xlim(),ax0.get_ylim()
-    fmt_x = generate_sci_fmt(xlim[0],xlim[1],10)
-    fmt_y = generate_sci_fmt(ylim[0],ylim[1],10)
+    fmt_x = generate_sci_fmt(xlim[0],xlim[1])
+    fmt_y = generate_sci_fmt(ylim[0],ylim[1])
     #if fmt_x is None:
     #    fmt_x = fmt if xlim[1]-xlim[0]<1e3 else sci_fmt
     #if fmt_y is None:
