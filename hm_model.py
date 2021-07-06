@@ -240,60 +240,76 @@ class HoltonMassModel(Model):
     def set_param_folder(self):
         self.param_foldername = ("du{}_h{}".format(self.q['du_per_day'],self.q['hB_d'])).replace(".","p")
         return
-    def plot_least_action(self,physical_param_folder,fun_name="U"):
+    def plot_least_action(self,physical_param_folder):
         funlib = self.observable_function_library()
         # Given the noise forcing, plot a picture of the least action pathway
         q = self.q
         n = q['Nz']-1
         sig = q['sig_mat']
-        obs_xst = funlib[fun_name]["fun"](self.tpt_obs_xst)
-        units = funlib[fun_name]["units"]
-        unit_symbol = funlib[fun_name]["unit_symbol"]
-        # A -> B
-        fig,ax = plt.subplots(nrows=3,ncols=2,figsize=(18,18),sharex=True,constrained_layout=True)
+        z = q['z_d'][1:-1]/1000
+        # -------------------- A -> B ----------------------
+        fig,ax = plt.subplots(nrows=3,ncols=1,figsize=(6,18),sharex=True)
         wmin = load(join(physical_param_folder,"wmin_dirn1.npy"))
         xmin = load(join(physical_param_folder,"xmin_dirn1.npy"))
         tmin = load(join(physical_param_folder,"tmin_dirn1.npy"))
-        obs = funlib[fun_name]["fun"](self.tpt_observables(xmin))
-        dU = (sig.dot(wmin.T)).T[:,2*n:3*n] # This part is specific to U
-        z = q['z_d'][1:-1]/1000
+        tmin -= tmin[-1]
         tz,zt = np.meshgrid(tmin,z,indexing='ij')
-        ax[0,0].plot(tmin,units*obs[:,q['zi']],color='black')
-        ax[0,0].plot(tmin[[0,-1]],units*obs_xst[0,q['zi']]*np.ones(2),color='skyblue')
-        ax[0,0].plot(tmin[[0,-1]],units*obs_xst[1,q['zi']]*np.ones(2),color='red')
-        im = ax[1,0].contourf(tz,zt,units*obs,cmap=plt.cm.coolwarm)
-        im = ax[2,0].contourf(tz[:-1,:],zt[:-1,:],dU,cmap=plt.cm.coolwarm)
-        # B -> A
-        wmin = load(join(physical_param_folder,"wmin_dirn-1.npy"))
-        xmin = load(join(physical_param_folder,"xmin_dirn-1.npy"))
-        tmin = load(join(physical_param_folder,"tmin_dirn-1.npy"))
-        obs = funlib[fun_name]["fun"](self.tpt_observables(xmin))
-        dU = (sig.dot(wmin.T)).T[:,2*n:3*n]
-        z = q['z_d'][1:-1]/1000
-        tz,zt = np.meshgrid(tmin,z,indexing='ij')
-        ax[0,1].plot(tmin,units*obs[:,q['zi']],color='black')
-        ax[0,1].plot(tmin[[0,-1]],units*obs_xst[0,q['zi']]*np.ones(2),color='skyblue')
-        ax[0,1].plot(tmin[[0,-1]],units*obs_xst[1,q['zi']]*np.ones(2),color='red')
-        im = ax[1,1].contourf(tz,zt,units*obs,cmap=plt.cm.coolwarm)
-        im = ax[2,1].contourf(tz[:-1,:],zt[:-1,:],dU,cmap=plt.cm.coolwarm)
-        # Common legends
-        #fig.suptitle("Least action paths",fontdict=bigfont)
-        ax[0,0].set_title(r"$A\to B$ least action",fontdict=bigfont)
-        ax[0,1].set_title(r"$B\to A$ least action",fontdict=bigfont)
-        ax[1,0].set_title("%s"%(funlib[fun_name]["name"]),fontdict=bigfont)
-        ax[1,1].set_title("%s"%(funlib[fun_name]["name"]),fontdict=bigfont)
-        ax[2,0].set_title(r"$\delta U(t)$",fontdict=bigfont)
-        ax[2,1].set_title(r"$\delta U(t)$",fontdict=bigfont)
-        ax[0,0].set_ylabel("%s(%d km) (%s)"%(funlib[fun_name]["name"],self.ref_alt,funlib[fun_name]["unit_symbol"]),fontdict=bigfont)
-        ax[1,0].set_ylabel(r"$z\,(\mathrm{km})$",fontdict=bigfont)
-        ax[2,0].set_ylabel(r"$z\,(\mathrm{km})$",fontdict=bigfont)
-        # Tick labels
-        for i in range(ax.shape[0]):
-            for j in range(ax.shape[1]):
-                ax[i,j].tick_params(axis='both',labelsize=30)
+        #dU = (sig.dot(wmin.T)).T[:,2*n:3*n] # This part is specific to U
+        # Top row: U(30 km) 
+        obs_xst = funlib["Uref"]["fun"](self.tpt_obs_xst)
+        obs = funlib["Uref"]["fun"](self.tpt_observables(xmin))
+        units = funlib["Uref"]["units"]
+        unit_symbol = funlib["U"]["unit_symbol"]
+        ax[0].plot(tmin,units*obs,color='black')
+        ax[0].plot(tmin[[0,-1]],units*obs_xst[0]*np.ones(2),color='skyblue')
+        ax[0].plot(tmin[[0,-1]],units*obs_xst[1]*np.ones(2),color='red')
+        ax[0].set_ylabel("%s (%s)"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=font)
+        ax[0].set_title(r"Least action ($A\to B$)",fontdict=font)
+        # Next row: U(z)
+        obs = funlib["U"]["fun"](self.tpt_observables(xmin))
+        im = ax[1].contourf(tz,zt,units*obs,cmap=plt.cm.coolwarm)
+        ax[1].set_ylabel(r"$z$ (km)",fontdict=font)
+        ax[1].set_title(r"%s$(z)$"%(funlib["U"]["name"]),fontdict=font)
+        # Next row: Psi(z)
+        obs = funlib["mag"]["fun"](self.tpt_observables(xmin))
+        im = ax[2].contourf(tz[:-1,:],zt[:-1,:],obs[:-1,:],cmap=plt.cm.coolwarm)
+        ax[2].set_ylabel(r"$z$ (km)",fontdict=font)
+        ax[2].set_title(r"%s$(z)$"%(funlib["mag"]["name"]),fontdict=font)
         # Save
-        fig.savefig(join(physical_param_folder,"fw_plot_%s"%fun_name))
+        ax[-1].set_xlabel(r"Time to $B$",fontdict=font)
+        fig.savefig(join(physical_param_folder,"fw_ab_plot"))
         plt.close(fig)
+        # B -> A
+        #wmin = load(join(physical_param_folder,"wmin_dirn-1.npy"))
+        #xmin = load(join(physical_param_folder,"xmin_dirn-1.npy"))
+        #tmin = load(join(physical_param_folder,"tmin_dirn-1.npy"))
+        #obs = funlib[fun_name]["fun"](self.tpt_observables(xmin))
+        #dU = (sig.dot(wmin.T)).T[:,2*n:3*n]
+        #z = q['z_d'][1:-1]/1000
+        #tz,zt = np.meshgrid(tmin,z,indexing='ij')
+        #ax[0,1].plot(tmin,units*obs[:,q['zi']],color='black')
+        #ax[0,1].plot(tmin[[0,-1]],units*obs_xst[0,q['zi']]*np.ones(2),color='skyblue')
+        #ax[0,1].plot(tmin[[0,-1]],units*obs_xst[1,q['zi']]*np.ones(2),color='red')
+        #im = ax[1,1].contourf(tz,zt,units*obs,cmap=plt.cm.coolwarm)
+        #im = ax[2,1].contourf(tz[:-1,:],zt[:-1,:],dU,cmap=plt.cm.coolwarm)
+        ## Common legends
+        ##fig.suptitle("Least action paths",fontdict=bigfont)
+        #ax[0,0].set_title(r"$A\to B$ least action",fontdict=bigfont)
+        #ax[0,1].set_title(r"$B\to A$ least action",fontdict=bigfont)
+        #ax[1,0].set_title("%s"%(funlib[fun_name]["name"]),fontdict=bigfont)
+        #ax[1,1].set_title("%s"%(funlib[fun_name]["name"]),fontdict=bigfont)
+        #ax[2,0].set_title(r"$\delta U(t)$",fontdict=bigfont)
+        #ax[2,1].set_title(r"$\delta U(t)$",fontdict=bigfont)
+        #ax[0,0].set_ylabel("%s(%d km) (%s)"%(funlib[fun_name]["name"],self.ref_alt,funlib[fun_name]["unit_symbol"]),fontdict=bigfont)
+        #ax[1,0].set_ylabel(r"$z\,(\mathrm{km})$",fontdict=bigfont)
+        #ax[2,0].set_ylabel(r"$z\,(\mathrm{km})$",fontdict=bigfont)
+        ## Tick labels
+        #for i in range(ax.shape[0]):
+        #    for j in range(ax.shape[1]):
+        #        ax[i,j].tick_params(axis='both',labelsize=30)
+        ## Save
+        #fig.savefig(join(physical_param_folder,"fw_plot_%s"%fun_name))
+        #plt.close(fig)
         return 
     def sampling_features(self,x,algo_params):
         # x must be the output of tpt_observables

@@ -2889,7 +2889,7 @@ class TPT:
         plt.close(fig)
         print("Prediction curves plotted")
         return
-    def maximize_rflux_on_surface(self,model,data,theta_x,comm_bwd,comm_fwd,weight,theta_level,theta_tol,max_num_states):
+    def maximize_rflux_on_surface(self,model,data,theta_x,comm_bwd,comm_fwd,weight,theta_level,theta_tol,max_num_states,frac_of_max):
         print("theta_x.shape = {}".format(theta_x.shape))
         Jup,Jdn = self.project_current_new(model,data,theta_x,comm_bwd,comm_fwd)
         print("Jup.shape = {}, Jdn.shape = {}".format(Jup.shape,Jdn.shape))
@@ -2898,18 +2898,19 @@ class TPT:
         Jdn = Jdn.flatten()
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
         idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
-        print("\tAt level {}, len(idx) = {}".format(theta_level,len(idx)))
+        print("\tAt level {}, len(idx) = {}".format(theta_level,len(idx)),end="")
         if len(idx) == 0:
-            idx = [np.argmin(np.abs(theta_x - theta_level))]
             print("WARNING: no datapoints are close to the level")
             return [],[],[]
         # Maximize reactive density constrained to the surface
         rflux = np.abs(Jdn[idx] + Jup[idx])
-        num = min(max_num_states,len(idx))
-        if num < len(idx):
-            rflux_max_idx = np.argpartition(-rflux,num)[:num]
-        else:
-            rflux_max_idx = np.arange(len(idx))
+        rflux_max_idx = np.where(rflux > frac_of_max*np.max(rflux))[0]
+        print(" and len(rflux_max_idx) = {}".format(len(rflux_max_idx)))
+        #num = min(max_num_states,len(idx))
+        #if num < len(idx):
+        #    rflux_max_idx = np.argpartition(-rflux,num)[:num]
+        #else:
+        #    rflux_max_idx = np.arange(len(idx))
         return list(idx[rflux_max_idx]),rflux[rflux_max_idx],theta_x[idx[rflux_max_idx],tidx]
     def maximize_rdens_on_surface(self,comm_bwd,comm_fwd,weight,theta_x,theta_level,theta_tol,max_num_states):
         # Find data closest to a certain level set, and return a set of datapoints
@@ -2931,25 +2932,26 @@ class TPT:
             # First plot the profiles with a small number of levels
             num_levels = 3
             num_per_level = 5
+            frac_of_max = 0.5
             if collect_flag: 
-                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.1,0.9])
-                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,tolerance=5.0,ramp_bounds=[0.25,0.75])
+                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.1,0.9])
+                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.25,0.75])
             for func_key in ["U","vT"]:
-                self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,func_key=func_key)
-                self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
+                self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+                self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
             # Next plot the evolution
             num_levels = 15
             num_per_level = 5
             if collect_flag: 
-                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,tolerance=0.05,ramp_bounds=[0.05,0.95])
-                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,tolerance=5.0,ramp_bounds=[0.01,0.99])
+                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.05,0.95])
+                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.01,0.99])
             for func_key in ["Uref"]:
-                self.plot_maxflux_path(model,data,'committor',dirn,num_per_level,num_levels,func_key=func_key)
-                self.plot_maxflux_path(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
-            for func_key in ["U"]:
-                self.plot_maxflux_profile(model,data,'leadtime',dirn,num_per_level,num_levels,func_key=func_key)
+                self.plot_maxflux_path(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+                self.plot_maxflux_path(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+            for func_key in ["U","mag"]:
+                self.plot_maxflux_profile(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
         return
-    def collect_transition_states(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,tolerance=np.inf,ramp_bounds=None):
+    def collect_transition_states(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,tolerance=np.inf,ramp_bounds=None):
         # ramp_name can be either committor or leadtime
         # dirn is 'ab' or 'ba'
         # Collect all states down to a given fraction of the maximum
@@ -2986,12 +2988,8 @@ class TPT:
         #rflux_idx = -np.ones((len(levels),num_per_level),dtype=int) # -1 is a filler
         # TODO: build flux_idx one level at a time to allow for missing levels and stop crashing.
         for i in range(num_levels):
-            new_idx,_,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,levels[i],tolerance,num_per_level)
+            new_idx,_,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,levels[i],tolerance,num_per_level,frac_of_max)
             rflux_idx[i] += new_idx
-            #if len(new_idx) > 0:
-            #    rfluxidx[i,:len(new_idx)] = new_idx
-            #if mrs is not None:
-            #    rflux_idx = np.concatenate((rflux_idx,mrs.reshap
         # Save a dictionary with the levels and indices
         flux_dict = dict({
             "levels": levels,
@@ -3000,12 +2998,12 @@ class TPT:
             "maxlevel": maxlevel,
             "symbol": symbol,
             })
-        pickle.dump(flux_dict,open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"wb"))
+        pickle.dump(flux_dict,open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"wb"))
         return rflux_idx
-    def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,func_key="U"):
+    def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="U"):
         # Plot the mean profile evolving over time (not committor)
         funlib = model.observable_function_library()
-        flux_dict = pickle.load(open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"rb"))
+        flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
         rflux_idx = flux_dict["idx"]
         levels = flux_dict["levels"]
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
@@ -3017,15 +3015,17 @@ class TPT:
             fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
             fx_mean[i] = np.nanmean(fxi,axis=0)
         fig,ax = model.plot_profile_evolution(fx_mean,levels,func_key)
-        ax.set_title("Max-flux %s$(z)$ profile"%(funlib[func_key]["name"]))
-        fig.savefig(join(self.savefolder,"maxflux_profile_%s_funckey%s"%(dirn,func_key)))
+        xlab = r"Time to $B$" if dirn=='ab' else r"Time to $A$"
+        ax.set_xlabel(xlab,fontdict=font)
+        ax.set_title("Max-flux %s$(z)$ profile"%(funlib[func_key]["name"]),fontdict=font)
+        fig.savefig(join(self.savefolder,"maxflux_profile_%s_funckey%s"%(dirn,func_key)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         print("Just saved in {}".format(self.savefolder))
         return
-    def plot_maxflux_path(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,func_key="Uref"):
+    def plot_maxflux_path(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="Uref"):
         # Plot any observable function at the gates, as a timeseries.
         funlib = model.observable_function_library()
-        flux_dict = pickle.load(open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"rb"))
+        flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
         minlevel = flux_dict["minlevel"]
         rflux_idx = flux_dict["idx"]
         levels = flux_dict["levels"]
@@ -3042,8 +3042,8 @@ class TPT:
             fx_std[i] = np.std(fxi)
             #ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
         levels_interp = np.linspace(levels[0],levels[-1],50)
-        fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean)(levels_interp)
-        fx_std_interp = scipy.interpolate.interp1d(levels,fx_std)(levels_interp)
+        fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean,kind='cubic')(levels_interp)
+        fx_std_interp = scipy.interpolate.interp1d(levels,fx_std,kind='cubic')(levels_interp)
         fig,ax = plt.subplots()
         ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
         ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
@@ -3058,14 +3058,15 @@ class TPT:
         ax.set_ylabel("%s (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
         title = r"$A\to B$ max-flux path" if dirn=='ab' else r"$B\to A$ max-flux path"
         ax.set_title(title,fontdict=font)
-        fig.savefig(join(self.savefolder,"flux_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
+        fig.savefig(join(self.savefolder,("flux_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
-    def plot_transition_states(self,model,data,ramp_name,dirn,num_per_level=10,num_levels=3,func_key="U",plot_level_subset=None):
+    def plot_transition_states(self,model,data,ramp_name,dirn,num_per_level=10,num_levels=3,frac_of_max=0.9,func_key="U",plot_level_subset=None):
         # func is now an altitude-dependent function
         if plot_level_subset is None: plot_level_subset = np.arange(num_levels)
         if len(plot_level_subset) > num_levels: sys.exit("ERROR: plot_level_subset = {} while num_levels = {}".format(plot_level_subset,num_levels))
-        flux_dict = pickle.load(open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"rb"))
+        #flux_dict = pickle.load(open(join(self.savefolder,"flux_{}_{}_nlev{}_nplev{}".format(ramp_name,dirn,num_levels,num_per_level)),"rb"))
+        flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
         rflux_idx = flux_dict["idx"]
         levels = flux_dict["levels"]
         minlevel,maxlevel = flux_dict["minlevel"],flux_dict["maxlevel"]
@@ -3099,15 +3100,15 @@ class TPT:
                 labellist += [labellist_unique[-1]] + ["" for j in range(numi-1)]
             real_levels += [levels[plsi] for j in range(numi)] #[i,:] = levels[plot_level_subset[i]]
         zorderlist = np.random.permutation(np.arange(num_total_states))
-        # Plot now
-        fig,ax = model.plot_multiple_states(data.X[rflux_idx_flat,tidx],real_levels,ramp_name,colorlist=colorlist,zorderlist=zorderlist,key=func_key,labellist=labellist)
-        title = r"$A\to B$ transition states" if dirn=='ab' else r"$B\to A$ transition states"
-        ax.set_title(title,fontdict=font)
-        fig.savefig(join(self.savefolder,"trans_states_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
+        # DO NOT plot all the lines. 
+        #fig,ax = model.plot_multiple_states(data.X[rflux_idx_flat,tidx],real_levels,ramp_name,colorlist=colorlist,zorderlist=zorderlist,key=func_key,labellist=labellist)
+        #title = r"$A\to B$ transition states" if dirn=='ab' else r"$B\to A$ transition states"
+        #ax.set_title(title,fontdict=font)
+        #fig.savefig(join(self.savefolder,"trans_states_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
         # Plot mean and standard deviation
         fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux_idx,levels[plot_level_subset],ramp_name,colors=colorlist_unique,key=func_key,labels=labellist_unique)
-        fig.savefig(join(self.savefolder,"trans_state_dist_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
+        fig.savefig(join(self.savefolder,("trans_state_dist_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
         return
     def plot_transition_states_committor(self,model,data,preload_idx=False):
         # First, the finest-grained num_per_level and num_levels

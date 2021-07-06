@@ -91,9 +91,11 @@ if least_action_flag:
     model_lap.minimize_action(100.0,physical_param_folder,dirn=-1,maxiter=10)
     model_lap.minimize_action(100.0,physical_param_folder,dirn=1,maxiter=10)
 # Plot least action
-model.plot_least_action(physical_param_folder,"U")
-model.plot_least_action(physical_param_folder,"mag")
-model.plot_least_action(physical_param_folder,"vTint")
+model.plot_least_action(physical_param_folder)
+#sys.exit()
+#model.plot_least_action(physical_param_folder,"U")
+#model.plot_least_action(physical_param_folder,"mag")
+#model.plot_least_action(physical_param_folder,"vTint")
 # -------------------------------------------------------
 
 # --------------- Long simulation --------------
