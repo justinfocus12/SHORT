@@ -240,7 +240,8 @@ class HoltonMassModel(Model):
     def set_param_folder(self):
         self.param_foldername = ("du{}_h{}".format(self.q['du_per_day'],self.q['hB_d'])).replace(".","p")
         return
-    def plot_least_action(self,physical_param_folder):
+    def plot_least_action_scalars(self,physical_param_folder,obs_names=["Uref","magref"],fig=None,ax=None):
+        # Plot scalars evolving over time
         funlib = self.observable_function_library()
         # Given the noise forcing, plot a picture of the least action pathway
         q = self.q
@@ -248,37 +249,56 @@ class HoltonMassModel(Model):
         sig = q['sig_mat']
         z = q['z_d'][1:-1]/1000
         # -------------------- A -> B ----------------------
-        fig,ax = plt.subplots(nrows=3,ncols=1,figsize=(6,18),sharex=True)
+        wmin = load(join(physical_param_folder,"wmin_dirn1.npy"))
+        xmin = load(join(physical_param_folder,"xmin_dirn1.npy"))
+        tmin = load(join(physical_param_folder,"tmin_dirn1.npy"))
+        tmin -= tmin[-1]
+        if fig is None or ax is None: # Must be a nx1 array of ax, where n=len(ob_names)
+            fig,ax = plt.subplots(nrows=len(obs_names),ncols=1,figsize=(6,6*len(obs_names)),sharex=True)
+        for i in range(len(obs_names)):
+            # Top row: U(30 km) 
+            obs_xst = funlib[obs_names[i]]["fun"](self.tpt_obs_xst)
+            obs = funlib[obs_names[i]]["fun"](self.tpt_observables(xmin))
+            units = funlib[obs_names[i]]["units"]
+            unit_symbol = funlib[obs_names[i]]["unit_symbol"]
+            ax[i].plot(tmin,units*obs,color='black')
+            ax[i].plot(tmin[[0,-1]],units*obs_xst[0]*np.ones(2),color='skyblue',linewidth=3)
+            ax[i].plot(tmin[[0,-1]],units*obs_xst[1]*np.ones(2),color='red',linewidth=3)
+            ax[i].set_ylabel("%s (%s)"%(funlib[obs_names[i]]["name"],funlib[obs_names[i]]["unit_symbol"]),fontdict=font)
+            ax[i].set_xlabel(r"Time to $B$ (days)",fontdict=font)
+            ax[i].set_title(r"Least action path ($A\to B$)",fontdict=font)
+        return fig,ax
+    def plot_least_action_profiles(self,physical_param_folder,prof_names=["U","mag"],fig=None,ax=None):
+        funlib = self.observable_function_library()
+        # Given the noise forcing, plot a picture of the least action pathway
+        q = self.q
+        n = q['Nz']-1
+        sig = q['sig_mat']
+        z = q['z_d'][1:-1]/1000
+        # -------------------- A -> B ----------------------
         wmin = load(join(physical_param_folder,"wmin_dirn1.npy"))
         xmin = load(join(physical_param_folder,"xmin_dirn1.npy"))
         tmin = load(join(physical_param_folder,"tmin_dirn1.npy"))
         tmin -= tmin[-1]
         tz,zt = np.meshgrid(tmin,z,indexing='ij')
         #dU = (sig.dot(wmin.T)).T[:,2*n:3*n] # This part is specific to U
-        # Top row: U(30 km) 
-        obs_xst = funlib["Uref"]["fun"](self.tpt_obs_xst)
-        obs = funlib["Uref"]["fun"](self.tpt_observables(xmin))
-        units = funlib["Uref"]["units"]
-        unit_symbol = funlib["U"]["unit_symbol"]
-        ax[0].plot(tmin,units*obs,color='black')
-        ax[0].plot(tmin[[0,-1]],units*obs_xst[0]*np.ones(2),color='skyblue')
-        ax[0].plot(tmin[[0,-1]],units*obs_xst[1]*np.ones(2),color='red')
-        ax[0].set_ylabel("%s (%s)"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=font)
-        ax[0].set_title(r"Least action ($A\to B$)",fontdict=font)
-        # Next row: U(z)
-        obs = funlib["U"]["fun"](self.tpt_observables(xmin))
-        im = ax[1].contourf(tz,zt,units*obs,cmap=plt.cm.coolwarm)
-        ax[1].set_ylabel(r"$z$ (km)",fontdict=font)
-        ax[1].set_title(r"%s$(z)$"%(funlib["U"]["name"]),fontdict=font)
-        # Next row: Psi(z)
-        obs = funlib["mag"]["fun"](self.tpt_observables(xmin))
-        im = ax[2].contourf(tz[:-1,:],zt[:-1,:],obs[:-1,:],cmap=plt.cm.coolwarm)
-        ax[2].set_ylabel(r"$z$ (km)",fontdict=font)
-        ax[2].set_title(r"%s$(z)$"%(funlib["mag"]["name"]),fontdict=font)
+        if fig is None or ax is None: # Must be a (n+1)x1 array of ax, where n=len(prof_names)
+            fig,ax = plt.subplots(nrows=len(prof_names),ncols=1,figsize=(6,18),sharex=True)
+        ims = []
+        for i in range(len(prof_names)):
+            name = funlib[prof_names[i]]["name"]
+            obs = funlib[prof_names[i]]["fun"](self.tpt_observables(xmin))
+            units = funlib[prof_names[i]]["units"]
+            unit_symbol = funlib[prof_names[i]]["unit_symbol"]
+            im = ax[i].contourf(tz,zt,units*obs,cmap=plt.cm.coolwarm)
+            ims += [im]
+            fig.colorbar(im,ax=ax[i])
+            ax[i].set_ylabel(r"$z$ (km)",fontdict=font)
+            ax[i].set_title(r"Least action %s$(z)$ (%s)"%(name,unit_symbol),fontdict=font)
+            ax[i].set_xlabel(r"Time to $B$ (days)",fontdict=font)
         # Save
-        ax[-1].set_xlabel(r"Time to $B$",fontdict=font)
-        fig.savefig(join(physical_param_folder,"fw_ab_plot"))
-        plt.close(fig)
+        #fig.savefig(join(savefolder,"fw_ab_plot"))
+        #plt.close(fig)
         # B -> A
         #wmin = load(join(physical_param_folder,"wmin_dirn-1.npy"))
         #xmin = load(join(physical_param_folder,"xmin_dirn-1.npy"))
@@ -310,7 +330,7 @@ class HoltonMassModel(Model):
         ## Save
         #fig.savefig(join(physical_param_folder,"fw_plot_%s"%fun_name))
         #plt.close(fig)
-        return 
+        return fig,ax,ims
     def sampling_features(self,x,algo_params):
         # x must be the output of tpt_observables
         funlib = self.observable_function_library()
@@ -1051,7 +1071,7 @@ class HoltonMassModel(Model):
         ax.set_ylabel(r"$z$ (km)",fontdict=font)
         ax.set_xlabel("{} ({})".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
         return fig,ax
-    def plot_profile_evolution(self,prof,levels,func_key):
+    def plot_profile_evolution(self,prof,levels,func_key,fig=None,ax=None,clim=None):
         # Plot a sequence of profiles, smoothly, as in the least action path.
         print("prof.shape = {}".format(prof.shape))
         print("levels.shape = {}".format(levels.shape))
@@ -1064,10 +1084,12 @@ class HoltonMassModel(Model):
             prof_interp[:,i] = interp1d(levels,prof[:,i],kind='cubic')(levels_interp)
         z = self.q['z_d'][1:-1]/1000
         lz,zl = np.meshgrid(levels_interp,z,indexing='ij')
-        fig,ax = plt.subplots()
-        im = ax.contourf(lz,zl,prof_interp*funlib[func_key]["units"],cmap=plt.cm.coolwarm)
+        if fig is None or ax is None:
+            fig,ax = plt.subplots()
+        vmin,vmax = (None,None) if clim is None else clim
+        im = ax.contourf(lz,zl,prof_interp*funlib[func_key]["units"],cmap=plt.cm.coolwarm,vmin=vmin,vmax=vmax)
         ax.set_ylabel(r"$z$ (km)",fontdict=font)
-        return fig,ax
+        return fig,ax,im
     def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None,zorderlist=None,key="U",labellist=None):
     #def plot_zdep_family_weighted(self,cv_x,cv_a,cv_b,labels,weights=None,cv_name=None,colorlist=None,units=1.0,unit_symbol=""):
         # Given a sequence of states (X) plot them all on the same graph. For the Holton-Mass model, this means different zonal wind profiles.

@@ -56,7 +56,7 @@ qp_tb_coords_flag = 0
 trans_state_flag =  0
 plot_long_2d_flag = 0
 lifecycle_flag =    1
-display_cast_flag = 1
+display_cast_flag = 0
 gen_rates_flag =    1
 plot_long_1d_flag = 0
 validation_flag =   0
@@ -91,7 +91,7 @@ if least_action_flag:
     model_lap.minimize_action(100.0,physical_param_folder,dirn=-1,maxiter=10)
     model_lap.minimize_action(100.0,physical_param_folder,dirn=1,maxiter=10)
 # Plot least action
-model.plot_least_action(physical_param_folder)
+#model.plot_least_action(physical_param_folder)
 #sys.exit()
 #model.plot_least_action(physical_param_folder,"U")
 #model.plot_least_action(physical_param_folder,"mag")
@@ -131,6 +131,7 @@ print("TPT computation: done")
 
 # --------- Reload data and prepare to plot -----------
 tpt = pickle.load(open(join(savefolder,"tpt"),"rb"))
+tpt.label_x_long(model)
 print("Loaded TPT")
 funlib = model.observable_function_library()
 # -----------------------------------------------------

@@ -133,6 +133,22 @@ class TPT:
                 self.dam_emp[keys[k]]['ba'] += [0.5*dt*(dam_long[keys[k]][ba_starts[ri]] + 2*np.sum(dam_long[keys[k]][ba_starts[ri]:ba_ends[ri]]) + dam_long[keys[k]][ba_ends[ri]])]
             self.dam_emp[keys[k]]['ab'] = np.array(self.dam_emp[keys[k]]['ab'])
             self.dam_emp[keys[k]]['ba'] = np.array(self.dam_emp[keys[k]]['ba'])
+        # ------------ Compute the empirical rate and its variance -------------
+        self.ab_starts = ab_starts
+        self.ab_ends = ab_ends
+        self.ba_starts = ba_starts
+        self.ba_ends = ba_ends
+        self.emp_rate = len(ab_starts)/(t_long[-1] - t_long[0])
+        num_blocks = 10
+        block_size = int((len(t_long)-1)/num_blocks)
+        Nt = num_blocks*block_size
+        emp_rate_blocks = np.zeros(num_blocks)
+        for i in range(num_blocks):
+            istart = i*block_size
+            iend = (i+1)*block_size
+            emp_rate_blocks[i] = np.sum((self.ab_starts >= istart)*(self.ab_starts < iend))/(t_long[iend] - t_long[istart])
+        self.emp_rate_unc = np.std(emp_rate_blocks)
+        self.emp_return_time_unc = np.std(1/emp_rate_blocks)
         return ab_starts,ab_ends,ba_starts,ba_ends,self.dam_emp
     def compile_data(self,model,istart=0):
         print("In TPT: self.nshort = {}".format(self.nshort))
@@ -913,8 +929,8 @@ class TPT:
                 "Phase": names,
                 "DGA": [self.lifecycle_corr_dga[keys[k]][idx] for idx in index],
                 "DNS": [self.lifecycle_corr_emp[keys[k]][idx] for idx in index],
-                "DGA_unc": [self.lifecycle_corr_dga_unc[keys[k]][idx] for idx in index],
-                "DNS_unc": [self.lifecycle_corr_emp_unc[keys[k]][idx] for idx in index],
+                "DGA_unc": [2*self.lifecycle_corr_dga_unc[keys[k]][idx] for idx in index],
+                "DNS_unc": [2*self.lifecycle_corr_emp_unc[keys[k]][idx] for idx in index],
                 }))
             maxcorr = 1.1*np.nanmax(np.abs(df[["DGA","DNS"]].to_numpy() + df[["DGA_unc","DNS_unc"]].to_numpy()))
             print(df)
@@ -935,8 +951,8 @@ class TPT:
                 "Phase": names,
                 "DGA": [self.lifecycle_mean_dga[keys[k]][idx] for idx in index],
                 "DNS": [self.lifecycle_mean_emp[keys[k]][idx] for idx in index],
-                "DGA_unc": [self.lifecycle_mean_dga_unc[keys[k]][idx] for idx in index],
-                "DNS_unc": [self.lifecycle_mean_emp_unc[keys[k]][idx] for idx in index],
+                "DGA_unc": [2*self.lifecycle_mean_dga_unc[keys[k]][idx] for idx in index],
+                "DNS_unc": [2*self.lifecycle_mean_emp_unc[keys[k]][idx] for idx in index],
                 }))
             maxmean = 1.1*np.nanmax(np.abs(df[["DGA","DNS"]].to_numpy() + df[["DGA_unc","DNS_unc"]].to_numpy()))
             print(df)
@@ -1024,7 +1040,7 @@ class TPT:
             print("Pay_long.shape = {}".format(Pay_long.shape))
             f.write("Correlation function %s\n"%model.corr_dict[keys[k]]['name'])
             for i in range(len(phase_symbols)):
-                f.write("\t%s"%(phase_text_headers[i]))
+                f.write("\t%s: "%(phase_text_headers[i]))
                 # DGA
                 comm_bwd = self.dam_moments[dk0][bwd_symbols[i]][0,:,0]
                 comm_fwd = self.dam_moments[dk0][fwd_symbols[i]][0,:,0]
@@ -1041,6 +1057,7 @@ class TPT:
                 # Empirical
                 # First a point estimate
                 #mean_trans_emp = np.sum(reactive_flag*Pay_long)/np.sum(reactive_flag)
+                Z_emp = np.mean(reactive_flag)
                 mean_trans_emp = np.mean(reactive_flag*Pay_long)/(np.mean(reactive_flag)*np.mean(Pay_long))
                 corr_emp = (np.mean(reactive_flag*Pay_long) - np.mean(reactive_flag)*np.mean(Pay_long))/np.sqrt(np.mean(reactive_flag**2)*np.mean(Pay_long**2))
                 # Then uncertainty bounds. Do this by blocking up data, say into tenths
@@ -1051,13 +1068,13 @@ class TPT:
                 block_indices = np.arange(Nlong).reshape((num_blocks,block_size))
                 mean_trans_emp_blocks = np.zeros(num_blocks)
                 corr_emp_blocks = np.zeros(num_blocks)
+                Z_emp_blocks = np.zeros(num_blocks)
                 for j in range(num_blocks):
                     idx = block_indices[j]
-                    #mean_trans_emp_blocks[j] = np.sum(reactive_flag[idx]*Pay_long[idx])/np.sum(reactive_flag[idx])
+                    Z_emp_blocks[j] = np.mean(reactive_flag[idx])
                     mean_trans_emp_blocks[j] = np.mean(reactive_flag[idx]*Pay_long[idx])/(np.mean(reactive_flag[idx])*np.mean(Pay_long[idx]))
                     corr_emp_blocks[j] = (np.mean(reactive_flag[idx]*Pay_long[idx]) - np.mean(reactive_flag[idx])*np.mean(Pay_long[idx]))/np.sqrt(np.mean(reactive_flag[idx]**2)*np.mean(Pay_long[idx]**2))
-                f.write("EMP: Z = %3.3e, mean = %3.3e, corr = %3.3e\n"%(np.mean(reactive_flag),mean_trans_emp,corr_emp))
-                print("phase_symbols[i] = {}".format(phase_symbols[i]))
+                f.write("EMP: Z = %3.3e +/- %3.3e, mean = %3.3e, corr = %3.3e\n"%(Z_emp,np.std(Z_emp_blocks),mean_trans_emp,corr_emp))
                 self.lifecycle_corr_emp[keys[k]][phase_symbols[i]] = corr_emp #
                 self.lifecycle_mean_emp[keys[k]][phase_symbols[i]] = mean_trans_emp #
                 self.lifecycle_mean_emp_unc[keys[k]][phase_symbols[i]] = np.std(mean_trans_emp_blocks)
@@ -1136,7 +1153,8 @@ class TPT:
             f.write("Damage function %s\n"%model.dam_dict[keys[k]]['name_full'])
             f.write("\tA->B\n")
             dga_rate = self.dam_moments[keys[k]]['rate_avg'][0] #['rate_ab'][0]
-            emp_rate = len(self.dam_emp[keys[k]]['ab'])/(t_long[-1] - t_long[0])
+            # For empirical rate, compute both the average and the uncertainty
+            #emp_rate = len(self.dam_emp[keys[k]]['ab'])/(t_long[-1] - t_long[0])
             # Compute the correlation with T -- if the moments go up to 2
             if self.num_moments >= 2:
                 # DGA
@@ -1161,8 +1179,10 @@ class TPT:
                 ax.plot(units_k*(eg_emp + np.sqrt(vg_emp)*np.array([-1,1])), units_t*et_emp*np.ones(2), color='cyan', linestyle='-',linewidth=4,label='DNS')
                 hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
                 ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
-                ax.set_xlabel(r"$%s (%s)$"%(model.dam_dict[keys[k]]['name_full'],unit_symbol_k),fontdict=font)
-                ax.set_ylabel(r"$%s (%s)$"%(model.dam_dict['one']['name_full'],unit_symbol_t),fontdict=font)
+                ax.set_xlabel(r"$%s\,(%s)$"%(model.dam_dict[keys[k]]['name_full'],unit_symbol_k),fontdict=font)
+                ax.set_ylabel(r"$%s\,(%s)$"%(model.dam_dict['one']['name_full'],unit_symbol_t),fontdict=font)
+                ax.set_xlim([min(0,ax.get_xlim()[0]),ax.get_xlim()[1]])
+                ax.set_ylim([min(0,ax.get_ylim()[0]),ax.get_ylim()[1]])
                 xlim,ylim = ax.get_xlim(),ax.get_ylim()
                 fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1],numdiv=100)
                 fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1],numdiv=100)
@@ -1174,7 +1194,7 @@ class TPT:
                 fig.savefig(join(self.savefolder,"corr{}_ab".format(keys[k])),bbox_inches="tight",pad_inches=0.2)
                 plt.close(fig)
                 f.write("\t\tCorrelation with T: DGA: %3.3e, EMP: %3.3e\n"%(dga_corr,emp_corr))
-            f.write("\t\tRate: DGA: %3.3e, EMP: %3.3e\n"%(dga_rate,emp_rate))
+            f.write("\t\tRate: DGA: %3.3e, EMP: %3.3e +/- %3.3e; return time = %3.3e +/- %3.3e\n"%(dga_rate,self.emp_rate,self.emp_rate_unc,1/self.emp_rate,self.emp_return_time_unc))
             for i in range(num_moments+1):
                 #print("self.dam_emp[keys[k]]['ab'].shape = {}".format(self.dam_emp[keys[k]]['ab'].shape))
                 dga_avg_per_time_tweighted = units_k**i/units_t*np.sum(
@@ -1196,10 +1216,10 @@ class TPT:
                 emp_moments_trajwise_unc_lower[0,i] = emp_avg_per_traj-unc
             f.write("\tB->A\n")
             dga_rate = self.dam_moments[keys[k]]['rate_avg'][0] #['rate_ba'][0]
-            emp_rate = len(self.dam_emp[keys[k]]['ba'])/(t_long[-1] - t_long[0])
+            #emp_rate = len(self.dam_emp[keys[k]]['ba'])/(t_long[-1] - t_long[0])
             # Compute the correlation with T
             if num_moments >= 2:
-            # DGA
+                # DGA
                 egt_t_dga = np.sum(self.dam_moments[keys[k]]['ba'][1,:,0]*self.chom)/np.sum(self.dam_moments[keys[k]]['ba'][0,:,0]*self.chom)
                 eg_dga = self.dam_moments[keys[k]]['rate_ba'][1]/dga_rate
                 et_dga = self.dam_moments['one']['rate_ba'][1]/dga_rate
@@ -1234,7 +1254,7 @@ class TPT:
                 fig.savefig(join(self.savefolder,"corr{}_ba".format(keys[k])),bbox_inches="tight",pad_inches=0.2)
                 plt.close(fig)
                 f.write("\t\tCorrelation with T: DGA: %3.3e, EMP: %3.3e\n"%(dga_corr,emp_corr))
-            f.write("\t\tRate: DGA: %3.3e, EMP: %3.3e\n"%(dga_rate,emp_rate))
+            f.write("\t\tRate: DGA: %3.3e, EMP: %3.3e +/- %3.3e; return time = %3.3e +/- %3.3e\n"%(dga_rate,self.emp_rate,self.emp_rate_unc,1/self.emp_rate,self.emp_return_time_unc))
             for i in range(num_moments+1):
                 dga_avg_per_time_tweighted = units_k**i/units_t*np.sum(
                         self.dam_moments[keys[k]]['ba'][i,:,0]*self.chom)
@@ -1268,11 +1288,11 @@ class TPT:
                         "DGA_errlo": np.nan*np.ones(num_moments),
                         "DGA_errhi": np.nan*np.ones(num_moments),
                         "DNS": y,
-                        "DNS_errlo": yerr[0],
-                        "DNS_errhi": yerr[1],
+                        "DNS_errlo": 2*yerr[0],
+                        "DNS_errhi": 2*yerr[1],
                         })
             print(df_moments)
-            df_moments.plot(x="Moment",y=["DGA","DNS"],yerr=df_moments[["DGA_errlo","DGA_errhi","DNS_errlo","DNS_errhi"]].to_numpy().T.reshape((2,2,num_moments)),kind='bar',ax=ax[0],color=['red','black'],rot=0,error_kw=dict(ecolor='skyblue',lw=3,capsize=6,capthick=3))
+            df_moments.plot(x="Moment",y=["DNS","DGA"],yerr=df_moments[["DNS_errlo","DNS_errhi","DGA_errlo","DGA_errhi"]].to_numpy().T.reshape((2,2,num_moments)),kind='bar',ax=ax[0],color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
             # ---- Line plotting method -----------
             #hemp, = ax[0].plot(np.arange(1,num_moments+1),y,color='black',marker='o',markersize=20,linewidth=2,label='DNS')
             #hdga, = ax[0].plot(np.arange(1,num_moments+1),dga_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',markersize=20,linewidth=2,label='DGA')
@@ -1296,11 +1316,11 @@ class TPT:
                         "DGA_errlo": np.nan*np.ones(num_moments),
                         "DGA_errhi": np.nan*np.ones(num_moments),
                         "DNS": y,
-                        "DNS_errlo": yerr[0],
-                        "DNS_errhi": yerr[1],
+                        "DNS_errlo": 2*yerr[0],
+                        "DNS_errhi": 2*yerr[1],
                         })
             print(df_moments)
-            df_moments.plot(x="Moment",y=["DGA","DNS"],yerr=df_moments[["DGA_errlo","DGA_errhi","DNS_errlo","DNS_errhi"]].to_numpy().T.reshape((2,2,num_moments)),kind='bar',ax=ax[1],color=['red','black'],rot=0,error_kw=dict(ecolor='skyblue',lw=3,capsize=6,capthick=3))
+            df_moments.plot(x="Moment",y=["DNS","DGA"],yerr=df_moments[["DNS_errlo","DNS_errhi","DGA_errlo","DGA_errhi"]].to_numpy().T.reshape((2,2,num_moments)),kind='bar',ax=ax[1],color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
             # ----- Line plotting method ----------
             #hemp, = ax[1].plot(np.arange(1,num_moments+1),y,color='black',marker='o',markersize=20,linewidth=2,label='DNS')
             #hdga, = ax[1].plot(np.arange(1,num_moments+1),dga_moments_trajwise[1,1:]**(1/np.arange(1,num_moments+1)),color='red',marker='o',markersize=20,linewidth=2,label='DNS')
@@ -1505,7 +1525,7 @@ class TPT:
                     if j == 1 and keys[k] != 'one':
                         fieldname = r"$E_x[%s|A\to B]/E_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
                         field = field/(self.dam_moments['one']['ab'][1])
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
                         fsuff = 'castpertime_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
                         plt.close(fig)
@@ -1540,7 +1560,7 @@ class TPT:
                     if j == 1 and keys[k] != 'one':
                         fieldname = r"$E_x[%s|B\to A]/E_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
                         field = field/(self.dam_moments['one']['ba'][1])
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
                         fsuff = 'castpertime_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
                         plt.close(fig)
@@ -2929,7 +2949,7 @@ class TPT:
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
     def plot_transition_states_all(self,model,data,collect_flag=True):
         # TODO: put FW and TPT results side by side as parallel as possible
-        for dirn in ['ab','ba']:
+        for dirn in ['ab']: #,'ba']:
             # First plot the profiles with a small number of levels
             num_levels = 3
             num_per_level = 5
@@ -2946,11 +2966,35 @@ class TPT:
             if collect_flag: 
                 _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.05,0.95])
                 _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.01,0.99])
-            for func_key in ["Uref"]:
-                self.plot_maxflux_path(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
-                self.plot_maxflux_path(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
-            for func_key in ["U","mag"]:
-                self.plot_maxflux_profile(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+            # Plot least-action Uref and max-flux Uref
+            fig,ax = plt.subplots(ncols=2,nrows=3,figsize=(16,18),sharey='row',sharex='col')
+            model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]])
+            self.plot_maxflux_path(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key="Uref",fig=fig,ax=ax[0,1])
+            ax[0,1].set_xlim(ax[0,0].get_xlim())
+            #fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_scalars"),bbox_inches="tight",pad_inches=0.2)
+            #plt.close(fig)
+            # Now plot the profiles along with the least-action ones
+            #fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex='col')
+            func_key_list = ["U","mag"]
+            _,_,ims = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0])
+            for i in range(len(func_key_list)):
+                clim = np.array([ims[i].levels[0],ims[i].levels[-1]])
+                _,_,imi = self.plot_maxflux_profile(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key_list[i],fig=fig,ax=ax[i+1,1],clim=clim)
+                ax[i+1,1].set_xlim(ax[i+1,0].get_xlim())
+                fig.colorbar(imi,ax=ax[i+1,1])
+            # Set x labels to False
+            for i in range(ax.shape[0]-1):
+                ax[i,0].xaxis.set_visible(False)
+                ax[i,1].xaxis.set_visible(False)
+            # Correct position of top row
+            pos00 = ax[0,0].get_position()
+            pos10 = ax[1,0].get_position()
+            ax[0,0].set_position([pos10.x0,pos00.y0,pos10.width,pos00.height])
+            pos01 = ax[0,1].get_position()
+            pos11 = ax[1,1].get_position()
+            ax[0,1].set_position([pos11.x0,pos01.y0,pos11.width,pos01.height])
+            fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles"),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
         return
     def collect_transition_states(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,tolerance=np.inf,ramp_bounds=None):
         # ramp_name can be either committor or leadtime
@@ -3001,7 +3045,7 @@ class TPT:
             })
         pickle.dump(flux_dict,open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"wb"))
         return rflux_idx
-    def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="U"):
+    def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="U",fig=None,ax=None,clim=None):
         # Plot the mean profile evolving over time (not committor)
         funlib = model.observable_function_library()
         flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
@@ -3015,15 +3059,15 @@ class TPT:
         for i in range(num_levels):
             fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
             fx_mean[i] = np.nanmean(fxi,axis=0)
-        fig,ax = model.plot_profile_evolution(fx_mean,levels,func_key)
+        fig,ax,im = model.plot_profile_evolution(fx_mean,levels,func_key,fig=fig,ax=ax,clim=clim)
         xlab = r"Time to $B$" if dirn=='ab' else r"Time to $A$"
         ax.set_xlabel(xlab,fontdict=font)
         ax.set_title("Max-flux %s$(z)$ profile"%(funlib[func_key]["name"]),fontdict=font)
-        fig.savefig(join(self.savefolder,"maxflux_profile_%s_funckey%s"%(dirn,func_key)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        print("Just saved in {}".format(self.savefolder))
-        return
-    def plot_maxflux_path(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="Uref"):
+        #fig.savefig(join(self.savefolder,"maxflux_profile_%s_funckey%s"%(dirn,func_key)),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        #print("Just saved in {}".format(self.savefolder))
+        return fig,ax,im
+    def plot_maxflux_path(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="Uref",fig=None,ax=None):
         # Plot any observable function at the gates, as a timeseries.
         funlib = model.observable_function_library()
         flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
@@ -3045,23 +3089,24 @@ class TPT:
         levels_interp = np.linspace(levels[0],levels[-1],50)
         fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean,kind='cubic')(levels_interp)
         fx_std_interp = scipy.interpolate.interp1d(levels,fx_std,kind='cubic')(levels_interp)
-        fig,ax = plt.subplots()
+        if fig is None or ax is None:
+            fig,ax = plt.subplots()
         ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
         ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
         ax.scatter(levels,fx_mean*funlib[func_key]["units"],color='black',marker='o')
         color = 'darkorange' if dirn=='ab' else 'mediumspringgreen'
-        ax.fill_between(levels_interp,(fx_mean_interp-fx_std_interp)*funlib[func_key]["units"],(fx_mean_interp+fx_std_interp)*funlib[func_key]["units"],color=color,alpha=0.5)
+        ax.fill_between(levels_interp,(fx_mean_interp-2*fx_std_interp)*funlib[func_key]["units"],(fx_mean_interp+2*fx_std_interp)*funlib[func_key]["units"],color=color,alpha=0.5)
         if ramp_name == "committor":
             xlab = r"$P_x\{x\to B\}$" if dirn=='ab' else r"$P_x\{x\to A\}$"
         elif ramp_name == "leadtime":
             xlab = r"Time to $B$" if dirn=='ab' else r"Time to $A$"
         ax.set_xlabel(xlab,fontdict=font)
         ax.set_ylabel("%s (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
-        title = r"$A\to B$ max-flux path" if dirn=='ab' else r"$B\to A$ max-flux path"
+        title = r"Max-flux path ($A\to B$)" if dirn=='ab' else r"Max-flux path ($B\to A$)"
         ax.set_title(title,fontdict=font)
-        fig.savefig(join(self.savefolder,("flux_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        return
+        #fig.savefig(join(self.savefolder,("flux_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        return fig,ax
     def plot_transition_states(self,model,data,ramp_name,dirn,num_per_level=10,num_levels=3,frac_of_max=0.9,func_key="U",plot_level_subset=None):
         # func is now an altitude-dependent function
         if plot_level_subset is None: plot_level_subset = np.arange(num_levels)
