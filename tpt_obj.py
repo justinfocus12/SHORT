@@ -1274,7 +1274,7 @@ class TPT:
                 emp_moments_trajwise_unc_upper[1,i] = emp_avg_per_traj+unc
                 emp_moments_trajwise_unc_lower[1,i] = emp_avg_per_traj-unc
             # Plot the moments for validation -- this time with error bars!
-            fig,ax = plt.subplots(ncols=2,figsize=(12,6),sharey=True)
+            fig,ax = plt.subplots(ncols=2,figsize=(12,6),sharey=False)
             bounds = np.array([emp_moments_trajwise_unc_lower[0,1:]**(1/np.arange(1,num_moments+1)),emp_moments_trajwise_unc_upper[0,1:]**(1/np.arange(1,num_moments+1))])
             y = emp_moments_trajwise[0,1:]**(1/np.arange(1,num_moments+1))
             yerr = np.array([y-bounds[0],bounds[1]-y])
@@ -1301,7 +1301,7 @@ class TPT:
             # ----------------------------
             ax[0].set_title(r"%s $(A\to B)$ moments"%model.dam_dict[keys[k]]['name'],fontdict=font)
             ax[0].set_xlabel("Moment number $k$",fontdict=font)
-            ax[0].set_ylabel(r"$(E[(\int%s\,dt)^k])^{1/k}$"%model.dam_dict[keys[k]]['pay_symbol'],fontdict=font)
+            ax[0].set_ylabel(r"$\left\{E\left[\left(%s\right)^k\right]\right\}^{1/k}$"%model.dam_dict[keys[k]]['name_full'],fontdict=font)
             ax[0].tick_params(axis='both',labelsize=14)
             # -------- B -> A moments -----------
             bounds = np.array([emp_moments_trajwise_unc_lower[1,1:]**(1/np.arange(1,num_moments+1)),emp_moments_trajwise_unc_upper[1,1:]**(1/np.arange(1,num_moments+1))])
@@ -2986,6 +2986,8 @@ class TPT:
             for i in range(ax.shape[0]-1):
                 ax[i,0].xaxis.set_visible(False)
                 ax[i,1].xaxis.set_visible(False)
+            for i in range(ax.shape[0]):
+                ax[i,1].yaxis.set_visible(False)
             # Correct position of top row
             pos00 = ax[0,0].get_position()
             pos10 = ax[1,0].get_position()
@@ -3060,9 +3062,9 @@ class TPT:
             fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
             fx_mean[i] = np.nanmean(fxi,axis=0)
         fig,ax,im = model.plot_profile_evolution(fx_mean,levels,func_key,fig=fig,ax=ax,clim=clim)
-        xlab = r"Time to $B$" if dirn=='ab' else r"Time to $A$"
+        xlab = r"Time to $B$ (days)" if dirn=='ab' else r"Time to $A$ (days)"
         ax.set_xlabel(xlab,fontdict=font)
-        ax.set_title("Max-flux %s$(z)$ profile"%(funlib[func_key]["name"]),fontdict=font)
+        ax.set_title("Max-flux %s$(z)$ profile (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
         #fig.savefig(join(self.savefolder,"maxflux_profile_%s_funckey%s"%(dirn,func_key)),bbox_inches="tight",pad_inches=0.2)
         #plt.close(fig)
         #print("Just saved in {}".format(self.savefolder))

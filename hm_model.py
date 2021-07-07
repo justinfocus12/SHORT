@@ -294,7 +294,7 @@ class HoltonMassModel(Model):
             ims += [im]
             fig.colorbar(im,ax=ax[i])
             ax[i].set_ylabel(r"$z$ (km)",fontdict=font)
-            ax[i].set_title(r"Least action %s$(z)$ (%s)"%(name,unit_symbol),fontdict=font)
+            ax[i].set_title(r"Least action %s$(z)$ profile (%s)"%(name,unit_symbol),fontdict=font)
             ax[i].set_xlabel(r"Time to $B$ (days)",fontdict=font)
         # Save
         #fig.savefig(join(savefolder,"fw_ab_plot"))
@@ -443,7 +443,7 @@ class HoltonMassModel(Model):
                     'name': 'Heat flux (%.0f km)'%self.ref_alt,
                     'name_fwd': "\\int_0^{\\tau^+}\\overline{v'T'}(%.0f\\ \\mathrm{km})dt"%self.ref_alt, 
                     'name_bwd': "\\int_{\\tau^-}^0\\overline{v'T'}(%.0f\\ \\mathrm{km})dt"%self.ref_alt, #r"$\tau^-$",
-                    'name_full': "\\int_{\\tau^-}^{\\tau^+}\\overline{v'T'}(%.0f\\ \\mathrm{km})dt"%self.ref_alt, #r"$\tau^+-\tau^-$",
+                    'name_full': "\\int_{\\tau^-}^{\\tau^+}\\overline{v'T'}(%.0f\\ \\mathrm{km})\,dt"%self.ref_alt, #r"$\tau^+-\tau^-$",
                     'abb_fwd': 'vT+',
                     'abb_bwd': 'vT-',
                     'abb_full': 'vTfull',
