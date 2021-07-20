@@ -233,7 +233,7 @@ if plot_long_1d_flag:
 
 # ---------- Plot dominant transition states-----------
 if trans_state_flag:
-    tpt.plot_transition_states_all(model,data,collect_flag=False)
+    tpt.plot_transition_states_all(model,data,collect_flag=True)
     #tpt.plot_transition_states_committor(model,data,preload_idx=True)
     #tpt.plot_transition_states_leadtime(model,data,preload_idx=True)
 # -------------------------------------------------

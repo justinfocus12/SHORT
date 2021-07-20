@@ -2950,22 +2950,28 @@ class TPT:
     def plot_transition_states_all(self,model,data,collect_flag=True):
         # TODO: put FW and TPT results side by side as parallel as possible
         for dirn in ['ab']: #,'ba']:
-            # First plot the profiles with a small number of levels
-            num_levels = 3
-            num_per_level = 5
+
             frac_of_max = 0.5
-            if collect_flag: 
-                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.1,0.9])
-                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.25,0.75])
-            for func_key in ["U","vT"]:
-                self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
-                self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+            ## First plot the profiles with a small number of levels
+            #num_levels = 3
+            #num_per_level = 5
+            #if collect_flag: 
+            #    _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.1,0.9])
+            #    _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.25,0.75])
+            #for func_key in ["U","vT"]:
+            #    self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+            #    self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+
             # Next plot the evolution
             num_levels = 15
             num_per_level = 5
+            Nx,Nt,xdim = data.X.shape
+            funlib = model.observable_function_library()
+            ramp_projection = np.array([funlib["magref"]["fun"](data.X.reshape((Nx*Nt,xdim))),funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim)))]).T
+            print("ramp_projection.shape = {}".format(ramp_projection.shape))
             if collect_flag: 
-                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.05,0.95])
-                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.01,0.99])
+                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.01,0.99],ramp_projection=ramp_projection)
+                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.05,0.95],ramp_projection=ramp_projection)
             # Plot least-action Uref and max-flux Uref
             fig,ax = plt.subplots(ncols=2,nrows=3,figsize=(16,18),sharey='row',sharex='col')
             model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]])
@@ -2996,7 +3002,7 @@ class TPT:
             fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles"),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
         return
-    def collect_transition_states(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,tolerance=np.inf,ramp_bounds=None):
+    def collect_transition_states(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,tolerance=np.inf,ramp_bounds=None,ramp_projection=None):
         # ramp_name can be either committor or leadtime
         # dirn is 'ab' or 'ba'
         # Collect all states down to a given fraction of the maximum
@@ -3019,6 +3025,19 @@ class TPT:
             symbol = "E_x[\\tau^+|A\\to B]" if dirn=='ab' else "E_x[\\tau^+|B\\to A]"
             eps = 1e-2
             ramp = -self.dam_moments['one'][fwd_key][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
+            # ------------------------- New crazy method: project ramp ---------------------
+            if ramp_projection is not None:
+                shp,dth,thaxes,_,ramp_proj,_,_,_,bounds = helper.project_field(ramp.flatten(),np.outer(self.chom,np.ones(Nt)).flatten(),ramp_projection)
+                print("ramp_proj.shape = {}".format(ramp_proj.shape))
+                ii = ((ramp_projection[:,0] - bounds[0,0])/dth[0]).astype(int)
+                jj = ((ramp_projection[:,1] - bounds[1,0])/dth[1]).astype(int)
+                print("ii.shape = {}, jj.shape = {}".format(ii.shape,jj.shape))
+                kk = np.ravel_multi_index((ii,jj),shp)
+                print("kk.shape = {}".format(kk.shape))
+                ramp = ramp_proj.flat[kk].reshape((Nx,Nt))
+            # ------------------------------------------------------------------------------
+            print("ramp.shape = {}".format(ramp.shape))
+            # Should we project the ramp into low dimensions? 
             ramp[np.where(comm_fwd <= eps)[0]] = np.nan
             minlevel,maxlevel = np.nanmin(ramp),np.nanmax(ramp)
             ramp_min,ramp_max = minlevel + np.array(ramp_bounds)*(maxlevel - minlevel)
@@ -3096,7 +3115,7 @@ class TPT:
         ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
         ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
         ax.scatter(levels,fx_mean*funlib[func_key]["units"],color='black',marker='o')
-        ax.plot(levels_interp[ub_crossing_idx]*np.ones(2),funlib[func_key]["units"]*np.array([np.min(fx_mean),np.max(fx_mean)]),color='black',linestyle='--')
+        ax.plot(np.mean(levels_interp[ub_crossing_idx:ub_crossing_idx+2])*np.ones(2),funlib[func_key]["units"]*np.array([np.min(fx_mean),np.max(fx_mean)]),color='black',linestyle='--')
         color = 'darkorange' if dirn=='ab' else 'mediumspringgreen'
         ax.plot(levels_interp,fx_mean_interp*funlib[func_key]["units"],color='black')
         ax.fill_between(levels_interp,(fx_mean_interp-2*fx_std_interp)*funlib[func_key]["units"],(fx_mean_interp+2*fx_std_interp)*funlib[func_key]["units"],color=color,alpha=0.5)
