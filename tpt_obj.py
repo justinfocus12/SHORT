@@ -2971,8 +2971,6 @@ class TPT:
             model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]])
             self.plot_maxflux_path(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key="Uref",fig=fig,ax=ax[0,1])
             ax[0,1].set_xlim(ax[0,0].get_xlim())
-            #fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_scalars"),bbox_inches="tight",pad_inches=0.2)
-            #plt.close(fig)
             # Now plot the profiles along with the least-action ones
             #fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex='col')
             func_key_list = ["U","mag"]
@@ -3090,13 +3088,17 @@ class TPT:
             #ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
         levels_interp = np.linspace(levels[0],levels[-1],50)
         fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean,kind='cubic')(levels_interp)
+        # Find where fx_mean_interp crosses the b line first
+        ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_mean_interp-fxb)))==2)[0][0]
         fx_std_interp = scipy.interpolate.interp1d(levels,fx_std,kind='cubic')(levels_interp)
         if fig is None or ax is None:
             fig,ax = plt.subplots()
         ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
         ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
         ax.scatter(levels,fx_mean*funlib[func_key]["units"],color='black',marker='o')
+        ax.plot(levels_interp[ub_crossing_idx]*np.ones(2),funlib[func_key]["units"]*np.array([np.min(fx_mean),np.max(fx_mean)]),color='black',linestyle='--')
         color = 'darkorange' if dirn=='ab' else 'mediumspringgreen'
+        ax.plot(levels_interp,fx_mean_interp*funlib[func_key]["units"],color='black')
         ax.fill_between(levels_interp,(fx_mean_interp-2*fx_std_interp)*funlib[func_key]["units"],(fx_mean_interp+2*fx_std_interp)*funlib[func_key]["units"],color=color,alpha=0.5)
         if ramp_name == "committor":
             xlab = r"$P_x\{x\to B\}$" if dirn=='ab' else r"$P_x\{x\to A\}$"
