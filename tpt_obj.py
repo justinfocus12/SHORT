@@ -2931,7 +2931,7 @@ class TPT:
         #    rflux_max_idx = np.argpartition(-rflux,num)[:num]
         #else:
         #    rflux_max_idx = np.arange(len(idx))
-        return list(idx[rflux_max_idx]),rflux[rflux_max_idx],theta_x[idx[rflux_max_idx],tidx]
+        return list(idx[rflux_max_idx]),list(rflux[rflux_max_idx]),theta_x[idx[rflux_max_idx],tidx]
     def maximize_rdens_on_surface(self,comm_bwd,comm_fwd,weight,theta_x,theta_level,theta_tol,max_num_states):
         # Find data closest to a certain level set, and return a set of datapoints
         # First, project reactive current onto the full-state CV space
@@ -2950,40 +2950,43 @@ class TPT:
     def plot_transition_states_all(self,model,data,collect_flag=True):
         # TODO: put FW and TPT results side by side as parallel as possible
         for dirn in ['ab']: #,'ba']:
-
-            frac_of_max = 0.5
+            frac_of_max = 0.1
             ## First plot the profiles with a small number of levels
-            #num_levels = 3
-            #num_per_level = 5
-            #if collect_flag: 
-            #    _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.1,0.9])
-            #    _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.25,0.75])
-            #for func_key in ["U","vT"]:
-            #    self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
-            #    self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+            num_levels = 3
+            num_per_level = 5
+            if collect_flag: 
+                _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.1,0.9])
+                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.25,0.75])
+            for func_key in ["U","vT"]:
+                self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+                self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
 
             # Next plot the evolution
             num_levels = 15
             num_per_level = 5
             Nx,Nt,xdim = data.X.shape
             funlib = model.observable_function_library()
-            ramp_projection = np.array([funlib["magref"]["fun"](data.X.reshape((Nx*Nt,xdim))),funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim)))]).T
-            print("ramp_projection.shape = {}".format(ramp_projection.shape))
+            ramp_projection = None
+            #ramp_projection = np.array([funlib["magref"]["fun"](data.X.reshape((Nx*Nt,xdim))),funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim)))]).T.reshape((Nx,Nt,2))
+            if ramp_projection is not None: print("ramp_projection.shape = {}".format(ramp_projection.shape))
             if collect_flag: 
+                _ = self.collect_transition_states(model,data,'daeltime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.01,0.99],ramp_projection=ramp_projection)
                 _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.01,0.99],ramp_projection=ramp_projection)
                 _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.05,0.95],ramp_projection=ramp_projection)
             # Plot least-action Uref and max-flux Uref
+            time_symbol = 'leadtime'
+            negtime = (time_symbol == 'leadtime')
             fig,ax = plt.subplots(ncols=2,nrows=3,figsize=(16,18),sharey='row',sharex='col')
-            model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]])
-            self.plot_maxflux_path(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key="Uref",fig=fig,ax=ax[0,1])
+            model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]],negtime=negtime)
+            self.plot_maxflux_path(model,data,time_symbol,dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key="Uref",fig=fig,ax=ax[0,1])
             ax[0,1].set_xlim(ax[0,0].get_xlim())
             # Now plot the profiles along with the least-action ones
             #fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex='col')
             func_key_list = ["U","mag"]
-            _,_,ims = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0])
+            _,_,ims = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0],negtime=negtime)
             for i in range(len(func_key_list)):
                 clim = np.array([ims[i].levels[0],ims[i].levels[-1]])
-                _,_,imi = self.plot_maxflux_profile(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key_list[i],fig=fig,ax=ax[i+1,1],clim=clim)
+                _,_,imi = self.plot_maxflux_profile(model,data,time_symbol,dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key_list[i],fig=fig,ax=ax[i+1,1],clim=clim)
                 ax[i+1,1].set_xlim(ax[i+1,0].get_xlim())
                 fig.colorbar(imi,ax=ax[i+1,1])
             # Set x labels to False
@@ -3025,20 +3028,8 @@ class TPT:
             symbol = "E_x[\\tau^+|A\\to B]" if dirn=='ab' else "E_x[\\tau^+|B\\to A]"
             eps = 1e-2
             ramp = -self.dam_moments['one'][fwd_key][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
-            # ------------------------- New crazy method: project ramp ---------------------
-            if ramp_projection is not None:
-                shp,dth,thaxes,_,ramp_proj,_,_,_,bounds = helper.project_field(ramp.flatten(),np.outer(self.chom,np.ones(Nt)).flatten(),ramp_projection)
-                print("ramp_proj.shape = {}".format(ramp_proj.shape))
-                ii = ((ramp_projection[:,0] - bounds[0,0])/dth[0]).astype(int)
-                jj = ((ramp_projection[:,1] - bounds[1,0])/dth[1]).astype(int)
-                print("ii.shape = {}, jj.shape = {}".format(ii.shape,jj.shape))
-                kk = np.ravel_multi_index((ii,jj),shp)
-                print("kk.shape = {}".format(kk.shape))
-                ramp = ramp_proj.flat[kk].reshape((Nx,Nt))
-            # ------------------------------------------------------------------------------
-            print("ramp.shape = {}".format(ramp.shape))
-            # Should we project the ramp into low dimensions? 
             ramp[np.where(comm_fwd <= eps)[0]] = np.nan
+            print("ramp.shape = {}, min(ramp) = {}, max(ramp) = {}".format(ramp.shape,np.min(ramp),np.max(ramp)))
             minlevel,maxlevel = np.nanmin(ramp),np.nanmax(ramp)
             ramp_min,ramp_max = minlevel + np.array(ramp_bounds)*(maxlevel - minlevel)
             #if ramp_bounds is None:
@@ -3046,18 +3037,45 @@ class TPT:
             #else:
             #    min_quantile,max_quantile = ramp_bounds
             #ramp_min,ramp_max = np.nanquantile(ramp.flatten(),[min_quantile,max_quantile])
+        elif ramp_name == 'daeltime':
+            symbol = "E_x[\\tau^-|A\\to B]" if dirn=='ab' else "E_x[\\tau^-|B\\to A]"
+            eps = 1e-2
+            ramp = self.dam_moments['one'][bwd_key][1,:,:]*(comm_bwd > eps)/(comm_bwd + 1*(comm_bwd < eps))
+            ramp[np.where(comm_bwd <= eps)[0]] = np.nan
+            print("ramp.shape = {}, min(ramp) = {}, max(ramp) = {}".format(ramp.shape,np.min(ramp),np.max(ramp)))
+            minlevel,maxlevel = np.nanmin(ramp),np.nanmax(ramp)
+            ramp_min,ramp_max = minlevel + np.array(ramp_bounds)*(maxlevel - minlevel)
+        # ------------------------- New crazy method: project ramp ---------------------
+        if ramp_projection is not None:
+            ramp_projection = ramp_projection.reshape((Nx*Nt,ramp_projection.shape[-1]))
+            shp,dth,thaxes,_,ramp_proj,_,_,_,bounds = helper.project_field(ramp.flatten(),np.outer(self.chom,np.ones(Nt)).flatten(),ramp_projection)
+            print("ramp_proj.shape = {}".format(ramp_proj.shape))
+            ii = ((ramp_projection[:,0] - bounds[0,0])/dth[0]).astype(int)
+            jj = ((ramp_projection[:,1] - bounds[1,0])/dth[1]).astype(int)
+            print("ii.shape = {}, jj.shape = {}".format(ii.shape,jj.shape))
+            kk = np.ravel_multi_index((ii,jj),shp)
+            print("kk.shape = {}".format(kk.shape))
+            ramp = ramp_proj.flat[kk].reshape((Nx,Nt))
+            # Check that this ramp really is the right projection
+            fig,ax = helper.plot_field_2d(ramp[:,0],self.chom,ramp_projection.reshape((Nx,Nt,ramp_projection.shape[-1]))[:,0],fun0name="magref",fun1name="Uref")
+            fig.savefig(join(self.savefolder,"rampcheck_{}".format(ramp_name)))
+            plt.close(fig)
+        # ------------------------------------------------------------------------------
         levels = np.linspace(ramp_min,ramp_max,num_levels)
         tolerance = min(tolerance,np.abs(ramp_max-ramp_min)/(2*num_levels))
         rflux_idx = [[] for i in range(num_levels)]
+        rflux = [[] for i in range(num_levels)]
         #rflux_idx = -np.ones((len(levels),num_per_level),dtype=int) # -1 is a filler
         # TODO: build flux_idx one level at a time to allow for missing levels and stop crashing.
         for i in range(num_levels):
-            new_idx,_,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,levels[i],tolerance,num_per_level,frac_of_max)
+            new_idx,new_rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,levels[i],tolerance,num_per_level,frac_of_max)
             rflux_idx[i] += new_idx
+            rflux[i] += new_rflux
         # Save a dictionary with the levels and indices
         flux_dict = dict({
             "levels": levels,
             "idx": rflux_idx,
+            "rflux": rflux,
             "minlevel": minlevel,
             "maxlevel": maxlevel,
             "symbol": symbol,
@@ -3079,7 +3097,10 @@ class TPT:
             fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
             fx_mean[i] = np.nanmean(fxi,axis=0)
         fig,ax,im = model.plot_profile_evolution(fx_mean,levels,func_key,fig=fig,ax=ax,clim=clim)
-        xlab = r"Time to $B$ (days)" if dirn=='ab' else r"Time to $A$ (days)"
+        if ramp_name == 'leadtime':
+            xlab = r"Time to $B$ (days)" if dirn=='ab' else r"Time to $A$ (days)"
+        elif ramp_name == 'daeltime':
+            xlab = r"Time since $A$ (days)" if dirn=='ab' else r"Time since $B$ (days)"
         ax.set_xlabel(xlab,fontdict=font)
         ax.set_title("Max-flux %s$(z)$ profile (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
         #fig.savefig(join(self.savefolder,"maxflux_profile_%s_funckey%s"%(dirn,func_key)),bbox_inches="tight",pad_inches=0.2)
@@ -3092,6 +3113,7 @@ class TPT:
         flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
         minlevel = flux_dict["minlevel"]
         rflux_idx = flux_dict["idx"]
+        rflux = flux_dict["rflux"]
         levels = flux_dict["levels"]
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
         print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
@@ -3102,20 +3124,22 @@ class TPT:
         for i in range(num_levels):
             #print("rflux_idx[i]={}".format(rflux_idx[i]))
             fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
-            fx_mean[i] = np.mean(fxi)
-            fx_std[i] = np.std(fxi)
+            fx_mean[i] = np.sum(fxi*rflux[i])/np.sum(rflux[i])   #np.mean(fxi)
+            fx_std[i] = np.sqrt(np.sum((fxi-fx_mean[i])**2*rflux[i])/(np.sum(rflux[i]))) #np.std(fxi)
+            #fx_mean[i] = np.mean(fxi)
+            #fx_std[i] = np.std(fxi)
             #ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
-        levels_interp = np.linspace(levels[0],levels[-1],50)
+        levels_interp = np.linspace(levels[0],levels[-1],200)
         fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean,kind='cubic')(levels_interp)
         # Find where fx_mean_interp crosses the b line first
-        ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_mean_interp-fxb)))==2)[0][0]
+        ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_mean_interp-fxb)))==2)[0]
         fx_std_interp = scipy.interpolate.interp1d(levels,fx_std,kind='cubic')(levels_interp)
         if fig is None or ax is None:
             fig,ax = plt.subplots()
         ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
         ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
         ax.scatter(levels,fx_mean*funlib[func_key]["units"],color='black',marker='o')
-        ax.plot(np.mean(levels_interp[ub_crossing_idx:ub_crossing_idx+2])*np.ones(2),funlib[func_key]["units"]*np.array([np.min(fx_mean),np.max(fx_mean)]),color='black',linestyle='--')
+        #if len(ub_crossing_idx) > 0: ax.plot(np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2])*np.ones(2),funlib[func_key]["units"]*np.array([np.min(fx_mean),np.max(fx_mean)]),color='black',linestyle='--')
         color = 'darkorange' if dirn=='ab' else 'mediumspringgreen'
         ax.plot(levels_interp,fx_mean_interp*funlib[func_key]["units"],color='black')
         ax.fill_between(levels_interp,(fx_mean_interp-2*fx_std_interp)*funlib[func_key]["units"],(fx_mean_interp+2*fx_std_interp)*funlib[func_key]["units"],color=color,alpha=0.5)
@@ -3123,6 +3147,8 @@ class TPT:
             xlab = r"$P_x\{x\to B\}$" if dirn=='ab' else r"$P_x\{x\to A\}$"
         elif ramp_name == "leadtime":
             xlab = r"Time to $B$" if dirn=='ab' else r"Time to $A$"
+        elif ramp_name == "daeltime":
+            xlab = r"Time since $A$" if dirn=='ab' else r"Time since $B$"
         ax.set_xlabel(xlab,fontdict=font)
         ax.set_ylabel("%s (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
         title = r"Max-flux path ($A\to B$)" if dirn=='ab' else r"Max-flux path ($B\to A$)"
