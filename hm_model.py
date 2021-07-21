@@ -270,6 +270,7 @@ class HoltonMassModel(Model):
             ax[i].plot(tmin[[0,-1]],units*obs_xst[0]*np.ones(2),color='skyblue',linewidth=3)
             ax[i].plot(tmin[[0,-1]],units*obs_xst[1]*np.ones(2),color='red',linewidth=3)
             #ax[i].plot(np.mean(tmin[ulb_idx:ulb_idx+2])*np.ones(2),units*np.array([np.min(obs),np.max(obs)]),color='black',linestyle='--')
+            ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
             ax[i].set_ylabel("%s (%s)"%(funlib[obs_names[i]]["name"],funlib[obs_names[i]]["unit_symbol"]),fontdict=font)
             ax[i].set_xlabel(r"Time to $B$ (days)",fontdict=font)
             ax[i].set_title(r"Least action path ($A\to B$)",fontdict=font)
@@ -287,6 +288,8 @@ class HoltonMassModel(Model):
         tmin = load(join(physical_param_folder,"tmin_dirn1.npy"))
         if negtime: tmin -= tmin[-1]
         tz,zt = np.meshgrid(tmin,z,indexing='ij')
+        uref_xst = funlib["Uref"]["fun"](self.tpt_obs_xst)
+        ulb_idx = np.where(funlib["Uref"]["fun"](self.tpt_observables(xmin)) < uref_xst[1])[0][0]
         #dU = (sig.dot(wmin.T)).T[:,2*n:3*n] # This part is specific to U
         if fig is None or ax is None: # Must be a (n+1)x1 array of ax, where n=len(prof_names)
             fig,ax = plt.subplots(nrows=len(prof_names),ncols=1,figsize=(6,18),sharex=True)
@@ -297,6 +300,7 @@ class HoltonMassModel(Model):
             units = funlib[prof_names[i]]["units"]
             unit_symbol = funlib[prof_names[i]]["unit_symbol"]
             im = ax[i].contourf(tz,zt,units*obs,cmap=plt.cm.coolwarm)
+            ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
             ims += [im]
             fig.colorbar(im,ax=ax[i])
             ax[i].set_ylabel(r"$z$ (km)",fontdict=font)
@@ -1048,7 +1052,7 @@ class HoltonMassModel(Model):
         def funz(x):
             return np.mean(fun(x),1).reshape((len(x),1))
         return funz
-    def plot_state_distribution(self,X,rflux_idx,qlevels,qsymbol,colors=None,key="U",labels=None):
+    def plot_state_distribution(self,X,rflux,rflux_idx,qlevels,qsymbol,colors=None,key="U",labels=None):
         # Given a sequence of states (X) plot their mean and std on the same graph. For the Holton-Mass model, this means different zonal wind profiles.
         #key = "U"
         num_levels = len(qlevels)
@@ -1068,11 +1072,23 @@ class HoltonMassModel(Model):
         for i in range(num_levels):
             if len(rflux_idx[i]) > 0:
                 U = funlib[key]["fun"](X[rflux_idx[i]])
-                Umean = np.mean(U,axis=0)
-                Ustd = np.std(U,axis=0)
+                Umean = np.zeros(len(z))
+                Ulower = np.zeros(len(z))
+                Uupper = np.zeros(len(z))
+                for zi in range(len(z)):
+                    order = np.argsort(U[:,zi])
+                    rfzi = np.array(rflux[i])[order]
+                    Uzi = U[order,zi]
+                    cdf = np.cumsum(rfzi)
+                    cdf *= 1.0/cdf[-1]
+                    Ulower[zi] = Uzi[np.where(cdf > 0.05)[0][0]]
+                    Uupper[zi] = Uzi[np.where(cdf > 0.95)[0][0]]
+                    Umean[zi] = np.sum(Uzi*rfzi)/np.sum(rfzi)
+                #Umean = np.mean(U,axis=0)
+                #Ustd = np.std(U,axis=0)
                 handle, = ax.plot(units*Umean,z,color=colors[i],linewidth=3,label=labels[i])
                 handles += [handle]
-                ax.fill_betweenx(z,x1=units*(Umean-Ustd),x2=units*(Umean+Ustd),color=colors[i],alpha=0.5)
+                ax.fill_betweenx(z,x1=units*Ulower,x2=units*Uupper,color=colors[i],alpha=0.5)
         ax.legend(handles=handles,prop={'size':13})
         ax.set_ylabel(r"$z$ (km)",fontdict=font)
         ax.set_xlabel("{} ({})".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
@@ -1083,7 +1099,7 @@ class HoltonMassModel(Model):
         print("levels.shape = {}".format(levels.shape))
         funlib = self.observable_function_library()
         n = prof.shape[1]
-        num_snaps = 50
+        num_snaps = 100
         levels_interp = np.linspace(levels[0],levels[-1],num_snaps)
         prof_interp = np.zeros((num_snaps,n))
         for i in range(n):

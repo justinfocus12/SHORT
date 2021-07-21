@@ -2951,7 +2951,7 @@ class TPT:
         # TODO: put FW and TPT results side by side as parallel as possible
         for dirn in ['ab']: #,'ba']:
             frac_of_max = 0.1
-            ## First plot the profiles with a small number of levels
+            # First plot the profiles with a small number of levels
             num_levels = 3
             num_per_level = 5
             if collect_flag: 
@@ -3082,20 +3082,34 @@ class TPT:
             })
         pickle.dump(flux_dict,open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"wb"))
         return rflux_idx
-    def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="U",fig=None,ax=None,clim=None):
+    def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="U",func_key_ref="Uref",fig=None,ax=None,clim=None):
         # Plot the mean profile evolving over time (not committor)
         funlib = model.observable_function_library()
         flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
         rflux_idx = flux_dict["idx"]
+        rflux = flux_dict["rflux"]
         levels = flux_dict["levels"]
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
         print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
         fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
+        fxrefa,fxrefb = funlib[func_key_ref]["fun"](model.tpt_obs_xst)
         n = len(fxa) # Number of entries in a profile
         fx_mean = np.zeros((num_levels,n))
+        fxref_lower = np.zeros(num_levels)
+        fxref_upper = np.zeros(num_levels)
         for i in range(num_levels):
             fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
-            fx_mean[i] = np.nanmean(fxi,axis=0)
+            fx_mean[i] = np.nansum(fxi.T*rflux[i],axis=1).T/np.nansum(rflux[i])
+            #fx_mean[i] = np.nanmean(fxi,axis=0)
+            fxrefi = funlib[func_key_ref]["fun"](data.X[rflux_idx[i],tidx])
+            order = np.argsort(fxrefi)
+            fxrefi = np.array(fxrefi)[order]
+            rflux[i] = np.array(rflux[i])[order]
+            cdf = np.cumsum(rflux[i])
+            if cdf[-1] <= 0: sys.exit("CDF[-1] = {}".format(cdf[-1]))
+            cdf *= 1.0/cdf[-1]
+            fxref_lower[i] = fxrefi[np.where(cdf > 0.05)[0][0]]
+            fxref_upper[i] = fxrefi[np.where(cdf > 0.95)[0][0]]
         fig,ax,im = model.plot_profile_evolution(fx_mean,levels,func_key,fig=fig,ax=ax,clim=clim)
         if ramp_name == 'leadtime':
             xlab = r"Time to $B$ (days)" if dirn=='ab' else r"Time to $A$ (days)"
@@ -3103,6 +3117,16 @@ class TPT:
             xlab = r"Time since $A$ (days)" if dirn=='ab' else r"Time since $B$ (days)"
         ax.set_xlabel(xlab,fontdict=font)
         ax.set_title("Max-flux %s$(z)$ profile (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
+        # Find where fxref_lower_interp crosses the b line first
+        levels_interp = np.linspace(levels[0],levels[-1],200)
+        fxref_lower_interp = scipy.interpolate.interp1d(levels,fxref_lower,kind='cubic')(levels_interp)
+        fxref_upper_interp = scipy.interpolate.interp1d(levels,fxref_upper,kind='cubic')(levels_interp)
+        if fxrefb < fxrefa:
+            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fxref_lower_interp-fxrefb)))==2)[0]
+        else:
+            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fxref_upper_interp-fxrefb)))==2)[0]
+        if len(ub_crossing_idx) > 0: 
+            ax.axvline(x=np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2]),color='black',linestyle='--')
         #fig.savefig(join(self.savefolder,"maxflux_profile_%s_funckey%s"%(dirn,func_key)),bbox_inches="tight",pad_inches=0.2)
         #plt.close(fig)
         #print("Just saved in {}".format(self.savefolder))
@@ -3121,28 +3145,42 @@ class TPT:
         # Instead of a scatter plot, make a mean-std plot
         fx_mean = np.zeros(num_levels)
         fx_std = np.zeros(num_levels)
+        fx_lower = np.zeros(num_levels) # 5th percentile
+        fx_upper = np.zeros(num_levels) # 95th percentile
         for i in range(num_levels):
             #print("rflux_idx[i]={}".format(rflux_idx[i]))
             fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
+            order = np.argsort(fxi)
+            fxi = np.array(fxi)[order]
+            rflux[i] = np.array(rflux[i])[order]
             fx_mean[i] = np.sum(fxi*rflux[i])/np.sum(rflux[i])   #np.mean(fxi)
             fx_std[i] = np.sqrt(np.sum((fxi-fx_mean[i])**2*rflux[i])/(np.sum(rflux[i]))) #np.std(fxi)
+            cdf = np.cumsum(rflux[i])
+            if cdf[-1] <= 0: sys.exit("CDF[-1] = {}".format(cdf[-1]))
+            cdf *= 1.0/cdf[-1]
+            fx_lower[i] = fxi[np.where(cdf > 0.05)[0][0]]
+            fx_upper[i] = fxi[np.where(cdf > 0.95)[0][0]]
             #fx_mean[i] = np.mean(fxi)
             #fx_std[i] = np.std(fxi)
             #ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
         levels_interp = np.linspace(levels[0],levels[-1],200)
         fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean,kind='cubic')(levels_interp)
-        # Find where fx_mean_interp crosses the b line first
-        ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_mean_interp-fxb)))==2)[0]
         fx_std_interp = scipy.interpolate.interp1d(levels,fx_std,kind='cubic')(levels_interp)
+        fx_lower_interp = scipy.interpolate.interp1d(levels,fx_lower,kind='cubic')(levels_interp)
+        fx_upper_interp = scipy.interpolate.interp1d(levels,fx_upper,kind='cubic')(levels_interp)
+        # Find where fx_lower_interp crosses the b line first
+        if fxb < fxa:
+            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_lower_interp-fxb)))==2)[0]
+        else:
+            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_upper_interp-fxb)))==2)[0]
         if fig is None or ax is None:
             fig,ax = plt.subplots()
         ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
         ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
         ax.scatter(levels,fx_mean*funlib[func_key]["units"],color='black',marker='o')
-        #if len(ub_crossing_idx) > 0: ax.plot(np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2])*np.ones(2),funlib[func_key]["units"]*np.array([np.min(fx_mean),np.max(fx_mean)]),color='black',linestyle='--')
         color = 'darkorange' if dirn=='ab' else 'mediumspringgreen'
         ax.plot(levels_interp,fx_mean_interp*funlib[func_key]["units"],color='black')
-        ax.fill_between(levels_interp,(fx_mean_interp-2*fx_std_interp)*funlib[func_key]["units"],(fx_mean_interp+2*fx_std_interp)*funlib[func_key]["units"],color=color,alpha=0.5)
+        ax.fill_between(levels_interp,fx_lower_interp*funlib[func_key]["units"],fx_upper_interp*funlib[func_key]["units"],color=color,alpha=0.5)
         if ramp_name == "committor":
             xlab = r"$P_x\{x\to B\}$" if dirn=='ab' else r"$P_x\{x\to A\}$"
         elif ramp_name == "leadtime":
@@ -3155,6 +3193,9 @@ class TPT:
         ax.set_title(title,fontdict=font)
         #fig.savefig(join(self.savefolder,("flux_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
         #plt.close(fig)
+        if len(ub_crossing_idx) > 0: 
+            #ax.plot(np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2])*np.ones(2),funlib[func_key]["units"]*np.array([np.min(fx_lower_interp),np.max(fx_upper_interp)]),color='black',linestyle='--')
+            ax.axvline(x=np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2]),color='black',linestyle='--')
         return fig,ax
     def plot_transition_states(self,model,data,ramp_name,dirn,num_per_level=10,num_levels=3,frac_of_max=0.9,func_key="U",plot_level_subset=None):
         # func is now an altitude-dependent function
@@ -3164,6 +3205,7 @@ class TPT:
         flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
         rflux_idx = flux_dict["idx"]
         levels = flux_dict["levels"]
+        rflux = flux_dict["rflux"]
         minlevel,maxlevel = flux_dict["minlevel"],flux_dict["maxlevel"]
         cmap = plt.cm.coolwarm if dirn=='ab' else plt.cm.coolwarm_r
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
@@ -3182,7 +3224,7 @@ class TPT:
             plsi = plot_level_subset[i]
             Uref = funlib["Uref"]["fun"](data.X[rflux_idx[plsi],tidx])
             print("dirn={}, func_key={}, plsi = {}. committor range = {},{}. Uref range = {},{}".format(dirn,func_key,plsi,np.min(comm_fwd[rflux_idx[plsi]]),np.max(comm_fwd[rflux_idx[plsi]]),np.min(Uref),np.max(Uref)))
-            print("rflux_idx[plsi] = {}".format(rflux_idx[plsi]))
+            #print("rflux_idx[plsi] = {}".format(rflux_idx[plsi]))
             numi = len(rflux_idx[plsi])
             num_total_states += numi
             rflux_idx_flat += rflux_idx[plsi]
@@ -3202,7 +3244,7 @@ class TPT:
         #fig.savefig(join(self.savefolder,"trans_states_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
         #plt.close(fig)
         # Plot mean and standard deviation
-        fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux_idx,levels[plot_level_subset],ramp_name,colors=colorlist_unique,key=func_key,labels=labellist_unique)
+        fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,levels[plot_level_subset],ramp_name,colors=colorlist_unique,key=func_key,labels=labellist_unique)
         fig.savefig(join(self.savefolder,("trans_state_dist_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
         return
     def plot_transition_states_committor(self,model,data,preload_idx=False):
