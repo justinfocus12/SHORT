@@ -54,12 +54,12 @@ proj_1d_flag =      0
 demo_flag =         0
 qp_tb_coords_flag = 0
 trans_state_flag =  1
-plot_long_2d_flag = 0
-lifecycle_flag =    0
-display_cast_flag = 0
-gen_rates_flag =    0
-plot_long_1d_flag = 0
-validation_flag =   0
+plot_long_2d_flag = 1
+lifecycle_flag =    1
+display_cast_flag = 1
+gen_rates_flag =    1
+plot_long_1d_flag = 1
+validation_flag =   1
 # ---------------------------------------
 
 # ---------- Set parameters --------------------------
@@ -209,7 +209,8 @@ if display_cast_flag:
 
 # ----------- Display lifecycle correlations -----------
 if lifecycle_flag:
-    keys=['Uref_ln20','heatflux_g3em5','vTintref_l0']
+    #keys=['Uref_ln20','heatflux_g3em5','vTintref_l0']
+    keys = ['Uref_ln20','heatflux_g60','vTintref_l0']
     tpt.write_compare_lifecycle_correlations(model,data)
     tpt.plot_lifecycle_correlations_bar(model,keys=keys)
 # ------------------------------------------------------

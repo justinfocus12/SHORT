@@ -39,6 +39,8 @@ class HoltonMassModel(Model):
            'nfreq': 3, 'Nz': 26, 'length': 2.5e5, 'time': 24*3600.0,
            'du_per_day': physical_params['du_per_day'], 'dt_sim': physical_params['dt_sim'],
         }
+        # Corrections
+        q['ideal_gas_constant'] = 287.0 # Joules / (kilogram * Kelvin) (for dry air)
         self.q = self.initialize_params(q)
         # E[(dU)^2]/dt = (du_perday m/s)^2/day
         # E[(dpsi)^2]/dt = (g/f0*dh_perday m^2/s)^2/day
@@ -374,6 +376,10 @@ class HoltonMassModel(Model):
                 'heatflux': {
                     'pay': funlib['vTref']['fun'], 
                     'name': funlib['vTref']['name'],
+                    },
+                'heatflux_g60': {
+                    'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 60.0),
+                    'name':  r"$1\{$%s$ > 60\ \mathrm{K}\cdot\mathrm{m/s}\}$"%funlib['vTref']['name'],
                     },
                 'heatflux_g1em5': {
                     'pay': lambda x: 1*(funlib['vTref']['fun'](x)*funlib['vTref']['units'] > 1e-5),
@@ -823,49 +829,49 @@ class HoltonMassModel(Model):
                 "vTint": 
                 {"fun": lambda X: self.integrated_meridional_heat_flux(X),
                  "name": r"$\int_{0}^{z}e^{-z/H}\overline{v'T'}dz$",
-                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant']),
+                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"$K\cdot m^2/s$",
                  },
                 "vTint13p5": 
                 {"fun": lambda X: self.integrated_meridional_heat_flux(X)[:,zlevel(13.5)],
                  "name": r"$\int_{0\ km}^{%.1f\ km}e^{-z/H}\overline{v'T'}dz$"%(13.5),
-                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant']),
+                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"$K\cdot m^2/s$",
                  },
                 "vTint19": 
                 {"fun": lambda X: self.integrated_meridional_heat_flux(X)[:,zlevel(19)],
                  "name": r"$\int_{0\ km}^{%.1f\ km}e^{-z/H}\overline{v'T'}dz$"%(19),
-                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant']),
+                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"$K\cdot m^2/s$",
                  },
                 "vTint21p5": 
                 {"fun": lambda X: self.integrated_meridional_heat_flux(X)[:,zlevel(21.5)],
                  "name": r"$\int_{0\ km}^{%.1f\ km}e^{-z/H}\overline{v'T'}dz$"%(21.5),
-                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant']),
+                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"$K\cdot m^2/s$",
                  },
                 "vTintref": 
                 {"fun": lambda X: self.integrated_meridional_heat_flux(X)[:,q['zi']],
                  "name": r"$\int_{0\ \mathrm{km}}^{%.0f\ \mathrm{km}}e^{-z/H}\overline{v'T'}dz$"%(self.ref_alt),
-                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant']),
+                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"K$\cdot$m$^2/$s",
                  },
                 "vTinttop": 
                 {"fun": lambda X: self.integrated_meridional_heat_flux(X)[:,-1],
                  "name": r"$\int_{z_b}^{%.0f}e^{-z/H}\overline{v'T'}dz$"%(q['z_d'][-2]/1000),
-                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant']),
+                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"$K\cdot m^2/s$",
                  },
-                "vT": 
+                "vT": # ADJUSTED UNITS 
                 {"fun": lambda X: self.meridional_heat_flux(X),
                  "name": r"$\overline{v'T'}$",
-                 "units": q['H']*q['f0_d']/(2*q['length']*q['ideal_gas_constant']),
+                 "units": q['H']*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"K$\cdot$m/s",
                  },
                 "vTref": 
                 {"fun": lambda X: self.meridional_heat_flux(X)[:,q['zi']],
                  "name": r"$\overline{v'T'}(%.0f\,\mathrm{km})$"%self.ref_alt,
-                 "units": q['H']*q['f0_d']/(2*q['length']*q['ideal_gas_constant']),
+                 "units": q['H']*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"$\mathrm{K}\cdot\mathrm{m/s}$",
                  },
                 "dqdy":
