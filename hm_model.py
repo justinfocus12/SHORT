@@ -22,6 +22,10 @@ import os
 from os.path import join,exists
 import sys
 from model_obj import Model
+import helper
+
+asymb = r"$\mathbf{a}$"
+bsymb = r"$\mathbf{b}$"
 
 class HoltonMassModel(Model):
     #def __init__(self,hB_d=38.5,du_per_day=1.0,dh_per_day=0.0,ref_alt=30.0,abdefdim=75):
@@ -1064,11 +1068,12 @@ class HoltonMassModel(Model):
         # Plot a bunch of zonal wind profiles
         #N = len(cv_x)
         z = q['z_d'][1:-1]/1000
-        ax.plot(units*Ua,z,color='blue',linestyle='--',linewidth=4)
-        ax.plot(units*Ub,z,color='red',linestyle='--',linewidth=4)
+        handles = []
+        ha, = ax.plot(units*Ua,z,color='blue',linestyle='dashed',linewidth=3,label=asymb)
+        hb, = ax.plot(units*Ub,z,color='red',linestyle='dashed',linewidth=3,label=bsymb)
+        handles += [ha,hb]
         if colors is None: colorlist = plt.cm.coolwarm(qlevels)
         if labels is None: labellist = ["" for i in range(num_levels)]
-        handles = []
         for i in range(num_levels):
             if len(rflux_idx[i]) > 0:
                 U = funlib[key]["fun"](X[rflux_idx[i]])
@@ -1092,6 +1097,9 @@ class HoltonMassModel(Model):
         ax.legend(handles=handles,prop={'size':13})
         ax.set_ylabel(r"$z$ (km)",fontdict=font)
         ax.set_xlabel("{} ({})".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
+        xlim = ax.get_xlim()
+        fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
+        ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
         return fig,ax
     def plot_profile_evolution(self,prof,levels,func_key,fig=None,ax=None,clim=None):
         # Plot a sequence of profiles, smoothly, as in the least action path.

@@ -3246,6 +3246,8 @@ class TPT:
         # Plot mean and standard deviation
         fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,levels[plot_level_subset],ramp_name,colors=colorlist_unique,key=func_key,labels=labellist_unique)
         fig.savefig(join(self.savefolder,("trans_state_dist_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
+        print("Saved transition state distribution in {}".format(self.savefolder))
+        plt.close(fig)
         return
     def plot_transition_states_committor(self,model,data,preload_idx=False):
         # First, the finest-grained num_per_level and num_levels
