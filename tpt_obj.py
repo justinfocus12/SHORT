@@ -1484,10 +1484,12 @@ class TPT:
                 print("\tStarting damage function %s"%(keys[k]))
                 field_units = model.dam_dict[keys[k]]['units']
                 # Determine vmin and vmax
-                if keys[k] == 'vT':
-                    vmin,vmax = 0,0.003
+                if keys[k] == 'heatlux':
+                    vmin,vmax = -10,200
                 elif keys[k] == 'one':
                     vmin,vmax = 0,250
+                else:
+                    vmin,vmax = -np.inf,np.inf
                 # Plot the actual function first
                 field = field_units*model.dam_dict[keys[k]]['pay'](data.X[:,0]).reshape(-1,1)
                 fieldname = model.dam_dict[keys[k]]['name']

@@ -29,7 +29,7 @@ def mantexp(num):
 def generate_sci_fmt(xmin,xmax,numdiv=100):
     # Print to two sig figs
     eps = (xmax-xmin)/numdiv
-    print("eps = {}".format(eps))
+    #print("eps = {}".format(eps))
     general_sci_fmt = lambda num,pos: sci_not_precision(num,eps)
     return general_sci_fmt
 def sci_not_precision(num,eps):
@@ -247,7 +247,7 @@ def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldnam
     im = ax0.contourf(th01,th10,field_mean.reshape(shp),cmap=cmap,locator=locator,zorder=1,vmin=vmin,vmax=vmax)
     ax0.set_xlim([np.min(units[0]*thaxes[0]),np.max(units[0]*thaxes[0])])
     ax0.set_ylim([np.min(units[1]*thaxes[1]),np.max(units[1]*thaxes[1]) + 0.15*units[1]*np.ptp(thaxes[1])])
-    print("eps = {} - {}".format(np.nanmax(field_mean),np.nanmin(field_mean)))
+    #print("eps = {} - {}".format(np.nanmax(field_mean),np.nanmin(field_mean)))
     cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean),20)
     # -------------------
     # New colorbar code
