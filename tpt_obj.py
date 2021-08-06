@@ -3118,7 +3118,7 @@ class TPT:
         elif ramp_name == 'daeltime':
             xlab = r"Time since $A$ (days)" if dirn=='ab' else r"Time since $B$ (days)"
         ax.set_xlabel(xlab,fontdict=font)
-        ax.set_title("Max-flux %s$(z)$ profile (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
+        ax.set_title("High prob. flux %s$(z)$ profile (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
         # Find where fxref_lower_interp crosses the b line first
         levels_interp = np.linspace(levels[0],levels[-1],200)
         fxref_lower_interp = scipy.interpolate.interp1d(levels,fxref_lower,kind='cubic')(levels_interp)
@@ -3191,7 +3191,7 @@ class TPT:
             xlab = r"Time since $A$" if dirn=='ab' else r"Time since $B$"
         ax.set_xlabel(xlab,fontdict=font)
         ax.set_ylabel("%s (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
-        title = r"Max-flux path ($A\to B$)" if dirn=='ab' else r"Max-flux path ($B\to A$)"
+        title = r"High prob. flux path ($A\to B$)" if dirn=='ab' else r"Max-flux path ($B\to A$)"
         ax.set_title(title,fontdict=font)
         #fig.savefig(join(self.savefolder,("flux_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
         #plt.close(fig)
