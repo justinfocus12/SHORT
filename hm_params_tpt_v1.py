@@ -3,16 +3,16 @@ import numpy as np
 
 def get_algo_params():
     # Algorithm parameters
-    tmax_long = 1000000.0
+    tmax_long = 200000.0
     tmax_short = 20.0
     dt_save = 0.5
-    nshort = 500000 
+    nshort = 300000 
     istart = 0 # Highly dependent on the existing static database
     basis_type = 'MSM'
-    basis_size = 1500 
+    basis_size = 1200 
     lag_time = 20.0 
     nlags = 21 
-    num_moments = 2
+    num_moments = 3
     lag_time_seq = np.linspace(0,lag_time,nlags)
     lag_time_current = lag_time_seq[1] # For computing rates
     lag_time_current_display = lag_time_seq[4] # For displaying current vector fields
@@ -47,7 +47,7 @@ def get_algo_params():
 def get_physical_params():
     du_per_day = 1.0
     hB_d = 38.5
-    abdefdim =               1
+    abdefdim =               75
     radius_a =               0.0
     radius_b =               0.0
     ref_alt =                30.0 # 21.5 or 26.9 or 29.6
