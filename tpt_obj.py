@@ -1881,15 +1881,21 @@ class TPT:
             ax[j].plot([0,max_length],theta2d_units[1]*theta_ab[1,1]*np.ones(2),color='black',linestyle='-',linewidth=3)
             htj_dga, = ax[j].plot(test_tbth[j]*np.ones(2),theta2d_units[1]*theta_ab[:,1],color='black',linestyle='--',linewidth=4,label=r"$\eta^+(\theta_{%d})=%.1f$"%(j,test_tbth[j]))
             htj_emp, = ax[j].plot(tb_emp[j]*np.ones(2),theta2d_units[1]*theta_ab[:,1],color='black',linestyle='--',linewidth=4,label=r"$\overline{\tau_B}(\theta_{%d})=%.1f$"%(j,tb_emp[j]))
+            print("test_tbth[j]={}".format(test_tbth[j]))
+            print("tb_emp[j]={}".format(tb_emp[j]))
             dthab = np.abs(theta_ab[0,1]-theta_ab[1,1])
             ax[j].text(0,theta2d_units[1]*(theta_ab[0,1]+0.01*dthab),asymb,fontdict=bigfont,color='black',weight='bold')
             ax[j].text(0,theta2d_units[1]*(theta_ab[1,1]+0.01*dthab),bsymb,fontdict=bigfont,color='black',weight='bold')
             ax[j].tick_params(axis='both',labelsize=25)
-            ax[j].legend(handles=handles[j]+[htj_dga,htj_emp],prop={'size':25})
-            ax[j].text(max_length*4/8,theta2d_units[1]*(theta_ab[0,1]*0.5+theta_ab[1,1]*0.5),r"$E[q^+|\theta_{%d}]=%.2f;\ \frac{N_B}{N}(\theta_{%d})=%.2f$"
+            ax[j].legend(handles=handles[j]+[htj_dga,htj_emp][:1],prop={'size':25})
+            print(r"$E[q^+|\theta_{%d}]=%.2f;\ \frac{N_B}{N}(\theta_{%d})=%.2f$"
             "\n"
             r"$E[\tau^+|\theta_{%d}\to B]=%.1f;\ \overline{T_B}(\theta_{%d})=%.1f$"
-            %(j,test_qth[j],j,Nb[j]/num_series,j,test_tbth[j],j,tb_emp[j]),fontdict=font)
+            %(j,test_qth[j],j,Nb[j]/num_series,j,test_tbth[j],j,tb_emp[j]))
+            #ax[j].text(max_length*4/8,theta2d_units[1]*(theta_ab[0,1]*0.5+theta_ab[1,1]*0.5),r"$E[q^+|\theta_{%d}]=%.2f;\ \frac{N_B}{N}(\theta_{%d})=%.2f$"
+            #"\n"
+            #r"$E[\tau^+|\theta_{%d}\to B]=%.1f;\ \overline{T_B}(\theta_{%d})=%.1f$"
+            #%(j,test_qth[j],j,Nb[j]/num_series,j,test_tbth[j],j,tb_emp[j]),fontdict=font)
         fig.savefig(join(self.savefolder,"committor_demo_timeseries"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
