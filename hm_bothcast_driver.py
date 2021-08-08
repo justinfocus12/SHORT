@@ -48,18 +48,18 @@ bsymb = r"$\mathbf{b}$"
 least_action_flag = 0
 run_long_flag =     0
 run_short_flag =    0
-compute_tpt_flag =  0
-regression_flag =   0
-proj_1d_flag =      0
+compute_tpt_flag =  1
+regression_flag =   1
+proj_1d_flag =      1
 demo_flag =         1
-qp_tb_coords_flag = 0
-trans_state_flag =  0
-plot_long_2d_flag = 0
-lifecycle_flag =    0
-display_cast_flag = 0
-gen_rates_flag =    0
-plot_long_1d_flag = 0
-validation_flag =   0
+qp_tb_coords_flag = 1
+trans_state_flag =  1
+plot_long_2d_flag = 1
+lifecycle_flag =    1
+display_cast_flag = 1
+gen_rates_flag =    1
+plot_long_1d_flag = 1
+validation_flag =   1
 # ---------------------------------------
 
 # ---------- Set parameters --------------------------
@@ -241,6 +241,7 @@ if trans_state_flag:
 
 # ------------------- Validation -----------------------
 if validation_flag:
+    print("Inside validation section")
     val_2d_names = ["magref","Uref"]
     val_1d_name = "Uref"
     q = model.q
@@ -248,10 +249,13 @@ if validation_flag:
     theta_1d_fun = lambda x: funlib[val_1d_name]["fun"](x).reshape(-1,1)
     theta_1d_name = funlib[val_1d_name]["name"]
     theta_1d_units = funlib[val_1d_name]["units"]
+    theta_1d_unit_symbol = funlib[val_1d_name]["unit_symbol"]
     theta_2d_fun = lambda x: model.sampling_features(x,algo_params) #cv_sample_fun
     theta_2d_names = algo_params['sampling_feature_names']
     theta_2d_units = np.array([funlib[name]['units'] for name in theta_2d_names]) #np.array([q['length']**2/q['time'],q['length']/q['time']])
     theta_2d_unit_symbol = [funlib[name]['unit_symbol'] for name in theta_2d_names] #[r"$m^2/s$",r"$m/s$"]
     tpt.display_change_of_measure_validation(model,data,theta_1d_fun,theta_2d_fun,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units)
     tpt.display_dam_moments_abba_validation(model,data,theta_1d_fun,theta_2d_fun,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units)
+    # --------- Display equivalent simulation time ---------------
+    tpt.display_equiv_sim_time(model,data,theta_1d_name,theta_1d_units,theta_1d_unit_symbol,algo_params['basis_size'],val_1d_name,theta_1d_short=None,theta_1d_fun=theta_1d_fun)
 # ----------------------------------------------------

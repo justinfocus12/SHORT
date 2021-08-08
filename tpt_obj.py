@@ -1766,8 +1766,8 @@ class TPT:
         theta2d_test_idx_lower = np.zeros((2,2), dtype=int)
         theta2d_test_idx_lower[:,1] = th1_idx0
         nnidx = np.where(np.isnan(qth_qth1half)==0)[0]
-        theta2d_test_idx_lower[0,0] = nnidx[np.argmin(np.abs(qth_qth1half[nnidx]-1/3))]
-        theta2d_test_idx_lower[1,0] = nnidx[np.argmin(np.abs(qth_qth1half[nnidx]-2/3))]
+        theta2d_test_idx_lower[0,0] = nnidx[np.argmin(np.abs(qth_qth1half[nnidx]-0.3))]
+        theta2d_test_idx_lower[1,0] = nnidx[np.argmin(np.abs(qth_qth1half[nnidx]-0.7))]
         # Now draw two sets of samples from pi
         t_long,x_long = model.load_long_traj(self.long_simfolder)
         ina_long = (model.adist(x_long)==0)
@@ -1801,8 +1801,9 @@ class TPT:
         print("test_qth = {}".format(test_qth))
         print("test_theta_0 = {}".format(theta2d_units*test_theta_0))
         print("test_theta_1 = {}".format(theta2d_units*test_theta_1))
-        # -------------------------------------------
-        # Plots
+
+        # -------------------- Plots -----------------------
+
         # 1. Maps of committor and MFPT
         fig,ax = plt.subplots(ncols=3,figsize=(18,6),sharey=True) #,constrained_layout=True)
         helper.plot_field_2d(qp,self.chom,theta2d,shp=[40,40],fun0name=theta2d_names[0],fun1name=theta2d_names[1],units=theta2d_units,unit_symbols=theta2d_unit_symbols,fig=fig,ax=ax[1],std_flag=False,cbar_pad=0.03,fmt_x=fmt2,fmt_y=fmt)
@@ -1837,9 +1838,12 @@ class TPT:
         dt = t_long[1] - t_long[0]
         fig,ax = plt.subplots(nrows=2,figsize=(12,12),constrained_layout=True,sharex=True)
         ss0 = np.sort(long_test_idx_0[np.where(np.isnan(self.dam_emp['one']['x_Dc'][long_test_idx_0])==0)[0]])
-        ss0 = ss0[np.linspace(0,len(ss0)-1,num_series).astype(int)]
+        #ss0 = np.sort(ss0[np.random.choice(np.arange(len(ss0)),min(num_series,len(ss0)),replace=False)])
+        ss0 = ss0[np.linspace(0,len(ss0)-1,min(num_series,len(ss0))).astype(int)]
         ss1 = np.sort(long_test_idx_1[np.where(np.isnan(self.dam_emp['one']['x_Dc'][long_test_idx_1])==0)[0]])
-        ss1 = ss1[np.linspace(0,len(ss1)-1,num_series).astype(int)]
+        #ss1 = np.sort(ss1[np.random.choice(np.arange(len(ss1)),min(num_series,len(ss1)),replace=False)])
+        ss1 = ss1[np.linspace(0,len(ss1)-1,min(num_series,len(ss0))).astype(int)]
+        print("len(ss0) = {}; len(ss1) = {}".format(len(ss0),len(ss1)))
         Nb = np.zeros(2,dtype=int)
         Nb[0] = np.sum(self.long_to_label[ss0]==1)
         Nb[1] = np.sum(self.long_to_label[ss1]==1)
@@ -1880,14 +1884,14 @@ class TPT:
             ax[j].plot([0,max_length],theta2d_units[1]*theta_ab[0,1]*np.ones(2),color='black',linestyle='-',linewidth=3)
             ax[j].plot([0,max_length],theta2d_units[1]*theta_ab[1,1]*np.ones(2),color='black',linestyle='-',linewidth=3)
             htj_dga, = ax[j].plot(test_tbth[j]*np.ones(2),theta2d_units[1]*theta_ab[:,1],color='black',linestyle='--',linewidth=4,label=r"$\eta^+(\theta_{%d})=%.1f$"%(j,test_tbth[j]))
-            htj_emp, = ax[j].plot(tb_emp[j]*np.ones(2),theta2d_units[1]*theta_ab[:,1],color='black',linestyle='--',linewidth=4,label=r"$\overline{\tau_B}(\theta_{%d})=%.1f$"%(j,tb_emp[j]))
+            #htj_emp, = ax[j].plot(tb_emp[j]*np.ones(2),theta2d_units[1]*theta_ab[:,1],color='black',linestyle='--',linewidth=4,label=r"$\overline{\tau_B}(\theta_{%d})=%.1f$"%(j,tb_emp[j]))
             print("test_tbth[j]={}".format(test_tbth[j]))
             print("tb_emp[j]={}".format(tb_emp[j]))
             dthab = np.abs(theta_ab[0,1]-theta_ab[1,1])
             ax[j].text(0,theta2d_units[1]*(theta_ab[0,1]+0.01*dthab),asymb,fontdict=bigfont,color='black',weight='bold')
             ax[j].text(0,theta2d_units[1]*(theta_ab[1,1]+0.01*dthab),bsymb,fontdict=bigfont,color='black',weight='bold')
             ax[j].tick_params(axis='both',labelsize=25)
-            ax[j].legend(handles=handles[j]+[htj_dga,htj_emp][:1],prop={'size':25})
+            ax[j].legend(handles=handles[j]+[htj_dga],prop={'size':25},loc="center right")
             print(r"$E[q^+|\theta_{%d}]=%.2f;\ \frac{N_B}{N}(\theta_{%d})=%.2f$"
             "\n"
             r"$E[\tau^+|\theta_{%d}\to B]=%.1f;\ \overline{T_B}(\theta_{%d})=%.1f$"
@@ -1958,7 +1962,7 @@ class TPT:
             #ax.plot(q_long_grid+np.sqrt(q_var_long_grid/N_long_grid),q_long_grid,linestyle='--',color='black')
             #ax.plot(q_long_grid-np.sqrt(q_var_long_grid/N_long_grid),q_long_grid,linestyle='--',color='black')
             ax.legend(handles=[h],prop={'size': 14},loc='upper left')
-            ax.set_xlabel(r"$q^+$ Empirical", fontdict=font)
+            ax.set_xlabel(r"$q^+$ DNS", fontdict=font)
             ax.set_ylabel(r"$q^+$ DGA", fontdict=font)
             ax.set_title(r"$N=%s,\ M=%d$, Lag$=$%d days"%(helper.sci_fmt_latex0(self.nshort),basis_size,self.lag_time_seq[-1]),fontdict=font)
             fig.savefig(join(self.savefolder,"fidelity_qp"),bbox_inches="tight",pad_inches=0.2)
@@ -1966,8 +1970,8 @@ class TPT:
             # ---------------------------------------------
             # One: Plot them both as a function of U (30 km)
             fig,ax = plt.subplots(figsize=(6,6))
-            hemp, = ax.plot(theta_1d_units*thaxes[0],q_long_grid,color='black',marker='o',label=r"$q^+_{EMP}$")
-            hdga, = ax.plot(theta_1d_units*thaxes[0],q_short_grid,color='red',marker='o',label=r"$q^+_{DGA}$")
+            hemp, = ax.plot(theta_1d_units*thaxes[0],q_long_grid,color='black',marker='o',label=r"$q^+_{\mathrm{DNS}}$")
+            hdga, = ax.plot(theta_1d_units*thaxes[0],q_short_grid,color='red',marker='o',label=r"$q^+_{\mathrm{DGA}}$")
             herr, = ax.plot([],[],color='white',label=r"RMS error $\epsilon=%.3f$"%(total_error))
             #ax.plot(q_long_grid+np.sqrt(q_var_long_grid/N_long_grid),q_long_grid,linestyle='--',color='black')
             #ax.plot(q_long_grid-np.sqrt(q_var_long_grid/N_long_grid),q_long_grid,linestyle='--',color='black')
