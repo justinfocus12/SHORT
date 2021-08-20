@@ -1,0 +1,104 @@
+/home/jf4241/SHORT/tpt_obj.py:1519: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1520: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1554: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1555: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1587: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1588: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1614: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1615: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1640: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1641: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1667: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1668: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+Traceback (most recent call last):
+  File "hm_bothcast_driver.py", line 237, in <module>
+    tpt.plot_transition_states_all(model,data,collect_flag=False)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 2973, in plot_transition_states_all
+    self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 3217, in plot_transition_states
+    flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch/jf4241/SHORT_holtonmass/results/2021-08-06/0/du1p0_h38p5_abdd1/istart0_tlong1000000p0_N50000_bs200_lag20p0_nlags21_lagj1p0_sf0magref/flux_committor_ab_fom0p1_nlev3_nplev5'
+/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1519: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1520: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1554: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1555: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1587: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1588: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1614: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1615: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1640: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1641: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1667: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1668: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+Traceback (most recent call last):
+  File "hm_bothcast_driver.py", line 237, in <module>
+    tpt.plot_transition_states_all(model,data,collect_flag=False)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 2973, in plot_transition_states_all
+    self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 3217, in plot_transition_states
+    flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch/jf4241/SHORT_holtonmass/results/2021-08-06/0/du1p0_h38p5_abdd1/istart0_tlong1000000p0_N500000_bs1000_lag5p0_nlags21_lagj0p25_sf0magref/flux_committor_ab_fom0p1_nlev3_nplev5'
+/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1519: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1520: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1554: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1555: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1587: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1588: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1614: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1615: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1640: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1641: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1667: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1668: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+Traceback (most recent call last):
+  File "hm_bothcast_driver.py", line 237, in <module>
+    tpt.plot_transition_states_all(model,data,collect_flag=False)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 2973, in plot_transition_states_all
+    self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 3217, in plot_transition_states
+    flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch/jf4241/SHORT_holtonmass/results/2021-08-06/0/du1p0_h38p5_abdd1/istart0_tlong1000000p0_N500000_bs1200_lag10p0_nlags21_lagj0p5_sf0magref/flux_committor_ab_fom0p1_nlev3_nplev5'

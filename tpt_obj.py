@@ -1977,7 +1977,7 @@ class TPT:
             #ax.plot(q_long_grid-np.sqrt(q_var_long_grid/N_long_grid),q_long_grid,linestyle='--',color='black')
             ax.legend(handles=[hemp,hdga,herr],prop={'size': 14},loc='lower left')
             ax.set_xlabel(r"%s (%s)"%(theta_1d_name,theta_1d_unit_symbol), fontdict=font)
-            ax.set_ylabel(r"$q^+$ DGA, Empirical", fontdict=font)
+            ax.set_ylabel(r"$q^+$ DGA, DNS", fontdict=font)
             ax.set_title(r"$N=%s,\ M=%d$, Lag$=$%d days"%(helper.sci_fmt_latex0(self.nshort),basis_size,self.lag_time_seq[-1]),fontdict=font)
             fig.savefig(join(self.savefolder,"fidelity_th"),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
