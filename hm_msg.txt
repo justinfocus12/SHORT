@@ -2,41 +2,59 @@ WARNING! Not converged to fixed points
 Gradient magnitudes: [1.84848074e-06 1.81010217e-03]
 q['Gsq'] = 19.76617097018271
 Done plotting snapshots
+WARNING! Not converged to fixed points
+Gradient magnitudes: [1.84848074e-06 1.81010217e-03]
+About to minimize action
+About to L-BFGS
+Done with L-BFGS
+About to minimize action
+About to L-BFGS
+Done with L-BFGS
 About to run long trajectory
 empirical weights: min=0.0, max=217413.0, mean=48649.89718455141, std=58848.958915626805
 About to run short trajectories
-In TPT: self.nshort = 50000
-in load_short_traj: num_traj=50000
-num_loaded = 50000
-cvx_short.shape = (41, 50000, 75)
+In TPT: self.nshort = 500000
+in load_short_traj: num_traj=500000
+num_loaded = 100000
+num_loaded = 200000
+num_loaded = 300000
+num_loaded = 400000
+num_loaded = 500000
+cvx_short.shape = (41, 500000, 75)
 Labelling long traj. dt = 0.5, Nt = 2000001, tmin = 0.0, tmax = 1000000.0
 sum(ina_long) = 578656
 sum(inb_long) = 251290
 num_rxn = 540
 Beginning change of measure
 len(bdy_idx) = 0
-len(iidx) = 50000
+len(iidx) = 500000
 nsubclust = 100, 
-nsubclust = 100, 50, 25, 12, 
-nsubclust = 90, 45, 22, 11, 
-nsubclust = 80, 40, 20, 
-nsubclust = 61, 30, 15, 
-nsubclust = 47, 23, 
-nsubclust = 25, 12, 6, 
-nsubclust = 20, 10, 
-nsubclust = 11, 
-num_leaves = 200; K = 50, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 
 nsubclust = 100, 50, 
-nsubclust = 10phi colsums range = (70.0,81233.0)
+nsubclust = 100, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 25, 12, 
+nsubclust = 100, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100phi colsums range = (53.0,390245.0)
 phi rowsums range = (1.0,1.0)
-Last two diags of R = [ 4.57759428e+01 -2.19049662e-14]
-chom range = -2.6143858171648326e-20,0.0002463118928245279
-phi colsums range = (80.0,276066.0)
-phi rowsums range = (1.0,1.0)
-Last two diags of R = [1.00571860e+02 2.41075498e-13]
-chom range = -2.560178613275876e-21,5.9Last two diags of R = [ 4.17201392e+01 -7.74726322e-14]
-chom range = -9.66220013470503e-21,6.106302265525677e-05
-chom positivity fraction = 0.998066
+Last two diags of R = [ 4.17201392e+01 -7.74726322e-14]
+chom range = -9.66220013470503e-21,6.10630226552567Last two diags of R = [6.53045108e+01 1.39582421e-14]
+chom range = -1.95871492757087e-20,6.205249062218197e-05
+chom positivity fraction = 0.991348
 Inside solve_damage_function_moments_multiple: about to fit data forward
 data.X[:,lag_idx]: min=[ -2.47263839  -8.37875299 -12.82115098 -16.23501386 -17.76899558
  -19.04428883 -20.25772826 -20.61448199 -20.43948048 -19.39543772
@@ -99,53 +117,64 @@ len(bdy_idx) = 267882
 len(iidx) = 232118
 nsubclust = 100, 
 nsubclust = 100, 
-nsubclust = 100, 50, 
 nsubclust = 100, 
-nsubclust = 100, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 25, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 25, 
-nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 
-nsubclust = 100, 50, 25, 
-nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
 nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 
-nsubclust = phi colsums range = (123.0,56569.0)
-phi rowsums range = (0.0,1.0)
-In MOM: 
-	detA = 0.0
-Starting bvp 0 out of 4
-feynman_kac_lhs_VX time = 3.508e-02
-feynman_kac_lhs_VF time = 1.975e+02
-feynman_kac_lhs time = 7.410e-01
-moments[2]: min=5.239413086346868, max=2738.547344406724, mean=1207.0350089606168, std=526.2807338210804
-basis->data time: 1.113e+02
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 25feynman_kac_lhs_VF time = 2.367e+02
+feynman_kac_lhs time = 7.455e-01
+moments[2]: min=1.8132761282573364, max=3191.096955580164, mean=932.3785181330621, std=552.2671214409402
+basis->data time: 1.348e+02
 Starting bvp 1 out of 4
-feynman_kac_lhs_VX time = 1.258e+0mofeynman_kac_lhs_VF time = 1.982e+02
-feynman_kac_lhs time = 1.334e+01
-moments[2]: min=79461.21257943448, max=7949525.319221869, mean=1444180.1260961199, std=1182034.6514642376
-basis->data time: 1.118e+02
+feynman_kac_lhs_VX time = 1.265e+01
+feynman_kac_lhs_VF time = 2.378e+02
+feynman_kac_lhs time = 1.342e+01
+moments[2]: min=6.23435186111306, max=13612772.884885713, mean=1615078.6505199461, std=2147343.322560683
+basis->data time: 1.351e+02
 Starting bvp 2 out of 4
-feynman_kac_lhs_VX time = 3.727e-momfeynman_kac_lhs_VF time = 1.983e+02
-feynman_kac_lhs time = 7.485e-01
-moments[2]: min=0.13465511978685427, max=4547.885864528163, mean=2223.7693418551016, std=1171.8951551674431
-basis->data tfeynman_kac_lhs_VF time = 2.338e+02
-feynman_kac_lhs time = 7.962e-01
-momentfeynman_kac_lhs_VF time = 2.248e+02
-feynman_kac_lhs time = 1.547e+01
-moments[2]: min=743.1925035577858, max=786534.3268317636, mean=47390.989139886406, stdfeynman_kac_lhs_VX basis->data time:feynman_kac_lhs_VF time = 2.838e+02
-feynman_kac_lhs time = 1.469e+01
-moments[2]: min=0.7698330096687747, max=1384184.2100042356, mean=117244.69198994093, std=219575.1706462808
-basis->data time: 1.628e+02
+feynman_kac_lhs_VX time = 3.692e-02
+feynman_kac_lhs_VF time = 2.380e+02
+feynman_kac_lhs time = 7.368e-01
+moments[2]: min=0.41242573768911595, max=4091.3187416486026, mean=1832.8110779974556, std=1034.3769153385858
+basis->data time: 1.348e+02
+Starting bvp 3 out of 4
+feynman_kac_lhs_VX time = 1.260e+01
+feynman_kac_lhs_VF time = 2.385e+02
+feynman_kac_lhs time = 1.350e+01
+moments[2]: min=0.7698330096687747, max=1384184.2100042356, mean=117244.69198994093, std=219575.170646momenbasis->data time: 1.346e+02
+Inside solve_damage_function_moments_multiple: about to fit data forward
+dabasis->data time: 1.648e+02
+Starting bvp 3 out of 4
+feynman_kac_lhs_VX time = 1.262e+01
+feynman_kac_lhs_VF time = 2.944e+02
+feynman_kac_lhs time = 1.323e+01
+moments[2]: min=549.7647618739566, max=1359379.49465764, mean=163575.92890762285, std=278532.2876978534
+basis->data time: 1.645e+02
 Inside solve_damage_function_moments_multiple: about to fit data forward
 data.X[:,lag_idx]: min=[ -3.8334472  -10.28213813 -14.58308445 -17.63640528 -18.28114121
  -19.22553748 -20.76929253 -21.01241315 -20.00403303 -19.0110816
@@ -209,53 +238,49 @@ len(iidx) = 298552
 nsubclust = 100, 
 nsubclust = 100, 
 nsubclust = 100, 
-nsubclust = 100, 50, 
 nsubclust = 100, 
 nsubclust = 100, 
 nsubclust = 100, 50, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 
+nsubclust = 100, 
+nsubclust = 100, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 25, 
-nsubclust = 100, 
 nsubclust = 100, 50, 
-nsubclust = 92, 46, 
-nsubclust = 47, 23, 
-nsubclust = 25, 
-num_leaves = 1200; K = 1200
-Finished fitting data forward
-phi colsums range = (64.0,196187.0)
-phi rowsums range = (0.0,1.0)
-In MOM: 
-	detA = 0.0
-Starting bvp 0 out of 4
-feynman_kac_lhs_VX time = 3.697e-02
-feynman_kac_lhs_VF time = 3.157e+02
-feynman_kac_lhs time = 7.674e-01
-moments[2]: min=6.46961970000364e-06, max=5497.693019556135, mean=1346.1885934319466, std=1461.8542559835562
-basis->data time: 1.425e+02
-Starting bvp 1 out of 4
-feynman_kac_lhs_VX time = 1.425e+01
-feynman_kac_lhs_VF time = 3.102e+02
-feynman_kac_lhs time = 1.490e+01
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 97, 48, 
+nsubclust = 50, 
+num_leaves = 1feynman_kac_lhs_VF time = 2.359e+02
+feynman_kac_lhs time = 1.318e+01
 moments[2]: min=-276.35172112282083, max=1259109.987992091, mean=91150.70334910376, std=126351.73701378421
-basis->data time: 1.644e+02
-Starting bvp 2 out of 4
-feynman_kac_lhs_VX time = 3.719e-02
-feynman_kac_lhs_VF time = 3.067e+02
-feynman_kac_lhs time = 7.483e-01
+basis->data timfeynman_kac_lhs_VF time = 2.923e+02
+feynman_kac_lhs time = 6.695e-01
+momefeynman_kac_lhs_VF time = 2.349e+02
+feynman_kac_lhs time = 7.077e-01
 moments[2]: min=0.7209742135927295, max=6081.662153191993, mean=1941.0578526165516, std=1870.6659133349774
-basis->data time: 1.426e+02
+basis->data time: feynman_kac_lhs_VF time = 2.927e+02
+feynman_kac_lhs time = 1.316e+01
+moments[2]: min=-77.56876234725142, max=1598462.389084174, mean=84729.moments[2]: min=-7171.30925747266, mbasis->data time: 1.631e+02
+Starting bvp 2 out of 4
+feynman_kac_lhs_Vbasis->data time: 1feynman_kac_lhs_VF time = 2.923e+02
+feynman_kac_lhs time = 7.043e-01
+moments[2]: min=1.9303115898980088, max=6079.489683111926, mean=2156.624972814839, std=2051.3581709154478
+basis->data time: 1.632e+02
 Starting bvp 3 out of 4
-feynman_kac_lhs_VX time = 1.485e+01
-feynman_kac_lhs_VF time = 3.055e+02
-feynman_kac_lhs time = 1.395e+01
-moments[2]: min=-7171.30925747266, max=12875537.461357996, mean=2540899.654017362, std=3367573.523948265
-basis->data time: 1.554e+02
+feynman_kac_lhs_VX time = 1.257e+01
+feynman_kac_lhs_VF time = 2.928e+02
+feynman_kac_lhs time = 1.335e+01
+moments[2]: min=-817.2371688158266, max=13252977.604416315, mean=2967443.022716273, std=3930788.2703402783
+basis->data time: 1.633e+02
 fd_weights = [1.03526492 1.         0.96593633 0.93303299 0.90125046 0.87055056
  0.84089642 0.8122524  0.7845841  0.75785828 0.73204285 0.70710678
  0.68302013 0.65975396 0.63728031 0.61557221 0.59460356 0.57434918
@@ -272,31 +297,37 @@ nsubclust = 100,
 nsubclust = 100, 
 nsubclust = 100, 
 nsubclust = 100, 
+nsubclust = 100, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 
-nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 
-nsubclust = 100, 50, 25, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 25, 12, 
 nsubclust = 100, 
 nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 25, 
-nsubclust = 100, 50, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 25, 12, 
-nsubclust = 98, 49, 24, 
-nsubclust = 75, 37, 
-nsubclust = 39, 19, 
-nsubclust = 21, 10, 
-nsubclust = 12, 
-num_leaves = 1200; K = 1200
-phi colsums range = (61.0,153354.0)
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 25, 
+nsubclust = 92, 46, 23, 
+nsubclust = 70, 35, 
+nsubclust = 36, 18, 9, 4, 
+nsubclust = 33, 
+num_leaves = 1500; K = 1500
+phi colsums range = (79.0,131396.0)
 phi rowsums range = (0.0,1.0)
 In BVP: 
 	detA = 0.0, detLHS = 0.0
@@ -305,27 +336,31 @@ len(iidx) = 463527
 nsubclust = 100, 
 nsubclust = 100, 
 nsubclust = 100, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 
+nsubclust = 100, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 
 nsubclust = 100, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 
+nsubclust = 100, 50, 25, 
+nsubclust = 100, 50, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 25, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 
 nsubclust = 100, 50, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 
-nsubclust = 100, 50, 
-nsubclust = 94, 47, 
-nsubclust = 48, 24, 
-nsubclust = 25, 
-num_leaves = 1200; K = 1200
-phi colsums range = (87.0,373352.0)
+nsubclust = 100, 50, 25, 
+nsubclust = 99, 49, 
+nsubclust = 51, 
+num_leaves = 1500; K = 1500
+phi colsums range = (56.0,475090.0)
 phi rowsums range = (0.0,1.0)
 In BVP: 
 	detA = 0.0, detLHS = 0.0
@@ -338,21 +373,21 @@ mean(X) = 12131.462037037038. min(block_means) = 9577.819444444445. max(block_me
 y = [75.20462963 81.94071084], yerr = [[3.41564636 4.63538662]
  [3.41564636 4.38684578]]
    Moment        DGA  DGA_errlo  DGA_errhi        DNS  DNS_errlo  DNS_errhi
-1       1  74.100148        NaN        NaN  75.204630   6.831293   6.831293
-2       2  82.597862        NaN        NaN  81.940711   9.270773   8.773692
+1       1  74.700838        NaN        NaN  75.204630   6.831293   6.831293
+2       2  83.674935        NaN        NaN  81.940711   9.270773   8.773692
 y = [101.26481481 110.14291642], yerr = [[4.94641763 6.18912205]
  [4.94641763 5.85937973]]
    Moment        DGA  DGA_errlo  DGA_errhi         DNS  DNS_errlo  DNS_errhi
-1       1  70.035575        NaN        NaN  101.264815   9.892835   9.892835
-2       2  71.853528        NaN        NaN  110.142916  12.378244  11.718759
+1       1  73.808079        NaN        NaN  101.264815   9.892835   9.892835
+2       2  75.385774        NaN        NaN  110.142916  12.378244  11.718759
 e1 = 75.20462962962964, alpha = 5.3429404168596495, beta = 0.07104536573310377, alpha/beta = 75.20462962962964
-e1 = 74.10014803785597, alpha = 4.123562394887867, beta = 0.055648504140386315, alpha/beta = 74.10014803785597
+e1 = 74.70083771965623, alpha = 3.926190988613316, beta = 0.05255886156655787, alpha/beta = 74.70083771965623
 AB, EMP: alpha=5.3429404168596495, beta=0.07104536573310377
-AB, DGA: alpha=4.123562394887867, beta=0.055648504140386315
+AB, DGA: alpha=3.926190988613316, beta=0.05255886156655787
 e1 = 101.26481481481481, alpha = 5.463565692388404, beta = 0.053953248246982395, alpha/beta = 101.26481481481481
-e1 = 70.03557515104794, alpha = 19.015414721916247, beta = 0.2715107954907931, alpha/beta = 70.03557515104794
+e1 = 73.80807923096883, alpha = 23.143759741684196, beta = 0.31356675289245844, alpha/beta = 73.80807923096883
 BA, EMP: alpha=5.463565692388404, beta=0.053953248246982395
-BA, DGA: alpha=19.015414721916247, beta=0.2715107954907931
+BA, DGA: alpha=23.143759741684196, beta=0.31356675289245844
 mean(X) = 1.0. min(block_means) = 1.0. max(block_means) = 1.0, unc = 0.0
 mean(X) = 1948.035928808247. min(block_means) = 1815.5331144932557. max(block_means) = 2171.357750290716, unc = 119.43081002980497
 mean(X) = 4222286.649603884. min(block_means) = 3408634.333500872. max(block_means) = 6145162.881456831, unc = 896988.282731551
@@ -362,23 +397,23 @@ mean(X) = 15357896.35184479. min(block_means) = 11206072.219072772. max(block_me
 y = [894.75547491 943.80279456], yerr = [[ 54.85595495 106.22971271]
  [ 54.85595495  95.42709464]]
    Moment         DGA  DGA_errlo  DGA_errhi         DNS   DNS_errlo   DNS_errhi
-1       1  539.543293        NaN        NaN  894.755475  109.711910  109.711910
-2       2  704.810789        NaN        NaN  943.802795  212.459425  190.854189
+1       1  549.671483        NaN        NaN  894.755475  109.711910  109.711910
+2       2  697.754977        NaN        NaN  943.802795  212.459425  190.854189
 y = [1461.5345578 1800.0031621], yerr = [[115.07459415 173.2370065 ]
  [115.07459415 157.96891179]]
    Moment          DGA  DGA_errlo  ...          DNS   DNS_errlo   DNS_errhi
-1       1   837.867668        NaN  ...  1461.534558  230.149188  230.149188
-2       2  1157.665042        NaN  ...  1800.003162  346.474013  315.937824
+1       1   772.230557        NaN  ...  1461.534558  230.149188  230.149188
+2       2  1088.327910        NaN  ...  1800.003162  346.474013  315.937824
 
 [2 rows x 7 columns]
 e1 = 1948.035928808247, alpha = 8.878018618973236, beta = 0.00455742036770572, alpha/beta = 1948.035928808247
-e1 = 1174.6781661842272, alpha = 1.41553683356605, beta = 0.0012050422612043753, alpha/beta = 1174.6781661842272
+e1 = 1196.7289704826696, alpha = 1.6356290304240055, beta = 0.001366749757686836, alpha/beta = 1196.7289704826696
 AB, EMP: alpha=8.878018618973236, beta=0.00455742036770572
-AB, DGA: alpha=1.41553683356605, beta=0.0012050422612043753
+AB, DGA: alpha=1.6356290304240055, beta=0.001366749757686836
 e1 = 3182.011074100413, alpha = 1.9349840131066125, beta = 0.0006081009676101307, alpha/beta = 3182.011074100413
-e1 = 1824.1814288427797, alpha = 1.100061892052821, beta = 0.000603044124153087, alpha/beta = 1824.18142884278
+e1 = 1681.278195512199, alpha = 1.0139809214694087, beta = 0.0006031012144069952, alpha/beta = 1681.2781955121989
 BA, EMP: alpha=1.9349840131066125, beta=0.0006081009676101307
-BA, DGA: alpha=1.100061892052821, beta=0.000603044124153087
+BA, DGA: alpha=1.0139809214694087, beta=0.0006031012144069952
 TPT computation: done
 Labelling long traj. dt = 0.5, Nt = 2000001, tmin = 0.0, tmax = 1000000.0
 sum(ina_long) = 578656
@@ -386,8 +421,8 @@ sum(inb_long) = 251290
 num_rxn = 540
 Loaded TPT
 Nth = 6
-R2 = 0.7740031700316574
-savefolder = /scratch/jf4241/SHORT_holtonmass/results/2021-08-06/0/du1p0_h38p5_abdd1/istart0_tlong1000000p0_N500000_bs1200_lag10p0_nlags21_lagj0p5_sf0magref
+R2 = 0.7319693386477786
+savefolder = /scratch/jf4241/SHORT_holtonmass/results/2021-11-01/0/du1p0_h38p5_abdd1/istart0_tlong1000000p0_N500000_bs1500_lag10p0_nlags21_lagj0p5_sf0magref
 Beginning std_range = [0.  0.5]
 Plotting zfam $U$
 Plotting zfam $|\Psi|$
@@ -401,13 +436,13 @@ thaxes in (-33.12826736122411,73.98252612502947)
 field in (0.0,1.0), field_mean in (0.0,1.0)
 shp0 = [20], dth=[5.63741018]
 thaxes in (-33.12826736122411,73.98252612502947)
-field in (0.0,106.74440970909221), field_mean in (0.0,78.73387912360248)
+field in (0.0,121.32100415280986), field_mean in (0.0,80.16117478086902)
 shp0 = [20], dth=[3844.16330804]
 thaxes in (-10338.574868321524,62700.527984481865)
-field in (0.0,1.0), field_mean in (0.03949914885805283,1.0)
+field in (0.0,1.0), field_mean in (0.04453596732453386,1.0)
 shp0 = [20], dth=[3844.16330804]
 thaxes in (-10338.574868321524,62700.527984481865)
-field in (0.0,106.74440970909221), field_mean in (0.0,75.83968705094415)
+field in (0.0,121.32100415280986), field_mean in (0.0,75.17620238071889)
 I subplots_adjusted. What more do you want?
 theta2D.shape = (500000, 2)
 WARNING: Bad subspace where q is not monotonic.
@@ -419,13 +454,13 @@ WARNING: Bad subspace where q is not monotonic.
  12.39404916 12.92543976 13.45683036 13.98822097 14.51961157 15.05100217
  15.58239277 16.11378337 16.64517397 17.17656458 17.70795518 18.23934578
  18.77073638 19.30212698 19.83351758]
-	qth0=[0.01741133 0.05190164 0.10707282 0.01527013 0.08017052 0.14797979
- 0.16678054 0.21155309 0.18685212 0.19172456 0.13282227 0.06730347
- 0.15853253 0.42281074 0.60910662 0.72963644 0.79110802 0.83761663
- 0.86501708 0.88661855 0.90950304 0.93190025 0.94942873 0.96517438
- 0.97808948 0.98540337 0.99043867 0.99296439 0.99604571 0.99599664
- 0.99679985 0.99763623 0.99813853 0.99831879 0.99901115 0.99966311
- 0.99902704 0.9997301  0.99545788 0.99913033 0.99988653 0.9998272
+	qth0=[0.02396063 0.1120092  0.12542627 0.01733122 0.0874275  0.15441233
+ 0.17056615 0.20167055 0.18715467 0.1907988  0.13134709 0.06789315
+ 0.1584451  0.42652814 0.6142044  0.7362841  0.79743915 0.84198569
+ 0.86708553 0.89141917 0.91596061 0.93725914 0.95385575 0.9669338
+ 0.977241   0.98419921 0.98885054 0.9916825  0.99473896 0.99445354
+ 0.99604621 0.99663414 0.99781562 0.99792071 0.99884316 0.998659
+ 0.9990823  0.99956521 0.99821622 0.9998188  0.99958023 0.9998147
         nan 1.         1.        ]
 WARNING: Bad subspace where q is not monotonic.
 	thaxes1[0]=[-11.99032058 -11.12441437 -10.25850817  -9.39260197  -8.52669576
@@ -439,25 +474,25 @@ WARNING: Bad subspace where q is not monotonic.
   22.64592759  23.51183379  24.37774     25.2436462   26.10955241]
 	qth1=[1.         1.         1.         1.         1.         1.
  1.         1.         1.         1.         1.         1.
- 1.         1.         1.         0.94904829 0.94042677 0.92515659
- 0.91293547 0.89659443 0.87882472 0.8632045  0.84290528 0.85051111
- 0.80571175 0.7792369  0.70725473 0.66515189 0.60197325 0.49259779
- 0.36207555 0.28470706 0.19173503 0.15703749 0.07712075 0.04607358
+ 1.         1.         1.         0.95018092 0.94388721 0.9322409
+ 0.9203382  0.90640522 0.8929953  0.88231828 0.85646742 0.85171892
+ 0.79841433 0.76712354 0.69564246 0.65937923 0.60123105 0.49032489
+ 0.37336718 0.29790391 0.2006653  0.16635957 0.08469845 0.05107118
  0.         0.         0.         0.         0.         0.
  0.         0.         0.        ]
 qth_qth0half = [       nan 1.         1.         1.         1.         1.
  1.         1.         1.         1.         1.         1.
- 1.         1.         1.         0.90113072 0.88216236 0.87943095
- 0.86756882 0.858425   0.84684125 0.83231866 0.81624151 0.80418323
- 0.76686143 0.73320144 0.643092   0.49032655 0.3418355  0.3232381
- 0.33779602 0.30951437 0.25465825 0.21860051 0.13518529 0.07558632
+ 1.         1.         1.         0.90812532 0.89613876 0.89382298
+ 0.88852273 0.87686449 0.86249146 0.84725869 0.82972989 0.80280142
+ 0.76441919 0.72052637 0.61319857 0.45846537 0.34184597 0.33680429
+ 0.35002582 0.32062605 0.26625541 0.23030507 0.15121894 0.08554174
  0.         0.         0.         0.         0.                nan
         nan        nan        nan]
-qth_qth1half = [       nan        nan        nan        nan 0.16949916 0.17608249
- 0.2720521  0.43271692 0.20796    0.1764816  0.20841471 0.22473996
- 0.25365126 0.28954455 0.37552905 0.48202821 0.56468491 0.61849799
- 0.6571229  0.67653737 0.70969339 0.75010974 0.77537022 0.79655349
- 0.7856372  0.83528161 0.81237791 0.79203531        nan        nan
+qth_qth1half = [       nan        nan        nan        nan 0.13382463 0.13958896
+ 0.25968622 0.43809406 0.20728843 0.18656343 0.21303078 0.22563217
+ 0.25875099 0.29832048 0.38032978 0.48314534 0.55519232 0.61081916
+ 0.64443017 0.67071056 0.70357217 0.73691432 0.79014286 0.7978168
+ 0.83005452 0.8405252  0.82385026 0.80365385        nan        nan
         nan        nan        nan        nan        nan        nan
         nan        nan        nan        nan        nan        nan
         nan        nan        nan]
@@ -467,80 +502,80 @@ mean theta over long_test_idx_0 = [11690.12852642    36.92224436]
 mean theta over long_test_idx_1 = [23557.68012037    36.61068389]
 dth = [1708.5170258     2.50551564]
 test_theta_0=[11658.58183881    36.71298102], test_theta_1=[23618.20101939    36.71298102]
-test_qth = [0.3325368  0.72990157]
+test_qth = [0.33932513 0.72024324]
 test_theta_0 = [11658.58183881    36.71298102]
 test_theta_1 = [23618.20101939    36.71298102]
 len(ss0) = 100; len(ss1) = 100
-test_tbth[j]=52.74159913407458
+test_tbth[j]=53.911458848907195
 tb_emp[j]=45.375
-$E[q^+|\theta_{0}]=0.33;\ \frac{N_B}{N}(\theta_{0})=0.28$
-$E[\tau^+|\theta_{0}\to B]=52.7;\ \overline{T_B}(\theta_{0})=45.4$
-test_tbth[j]=24.73658467601916
+$E[q^+|\theta_{0}]=0.34;\ \frac{N_B}{N}(\theta_{0})=0.28$
+$E[\tau^+|\theta_{0}\to B]=53.9;\ \overline{T_B}(\theta_{0})=45.4$
+test_tbth[j]=25.64739584447823
 tb_emp[j]=26.4
-$E[q^+|\theta_{1}]=0.73;\ \frac{N_B}{N}(\theta_{1})=0.68$
-$E[\tau^+|\theta_{1}\to B]=24.7;\ \overline{T_B}(\theta_{1})=26.4$
-ymin = 0.0, ymax = 99.00777255319693
-A avoiding B in range 0.0,115.38829548202632
-prediction curves coeffs = [ 82.76075914 -70.04256119]
-prediction curves coeffs = [ 82.76075914 -70.04256119]
-prediction curves coeffs = [ 82.76075914 -70.04256119]
+$E[q^+|\theta_{1}]=0.72;\ \frac{N_B}{N}(\theta_{1})=0.68$
+$E[\tau^+|\theta_{1}\to B]=25.6;\ \overline{T_B}(\theta_{1})=26.4$
+ymin = 0.0, ymax = 100.80103878423687
+A avoiding B in range 0.0,124.17985769821387
+prediction curves coeffs = [ 84.96624091 -71.7420731 ]
+prediction curves coeffs = [ 84.96624091 -71.7420731 ]
+prediction curves coeffs = [ 84.96624091 -71.7420731 ]
 t_long[timax] = 3000.0
 t_long[timax] = 3000.0
 About to start displaying casts
 Starting view (magref,Uref)
 	Starting damage function one
-field range: (-28754387503272.273,153972.8596289617)
-field range: (46.8339525276479,241.07327636283716)
-field range: (54.932568197055765,230.11155515064695)
-field range: (54.932568197055765,230.11155515064695)
-field range: (0.0,106.7444097090922)
-field range: (0.0,106.7444097090922)
-field range: (0.0,162.5166284960657)
-field range: (0.0,162.5166284960657)
-field range: (0.0,139.6321767359954)
-field range: (0.0,139.6321767359954)
-field range: (-28754387503311.336,153927.56248471313)
-field range: (0.0,235.4844599928672)
+field range: (47.95036773543742,2968176.07974136)
+field range: (47.95036773543742,249.1362193953915)
+field range: (51.79834449825593,669.5638669591015)
+field range: (51.79834449825593,229.99016010130555)
+field range: (0.0,121.32100415280985)
+field range: (0.0,121.32100415280985)
+field range: (0.0,600.7753482685631)
+field range: (0.0,227.7644046436912)
+field range: (0.0,136.4345192293339)
+field range: (0.0,136.4345192293339)
+field range: (0.0,2968135.5643992093)
+field range: (0.0,247.7894889782742)
 	Starting damage function heatflux
-field range: (-4774382321671.734,788257.7339606577)
-field range: (-4774382321671.734,788257.7339606577)
-field range: (-90.45558589375091,12377.506658920876)
-field range: (-90.45558589375091,12377.506658920876)
-field range: (0.0,1669.1012684873706)
-field range: (0.0,1669.1012684873706)
-field range: (-133.27866847207846,11358.469991031101)
-field range: (-133.27866847207846,11358.469991031101)
-field range: (0.0,1450.9697446644586)
-field range: (0.0,1450.9697446644586)
-field range: (-4774382323002.625,786877.357098777)
-field range: (-4774382323002.625,786877.357098777)
+field range: (615.7106769566457,30311860.479811184)
+field range: (615.7106769566457,30311860.479811184)
+field range: (-15.739143418908851,71595.78708843127)
+field range: (-15.739143418908851,71595.78708843127)
+field range: (0.0,1736.394743683539)
+field range: (0.0,1736.394743683539)
+field range: (-156.45900198231845,70761.0808993805)
+field range: (-156.45900198231845,70761.0808993805)
+field range: (0.0,1426.3094754083777)
+field range: (0.0,1426.3094754083777)
+field range: (-0.12347186331639295,30310435.34725921)
+field range: (-0.12347186331639295,30310435.34725921)
 Starting view (vTintref,Uref)
 	Starting damage function one
-field range: (-28754387503272.273,153972.8596289617)
-field range: (46.8339525276479,241.07327636283716)
-field range: (54.932568197055765,230.11155515064695)
-field range: (54.932568197055765,230.11155515064695)
-field range: (0.0,106.7444097090922)
-field range: (0.0,106.7444097090922)
-field range: (0.0,162.5166284960657)
-field range: (0.0,162.5166284960657)
-field range: (0.0,139.6321767359954)
-field range: (0.0,139.6321767359954)
-field range: (-28754387503311.336,153927.56248471313)
-field range: (0.0,235.4844599928672)
+field range: (47.95036773543742,2968176.07974136)
+field range: (47.95036773543742,249.1362193953915)
+field range: (51.79834449825593,669.5638669591015)
+field range: (51.79834449825593,229.99016010130555)
+field range: (0.0,121.32100415280985)
+field range: (0.0,121.32100415280985)
+field range: (0.0,600.7753482685631)
+field range: (0.0,227.7644046436912)
+field range: (0.0,136.4345192293339)
+field range: (0.0,136.4345192293339)
+field range: (0.0,2968135.5643992093)
+field range: (0.0,247.7894889782742)
 	Starting damage function heatflux
-field range: (-4774382321671.734,788257.7339606577)
-field range: (-4774382321671.734,788257.7339606577)
-field range: (-90.45558589375091,12377.506658920876)
-field range: (-90.45558589375091,12377.506658920876)
-field range: (0.0,1669.1012684873706)
-field range: (0.0,1669.1012684873706)
-field range: (-133.27866847207846,11358.469991031101)
-field range: (-133.27866847207846,11358.469991031101)
-field range: (0.0,1450.9697446644586)
-field range: (0.0,1450.9697446644586)
-field range: (-4774382323002.625,786877.357098777)
-field range: (-4774382323002.625,786877.357098777)
+field range: (615.7106769566457,30311860.479811184)
+field range: (615.7106769566457,30311860.479811184)
+field range: (-15.739143418908851,71595.78708843127)
+field range: (-15.739143418908851,71595.78708843127)
+field range: (0.0,1736.394743683539)
+field range: (0.0,1736.394743683539)
+field range: (-156.45900198231845,70761.0808993805)
+field range: (-156.45900198231845,70761.0808993805)
+field range: (0.0,1426.3094754083777)
+field range: (0.0,1426.3094754083777)
+field range: (-0.12347186331639295,30310435.34725921)
+field range: (-0.12347186331639295,30310435.34725921)
 comm_bwd.shape = (500000, 21)
 comm_fwd.shape = (500000, 21)
 About to go into plotting current
@@ -550,9 +585,9 @@ comm_fwd_ypj.shape = (500000,)
 theta_ypj.shape = (500000, 2)
 theta_x.shape = (500000, 2)
 field0.shape = (500000, 2), field1.shape = (500000, 2)
-Jmag range = (0.0,2.6434014538630784e-08)
+Jmag range = (0.0,2.6489260749622944e-08)
 J0.shape = (25, 25)
-Final J0 range = (-1.455146623621114,2.7596700033669457)
+Final J0 range = (-1.412377661012939,2.5187392037906497)
 ABpoints done
 comm_bwd.shape = (500000, 21)
 comm_fwd.shape = (500000, 21)
@@ -563,9 +598,9 @@ comm_fwd_ypj.shape = (500000,)
 theta_ypj.shape = (500000, 2)
 theta_x.shape = (500000, 2)
 field0.shape = (500000, 2), field1.shape = (500000, 2)
-Jmag range = (0.0,5.289628388974236e-09)
+Jmag range = (0.0,5.587110105308071e-09)
 J0.shape = (25, 25)
-Final J0 range = (-0.5078978044128784,2.937512654685445)
+Final J0 range = (-0.6263659480031841,2.8891765777295744)
 ABpoints done
 comm_bwd.shape = (500000, 21)
 comm_fwd.shape = (500000, 21)
@@ -576,9 +611,9 @@ comm_fwd_ypj.shape = (500000,)
 theta_ypj.shape = (500000, 2)
 theta_x.shape = (500000, 2)
 field0.shape = (500000, 2), field1.shape = (500000, 2)
-Jmag range = (0.0,4.5561411564012835e-09)
+Jmag range = (0.0,3.143722486030667e-09)
 J0.shape = (25, 25)
-Final J0 range = (-3.6494074681798176,2.0103000353921527)
+Final J0 range = (-3.5947465894246644,2.232846566257263)
 comm_bwd.shape = (500000, 21)
 comm_fwd.shape = (500000, 21)
 About to go into plotting current
@@ -588,9 +623,9 @@ comm_fwd_ypj.shape = (500000,)
 theta_ypj.shape = (500000, 2)
 theta_x.shape = (500000, 2)
 field0.shape = (500000, 2), field1.shape = (500000, 2)
-Jmag range = (0.0,2.5723662226894405e-08)
+Jmag range = (0.0,2.6757606907077482e-08)
 J0.shape = (25, 25)
-Final J0 range = (-2.836818769903352,2.028664942530213)
+Final J0 range = (-2.784131502719902,1.8255566421867933)
 ABpoints done
 comm_bwd.shape = (500000, 21)
 comm_fwd.shape = (500000, 21)
@@ -601,9 +636,9 @@ comm_fwd_ypj.shape = (500000,)
 theta_ypj.shape = (500000, 2)
 theta_x.shape = (500000, 2)
 field0.shape = (500000, 2), field1.shape = (500000, 2)
-Jmag range = (0.0,5.372873084826871e-09)
+Jmag range = (0.0,5.78244161194167e-09)
 J0.shape = (25, 25)
-Final J0 range = (-0.621570256323086,1.9723354563307223)
+Final J0 range = (-0.6313836367860157,1.9922273011854708)
 ABpoints done
 comm_bwd.shape = (500000, 21)
 comm_fwd.shape = (500000, 21)
@@ -614,9 +649,9 @@ comm_fwd_ypj.shape = (500000,)
 theta_ypj.shape = (500000, 2)
 theta_x.shape = (500000, 2)
 field0.shape = (500000, 2), field1.shape = (500000, 2)
-Jmag range = (0.0,2.4854111603753797e-09)
+Jmag range = (0.0,2.323457511457146e-09)
 J0.shape = (25, 25)
-Final J0 range = (-3.5636154249295813,3.085469726833599)
+Final J0 range = (-3.5794265342063887,3.3338524443408626)
 data.X.shape = (500000, 21, 75)
 Pay.shape = (500000,)
 Pay_long.shape = (2000001,)
@@ -674,39 +709,39 @@ Pay_long.shape = (2000001,)
 data.X.shape = (500000, 21, 75)
 Pay.shape = (500000,)
 Pay_long.shape = (2000001,)
-key = Uref_ln20. corr_dga range = ({'aa': -0.052655072727598506, 'ab': -0.031189172377732544, 'bb': 0.0728133152677059, 'ba': -0.037101239521197614},{'aa': -0.052655072727598506, 'ab': -0.031189172377732544, 'bb': 0.0728133152677059, 'ba': -0.037101239521197614}). corr_emp range = ({'aa': -0.023813925341002018, 'ab': -0.006662932976948893, 'bb': 0.03241259928904526, 'ba': -0.007738310320640962},{'aa': -0.023813925341002018, 'ab': -0.006662932976948893, 'bb': 0.03241259928904526, 'ba': -0.007738310320640962})
+key = Uref_ln20. corr_dga range = ({'aa': -0.05217972668509098, 'ab': -0.03143630264167694, 'bb': 0.07231414461711931, 'ba': -0.03551099710468541},{'aa': -0.05217972668509098, 'ab': -0.03143630264167694, 'bb': 0.07231414461711931, 'ba': -0.03551099710468541}). corr_emp range = ({'aa': -0.023813925341002018, 'ab': -0.006662932976948893, 'bb': 0.03241259928904526, 'ba': -0.007738310320640962},{'aa': -0.023813925341002018, 'ab': -0.006662932976948893, 'bb': 0.03241259928904526, 'ba': -0.007738310320640962})
        Phase       DGA       DNS  DGA_unc   DNS_unc
-aa  $A\to A$ -0.052655 -0.023814      NaN  0.003740
-ab  $A\to B$ -0.031189 -0.006663      NaN  0.001523
-bb  $B\to B$  0.072813  0.032413      NaN  0.007193
-ba  $B\to A$ -0.037101 -0.007738      NaN  0.001764
-key = heatflux_g60. corr_dga range = ({'aa': -0.13119497241514902, 'ab': 0.057261140080454576, 'bb': 0.14238494057626438, 'ba': -0.06336975267870162},{'aa': -0.13119497241514902, 'ab': 0.057261140080454576, 'bb': 0.14238494057626438, 'ba': -0.06336975267870162}). corr_emp range = ({'aa': -0.10976247247886886, 'ab': 0.0453271233545222, 'bb': 0.11751350789163383, 'ba': -0.01579453632143934},{'aa': -0.10976247247886886, 'ab': 0.0453271233545222, 'bb': 0.11751350789163383, 'ba': -0.01579453632143934})
+aa  $A\to A$ -0.052180 -0.023814      NaN  0.003740
+ab  $A\to B$ -0.031436 -0.006663      NaN  0.001523
+bb  $B\to B$  0.072314  0.032413      NaN  0.007193
+ba  $B\to A$ -0.035511 -0.007738      NaN  0.001764
+key = heatflux_g60. corr_dga range = ({'aa': -0.13185853549486756, 'ab': 0.05422170915072832, 'bb': 0.14399497829341998, 'ba': -0.0627545794288226},{'aa': -0.13185853549486756, 'ab': 0.05422170915072832, 'bb': 0.14399497829341998, 'ba': -0.0627545794288226}). corr_emp range = ({'aa': -0.10976247247886886, 'ab': 0.0453271233545222, 'bb': 0.11751350789163383, 'ba': -0.01579453632143934},{'aa': -0.10976247247886886, 'ab': 0.0453271233545222, 'bb': 0.11751350789163383, 'ba': -0.01579453632143934})
        Phase       DGA       DNS  DGA_unc   DNS_unc
-aa  $A\to A$ -0.131195 -0.109762      NaN  0.006166
-ab  $A\to B$  0.057261  0.045327      NaN  0.017214
-bb  $B\to B$  0.142385  0.117514      NaN  0.023479
-ba  $B\to A$ -0.063370 -0.015795      NaN  0.010048
-key = vTintref_l0. corr_dga range = ({'aa': 0.023311831667143755, 'ab': -0.019852712317713708, 'bb': -0.04297290238581764, 'ba': 0.08844181911044603},{'aa': 0.023311831667143755, 'ab': -0.019852712317713708, 'bb': -0.04297290238581764, 'ba': 0.08844181911044603}). corr_emp range = ({'aa': -0.006136166562448576, 'ab': -0.00764196731208242, 'bb': -0.030637642095305073, 'ba': 0.10748474025978226},{'aa': -0.006136166562448576, 'ab': -0.00764196731208242, 'bb': -0.030637642095305073, 'ba': 0.10748474025978226})
+aa  $A\to A$ -0.131859 -0.109762      NaN  0.006166
+ab  $A\to B$  0.054222  0.045327      NaN  0.017214
+bb  $B\to B$  0.143995  0.117514      NaN  0.023479
+ba  $B\to A$ -0.062755 -0.015795      NaN  0.010048
+key = vTintref_l0. corr_dga range = ({'aa': 0.021216725523544075, 'ab': -0.018694711474181443, 'bb': -0.04314704847243527, 'ba': 0.09557207639109844},{'aa': 0.021216725523544075, 'ab': -0.018694711474181443, 'bb': -0.04314704847243527, 'ba': 0.09557207639109844}). corr_emp range = ({'aa': -0.006136166562448576, 'ab': -0.00764196731208242, 'bb': -0.030637642095305073, 'ba': 0.10748474025978226},{'aa': -0.006136166562448576, 'ab': -0.00764196731208242, 'bb': -0.030637642095305073, 'ba': 0.10748474025978226})
        Phase       DGA       DNS  DGA_unc   DNS_unc
-aa  $A\to A$  0.023312 -0.006136      NaN  0.013881
-ab  $A\to B$ -0.019853 -0.007642      NaN  0.013410
-bb  $B\to B$ -0.042973 -0.030638      NaN  0.009002
-ba  $B\to A$  0.088442  0.107485      NaN  0.028283
-       Phase      DGA       DNS  DGA_unc   DNS_unc
-aa  $A\to A$  0.00000  0.000000      NaN  0.000000
-ab  $A\to B$  0.00000  0.000000      NaN  0.000000
-bb  $B\to B$  2.46901  2.564732      NaN  0.466318
-ba  $B\to A$  0.00000  0.000000      NaN  0.000000
+aa  $A\to A$  0.021217 -0.006136      NaN  0.013881
+ab  $A\to B$ -0.018695 -0.007642      NaN  0.013410
+bb  $B\to B$ -0.043147 -0.030638      NaN  0.009002
+ba  $B\to A$  0.095572  0.107485      NaN  0.028283
        Phase       DGA       DNS  DGA_unc   DNS_unc
-aa  $A\to A$  0.004417  0.012702      NaN  0.014493
-ab  $A\to B$  1.733595  2.457196      NaN  0.650775
-bb  $B\to B$  2.147832  2.215176      NaN  0.396820
-ba  $B\to A$  0.317513  0.562794      NaN  0.244379
+aa  $A\to A$  0.000000  0.000000      NaN  0.000000
+ab  $A\to B$  0.000000  0.000000      NaN  0.000000
+bb  $B\to B$  2.482458  2.564732      NaN  0.466318
+ba  $B\to A$  0.000000  0.000000      NaN  0.000000
        Phase       DGA       DNS  DGA_unc   DNS_unc
-aa  $A\to A$  1.390825  0.874916      NaN  0.282614
-ab  $A\to B$  0.438096  0.443229      NaN  0.954978
-bb  $B\to B$  0.234660  0.282011      NaN  0.196384
-ba  $B\to A$  3.104336  7.742753      NaN  2.175787
+aa  $A\to A$  0.003567  0.012702      NaN  0.014493
+ab  $A\to B$  1.680117  2.457196      NaN  0.650775
+bb  $B\to B$  2.163987  2.215176      NaN  0.396820
+ba  $B\to A$  0.303174  0.562794      NaN  0.244379
+       Phase       DGA       DNS  DGA_unc   DNS_unc
+aa  $A\to A$  1.348646  0.874916      NaN  0.282614
+ab  $A\to B$  0.490087  0.443229      NaN  0.954978
+bb  $B\to B$  0.241564  0.282011      NaN  0.196384
+ba  $B\to A$  3.307685  7.742753      NaN  2.175787
 mean(X) = 1.0. min(block_means) = 1.0. max(block_means) = 1.0, unc = 0.0
 mean(X) = 75.20462962962964. min(block_means) = 70.43518518518519. max(block_means) = 82.87037037037037, unc = 3.415646364769519
 mean(X) = 6714.280092592592. min(block_means) = 5807.958333333333. max(block_means) = 8157.833333333333, unc = 738.1669394642698
@@ -716,21 +751,21 @@ mean(X) = 12131.462037037038. min(block_means) = 9577.819444444445. max(block_me
 y = [75.20462963 81.94071084], yerr = [[3.41564636 4.63538662]
  [3.41564636 4.38684578]]
    Moment        DGA  DGA_errlo  DGA_errhi        DNS  DNS_errlo  DNS_errhi
-1       1  74.100148        NaN        NaN  75.204630   6.831293   6.831293
-2       2  82.597862        NaN        NaN  81.940711   9.270773   8.773692
+1       1  74.700838        NaN        NaN  75.204630   6.831293   6.831293
+2       2  83.674935        NaN        NaN  81.940711   9.270773   8.773692
 y = [101.26481481 110.14291642], yerr = [[4.94641763 6.18912205]
  [4.94641763 5.85937973]]
    Moment        DGA  DGA_errlo  DGA_errhi         DNS  DNS_errlo  DNS_errhi
-1       1  70.035575        NaN        NaN  101.264815   9.892835   9.892835
-2       2  71.853528        NaN        NaN  110.142916  12.378244  11.718759
+1       1  73.808079        NaN        NaN  101.264815   9.892835   9.892835
+2       2  75.385774        NaN        NaN  110.142916  12.378244  11.718759
 e1 = 75.20462962962964, alpha = 5.3429404168596495, beta = 0.07104536573310377, alpha/beta = 75.20462962962964
-e1 = 74.10014803785597, alpha = 4.123562394887867, beta = 0.055648504140386315, alpha/beta = 74.10014803785597
+e1 = 74.70083771965623, alpha = 3.926190988613316, beta = 0.05255886156655787, alpha/beta = 74.70083771965623
 AB, EMP: alpha=5.3429404168596495, beta=0.07104536573310377
-AB, DGA: alpha=4.123562394887867, beta=0.055648504140386315
+AB, DGA: alpha=3.926190988613316, beta=0.05255886156655787
 e1 = 101.26481481481481, alpha = 5.463565692388404, beta = 0.053953248246982395, alpha/beta = 101.26481481481481
-e1 = 70.03557515104794, alpha = 19.015414721916247, beta = 0.2715107954907931, alpha/beta = 70.03557515104794
+e1 = 73.80807923096883, alpha = 23.143759741684196, beta = 0.31356675289245844, alpha/beta = 73.80807923096883
 BA, EMP: alpha=5.463565692388404, beta=0.053953248246982395
-BA, DGA: alpha=19.015414721916247, beta=0.2715107954907931
+BA, DGA: alpha=23.143759741684196, beta=0.31356675289245844
 mean(X) = 1.0. min(block_means) = 1.0. max(block_means) = 1.0, unc = 0.0
 mean(X) = 1948.035928808247. min(block_means) = 1815.5331144932557. max(block_means) = 2171.357750290716, unc = 119.43081002980497
 mean(X) = 4222286.649603884. min(block_means) = 3408634.333500872. max(block_means) = 6145162.881456831, unc = 896988.282731551
@@ -740,23 +775,23 @@ mean(X) = 15357896.35184479. min(block_means) = 11206072.219072772. max(block_me
 y = [894.75547491 943.80279456], yerr = [[ 54.85595495 106.22971271]
  [ 54.85595495  95.42709464]]
    Moment         DGA  DGA_errlo  DGA_errhi         DNS   DNS_errlo   DNS_errhi
-1       1  539.543293        NaN        NaN  894.755475  109.711910  109.711910
-2       2  704.810789        NaN        NaN  943.802795  212.459425  190.854189
+1       1  549.671483        NaN        NaN  894.755475  109.711910  109.711910
+2       2  697.754977        NaN        NaN  943.802795  212.459425  190.854189
 y = [1461.5345578 1800.0031621], yerr = [[115.07459415 173.2370065 ]
  [115.07459415 157.96891179]]
    Moment          DGA  DGA_errlo  ...          DNS   DNS_errlo   DNS_errhi
-1       1   837.867668        NaN  ...  1461.534558  230.149188  230.149188
-2       2  1157.665042        NaN  ...  1800.003162  346.474013  315.937824
+1       1   772.230557        NaN  ...  1461.534558  230.149188  230.149188
+2       2  1088.327910        NaN  ...  1800.003162  346.474013  315.937824
 
 [2 rows x 7 columns]
 e1 = 1948.035928808247, alpha = 8.878018618973236, beta = 0.00455742036770572, alpha/beta = 1948.035928808247
-e1 = 1174.6781661842272, alpha = 1.41553683356605, beta = 0.0012050422612043753, alpha/beta = 1174.6781661842272
+e1 = 1196.7289704826696, alpha = 1.6356290304240055, beta = 0.001366749757686836, alpha/beta = 1196.7289704826696
 AB, EMP: alpha=8.878018618973236, beta=0.00455742036770572
-AB, DGA: alpha=1.41553683356605, beta=0.0012050422612043753
+AB, DGA: alpha=1.6356290304240055, beta=0.001366749757686836
 e1 = 3182.011074100413, alpha = 1.9349840131066125, beta = 0.0006081009676101307, alpha/beta = 3182.011074100413
-e1 = 1824.1814288427797, alpha = 1.100061892052821, beta = 0.000603044124153087, alpha/beta = 1824.18142884278
+e1 = 1681.278195512199, alpha = 1.0139809214694087, beta = 0.0006031012144069952, alpha/beta = 1681.2781955121989
 BA, EMP: alpha=1.9349840131066125, beta=0.0006081009676101307
-BA, DGA: alpha=1.100061892052821, beta=0.000603044124153087
+BA, DGA: alpha=1.0139809214694087, beta=0.0006031012144069952
 Beginning plot field long
 theta_x.shape = (2000001, 1)
 avg_flag = False
@@ -790,27 +825,27 @@ theta_x.shape = (500000, 1)
 avg_flag = False
 shp0 = [20], dth=[3844.16330804]
 thaxes in (-10338.574868321524,62700.527984481865)
-u in (1.0,1.0), u_mean in (2.4465486650355123e-08,0.0001508947289255831)
+u in (1.0,1.0), u_mean in (2.3465753794845167e-08,0.00015186488994402161)
 ylab = $\int_{0\ \mathrm{km}}^{30\ \mathrm{km}}e^{-z/H}\overline{v'T'}dz$ (K$\cdot$m$^2/$s)
 avg_flag = False
 shp0 = [20], dth=[3844.16330804]
 thaxes in (-10338.574868321524,62700.527984481865)
-u in (-1.367168243534296e-16,14.170929162930442), u_mean in (0.0,0.00011529607378228736)
+u in (0.0,13.672998773657286), u_mean in (0.0,0.00012016444707445536)
 ylab = $\int_{0\ \mathrm{km}}^{30\ \mathrm{km}}e^{-z/H}\overline{v'T'}dz$ (K$\cdot$m$^2/$s)
 avg_flag = False
 shp0 = [20], dth=[3844.16330804]
 thaxes in (-10338.574868321524,62700.527984481865)
-u in (0.0,12.239715572323547), u_mean in (0.0,9.597786665831324e-05)
+u in (0.0,12.527901678166083), u_mean in (0.0,9.801612320165391e-05)
 ylab = $\int_{0\ \mathrm{km}}^{30\ \mathrm{km}}e^{-z/H}\overline{v'T'}dz$ (K$\cdot$m$^2/$s)
 avg_flag = False
 shp0 = [20], dth=[3844.16330804]
 thaxes in (-10338.574868321524,62700.527984481865)
-u in (-3.0330163128587316e-18,2.1874644268239107), u_mean in (0.0,0.00027103929212562777)
+u in (0.0,2.1787816905420803), u_mean in (0.0,0.000271745820147725)
 ylab = $\int_{0\ \mathrm{km}}^{30\ \mathrm{km}}e^{-z/H}\overline{v'T'}dz$ (K$\cdot$m$^2/$s)
 avg_flag = False
 shp0 = [20], dth=[3844.16330804]
 thaxes in (-10338.574868321524,62700.527984481865)
-u in (0.0,2.469009642557267), u_mean in (2.933764779025136e-09,6.161470105002514e-05)
+u in (0.0,2.4824582909434567), u_mean in (4.545178706343047e-09,6.276616062310938e-05)
 ylab = $\int_{0\ \mathrm{km}}^{30\ \mathrm{km}}e^{-z/H}\overline{v'T'}dz$ (K$\cdot$m$^2/$s)
 Plotting lines for A and B
 Done plotting field long
@@ -847,27 +882,27 @@ theta_x.shape = (500000, 1)
 avg_flag = False
 shp0 = [20], dth=[16.29588649]
 thaxes in (-39.44339341898456,270.17844980658356)
-u in (1.0,1.0), u_mean in (0.004777159266207974,43.05156818664251)
+u in (1.0,1.0), u_mean in (0.004731848293337793,43.12497166335739)
 ylab = $\overline{v'T'}(30\,\mathrm{km})$ ($\mathrm{K}\cdot\mathrm{m/s}$)
 avg_flag = False
 shp0 = [20], dth=[16.29588649]
 thaxes in (-39.44339341898456,270.17844980658356)
-u in (-1.367168243534296e-16,14.170929162930442), u_mean in (0.0,37.667884516218066)
+u in (0.0,13.672998773657286), u_mean in (0.0,38.899841061650406)
 ylab = $\overline{v'T'}(30\,\mathrm{km})$ ($\mathrm{K}\cdot\mathrm{m/s}$)
 avg_flag = False
 shp0 = [20], dth=[16.29588649]
 thaxes in (-39.44339341898456,270.17844980658356)
-u in (0.0,12.239715572323547), u_mean in (0.0,38.61952361365468)
+u in (0.0,12.527901678166083), u_mean in (0.0,39.36774833505994)
 ylab = $\overline{v'T'}(30\,\mathrm{km})$ ($\mathrm{K}\cdot\mathrm{m/s}$)
 avg_flag = False
 shp0 = [20], dth=[16.29588649]
 thaxes in (-39.44339341898456,270.17844980658356)
-u in (-3.0330163128587316e-18,2.1874644268239107), u_mean in (0.0,73.84919567808869)
+u in (0.0,2.1787816905420803), u_mean in (0.0,73.93807641012128)
 ylab = $\overline{v'T'}(30\,\mathrm{km})$ ($\mathrm{K}\cdot\mathrm{m/s}$)
 avg_flag = False
 shp0 = [20], dth=[16.29588649]
 thaxes in (-39.44339341898456,270.17844980658356)
-u in (0.0,2.469009642557267), u_mean in (0.002848053175071827,30.124748024510236)
+u in (0.0,2.4824582909434567), u_mean in (0.0034331637018327876,29.196316113525263)
 ylab = $\overline{v'T'}(30\,\mathrm{km})$ ($\mathrm{K}\cdot\mathrm{m/s}$)
 Plotting lines for A and B
 Done plotting field long
@@ -904,27 +939,27 @@ theta_x.shape = (500000, 1)
 avg_flag = False
 shp0 = [20], dth=[5.63741018]
 thaxes in (-33.12826736122411,73.98252612502947)
-u in (1.0,1.0), u_mean in (0.0002161306509264372,0.12311957252137025)
+u in (1.0,1.0), u_mean in (0.00021350020835105121,0.12460135455394736)
 ylab = $U$(30 km) (m/s)
 avg_flag = False
 shp0 = [20], dth=[5.63741018]
 thaxes in (-33.12826736122411,73.98252612502947)
-u in (-1.367168243534296e-16,14.170929162930442), u_mean in (0.0,0.18375816704716907)
+u in (0.0,13.672998773657286), u_mean in (0.0,0.18790097863952737)
 ylab = $U$(30 km) (m/s)
 avg_flag = False
 shp0 = [20], dth=[5.63741018]
 thaxes in (-33.12826736122411,73.98252612502947)
-u in (0.0,12.239715572323547), u_mean in (0.0,0.13431909126635944)
+u in (0.0,12.527901678166083), u_mean in (0.0,0.1416164220619627)
 ylab = $U$(30 km) (m/s)
 avg_flag = False
 shp0 = [20], dth=[5.63741018]
 thaxes in (-33.12826736122411,73.98252612502947)
-u in (-3.0330163128587316e-18,2.1874644268239107), u_mean in (0.0,0.23500372104818376)
+u in (0.0,2.1787816905420803), u_mean in (0.0,0.2359406182278358)
 ylab = $U$(30 km) (m/s)
 avg_flag = False
 shp0 = [20], dth=[5.63741018]
 thaxes in (-33.12826736122411,73.98252612502947)
-u in (0.0,2.469009642557267), u_mean in (0.0,0.10721044795671705)
+u in (0.0,2.4824582909434567), u_mean in (0.0,0.11158492294545186)
 ylab = $U$(30 km) (m/s)
 Plotting lines for A and B
 Done plotting field long
@@ -961,27 +996,234 @@ theta_x.shape = (500000, 1)
 avg_flag = False
 shp0 = [20], dth=[686608.14843319]
 thaxes in (349047.7620317343,13394602.5822623)
-u in (1.0,1.0), u_mean in (1.1489232475504887e-09,3.273124394232996e-07)
+u in (1.0,1.0), u_mean in (1.137585584974232e-09,3.2825513299449336e-07)
 ylab = $|\Psi|$(30 km) (m$^2/$s)
 avg_flag = False
 shp0 = [20], dth=[686608.14843319]
 thaxes in (349047.7620317343,13394602.5822623)
-u in (-1.367168243534296e-16,14.170929162930442), u_mean in (3.1800378552484604e-09,1.750760682110422e-07)
+u in (0.0,13.672998773657286), u_mean in (3.5442881601191786e-09,1.8263203521738369e-07)
 ylab = $|\Psi|$(30 km) (m$^2/$s)
 avg_flag = False
 shp0 = [20], dth=[686608.14843319]
 thaxes in (349047.7620317343,13394602.5822623)
-u in (0.0,12.239715572323547), u_mean in (1.4174943393426205e-11,1.6917269302621125e-07)
+u in (0.0,12.527901678166083), u_mean in (1.151781071305245e-11,1.7478346047615008e-07)
 ylab = $|\Psi|$(30 km) (m$^2/$s)
 avg_flag = False
 shp0 = [20], dth=[686608.14843319]
 thaxes in (349047.7620317343,13394602.5822623)
-u in (-3.0330163128587316e-18,2.1874644268239107), u_mean in (1.9887775616698957e-12,5.425697023577418e-07)
+u in (0.0,2.1787816905420803), u_mean in (1.397239563442567e-12,5.449349676877849e-07)
 ylab = $|\Psi|$(30 km) (m$^2/$s)
 avg_flag = False
 shp0 = [20], dth=[686608.14843319]
 thaxes in (349047.7620317343,13394602.5822623)
-u in (0.0,2.469009642557267), u_mean in (1.9940244577935244e-09,2.6697573981697596e-07)
+u in (0.0,2.4824582909434567), u_mean in (2.037628288029289e-09,2.5462665396153675e-07)
 ylab = $|\Psi|$(30 km) (m$^2/$s)
 Plotting lines for A and B
 Done plotting field long
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =        59997     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  5.18692D+03    |proj g|=  2.45601D+01
+
+At iterate    1    f=  4.31922D+03    |proj g|=  1.43911D+01
+
+At iterate    2    f=  2.37703D+03    |proj g|=  9.62910D+00
+
+At iterate    3    f=  2.27315D+03    |proj g|=  5.74020D+00
+
+At iterate    4    f=  1.61222D+03    |proj g|=  4.50548D+00
+
+At iterate    5    f=  1.30775D+03    |proj g|=  3.91278D+00
+
+At iterate    6    f=  7.30895D+01    |proj g|=  7.55664D-01
+
+At iterate    7    f=  6.97018D+01    |proj g|=  5.65151D-01
+
+At iterate    8    f=  4.70218D+01    |proj g|=  4.40202D-01
+
+At iterate    9    f=  3.96390D+01    |proj g|=  5.71707D-01
+
+At iterate   10    f=  3.37503D+01    |proj g|=  2.22164D-01
+
+           * * *
+
+Tit   = total number of iterations
+Tnf   = total number of function evaluations
+Tnint = total number of segments explored during Cauchy searches
+Skip  = number of BFGS updates skipped
+Nact  = number of active bounds at final generalized Cauchy point
+Projg = norm of the final projected gradient
+F     = final function value
+
+           * * *
+
+   N    Tit     Tnf  Tnint  Skip  Nact     Projg        F
+59997     10     15      1     0     0   2.222D-01   3.375D+01
+  F =   33.750318445568084     
+
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT                 
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =        59997     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  5.18658D+03    |proj g|=  8.11510D+00
+
+At iterate    1    f=  5.46978D+02    |proj g|=  9.10890D+00
+
+At iterate    2    f=  4.56719D+02    |proj g|=  2.55970D+00
+
+At iterate    3    f=  4.41205D+02    |proj g|=  1.53515D+00
+
+At iterate    4    f=  4.19854D+02    |proj g|=  1.62903D+00
+
+At iterate    5    f=  1.22071D+02    |proj g|=  1.27852D+00
+
+At iterate    6    f=  1.20897D+02    |proj g|=  1.03324D+00
+
+At iterate    7    f=  1.17765D+02    |proj g|=  8.92607D-01
+
+At iterate    8    f=  8.78311D+01    |proj g|=  8.95427D-01
+
+At iterate    9    f=  5.45513D+01    |proj g|=  8.96119D-01
+
+At iterate   10    f=  4.23761D+01    |proj g|=  1.31157D+00
+
+           * * *
+
+Tit   = total number of iterations
+Tnf   = total number of function evaluations
+Tnint = total number of segments explored during Cauchy searches
+Skip  = number of BFGS updates skipped
+Nact  = number of active bounds at final generalized Cauchy point
+Projg = norm of the final projected gradient
+F     = final function value
+
+           * * *
+
+   N    Tit     Tnf  Tnint  Skip  Nact     Projg        F
+59997     10     20      1     0     0   1.312D+00   4.238D+01
+  F =   42.376080535220588     
+
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT                 
+
+u in (-3.4657157247481327e-15,11.107165213204578), u_mean in (2.2491770637202996e-12,1.7856935875745592e-07)
+ylab = $|\Psi|$(30 km) (m$^2/$s)
+avg_flag = False
+shp0 = [20], dth=[686429.09067022]
+thaxes in (352539.38840961887,13394692.111143785)
+u in (-5.758720331354328e-16,2.500646490871389), u_mean in (2.320772711752961e-13,5.476629785942633e-07)
+ylab = $|\Psi|$(30 km) (m$^2/$s)
+avg_flag = False
+shp0 = [20], dth=[686429.09067022]
+thaxes in (352539.38840961887,13394692.111143785)
+u in (0.0,2.197701777074333), u_mean in (1.7542539610738499e-09,2.304542869984229e-07)
+ylab = $|\Psi|$(30 km) (m$^2/$s)
+Plotting lines for A and B
+Done plotting field long
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =        59997     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  5.18692D+03    |proj g|=  2.45601D+01
+
+At iterate    1    f=  4.31922D+03    |proj g|=  1.43911D+01
+
+At iterate    2    f=  2.37703D+03    |proj g|=  9.62910D+00
+
+At iterate    3    f=  2.27315D+03    |proj g|=  5.74020D+00
+
+At iterate    4    f=  1.61222D+03    |proj g|=  4.50548D+00
+
+At iterate    5    f=  1.30775D+03    |proj g|=  3.91278D+00
+
+At iterate    6    f=  7.30895D+01    |proj g|=  7.55664D-01
+
+At iterate    7    f=  6.97018D+01    |proj g|=  5.65151D-01
+
+At iterate    8    f=  4.70218D+01    |proj g|=  4.40202D-01
+
+At iterate    9    f=  3.96390D+01    |proj g|=  5.71707D-01
+
+At iterate   10    f=  3.37503D+01    |proj g|=  2.22164D-01
+
+           * * *
+
+Tit   = total number of iterations
+Tnf   = total number of function evaluations
+Tnint = total number of segments explored during Cauchy searches
+Skip  = number of BFGS updates skipped
+Nact  = number of active bounds at final generalized Cauchy point
+Projg = norm of the final projected gradient
+F     = final function value
+
+           * * *
+
+   N    Tit     Tnf  Tnint  Skip  Nact     Projg        F
+59997     10     15      1     0     0   2.222D-01   3.375D+01
+  F =   33.750318445568084     
+
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT                 
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =        59997     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  5.18658D+03    |proj g|=  8.11510D+00
+
+At iterate    1    f=  5.46978D+02    |proj g|=  9.10890D+00
+
+At iterate    2    f=  4.56719D+02    |proj g|=  2.55970D+00
+
+At iterate    3    f=  4.41205D+02    |proj g|=  1.53515D+00
+
+At iterate    4    f=  4.19854D+02    |proj g|=  1.62903D+00
+
+At iterate    5    f=  1.22071D+02    |proj g|=  1.27852D+00
+
+At iterate    6    f=  1.20897D+02    |proj g|=  1.03324D+00
+
+At iterate    7    f=  1.17765D+02    |proj g|=  8.92607D-01
+
+At iterate    8    f=  8.78311D+01    |proj g|=  8.95427D-01
+
+At iterate    9    f=  5.45513D+01    |proj g|=  8.96119D-01
+
+At iterate   10    f=  4.23761D+01    |proj g|=  1.31157D+00
+
+           * * *
+
+Tit   = total number of iterations
+Tnf   = total number of function evaluations
+Tnint = total number of segments explored during Cauchy searches
+Skip  = number of BFGS updates skipped
+Nact  = number of active bounds at final generalized Cauchy point
+Projg = norm of the final projected gradient
+F     = final function value
+
+           * * *
+
+   N    Tit     Tnf  Tnint  Skip  Nact     Projg        F
+59997     10     20      1     0     0   1.312D+00   4.238D+01
+  F =   42.376080535220588     
+
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT                 

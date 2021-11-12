@@ -35,7 +35,7 @@ simfolder = join(datafolder,"runs")
 if not exists(simfolder): mkdir(simfolder)
 resultfolder = join(datafolder,"results")
 if not exists(resultfolder): mkdir(resultfolder)
-dayfolder = join(resultfolder,"2021-08-06")
+dayfolder = join(resultfolder,"2021-11-01")
 if not exists(dayfolder): mkdir(dayfolder)
 expfolder = join(dayfolder,"0")
 if not exists(expfolder): mkdir(expfolder)
@@ -53,13 +53,13 @@ regression_flag =   0
 proj_1d_flag =      0
 demo_flag =         0
 qp_tb_coords_flag = 0
-trans_state_flag =  0
+trans_state_flag =  1
 plot_long_2d_flag = 0
 lifecycle_flag =    0
 display_cast_flag = 0
 gen_rates_flag =    0
 plot_long_1d_flag = 0
-validation_flag =   1
+validation_flag =   0
 # ---------------------------------------
 
 # ---------- Set parameters --------------------------
@@ -93,8 +93,9 @@ if least_action_flag:
 # Plot least action
 #model.plot_least_action(physical_param_folder)
 #sys.exit()
-#model.plot_least_action(physical_param_folder,"U")
-#model.plot_least_action(physical_param_folder,"mag")
+#model.plot_least_action_profiles(physical_param_folder,["U","mag"])
+#model.plot_least_action_scalars(physical_param_folder,["Uref"])
+#sys.exit()
 #model.plot_least_action(physical_param_folder,"vTint")
 # -------------------------------------------------------
 
@@ -234,7 +235,7 @@ if plot_long_1d_flag:
 
 # ---------- Plot dominant transition states-----------
 if trans_state_flag:
-    tpt.plot_transition_states_all(model,data,collect_flag=False)
+    tpt.plot_transition_states_all(model,data,collect_flag=True)
     #tpt.plot_transition_states_committor(model,data,preload_idx=True)
     #tpt.plot_transition_states_leadtime(model,data,preload_idx=True)
 # -------------------------------------------------

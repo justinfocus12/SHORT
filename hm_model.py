@@ -267,6 +267,7 @@ class HoltonMassModel(Model):
         ulb_idx = np.where(funlib["Uref"]["fun"](self.tpt_observables(xmin)) < uref_xst[1])[0][0]
         print("ulb_idx = {}, tmin[ulb_idx] = {}".format(ulb_idx,tmin[ulb_idx]))
         for i in range(len(obs_names)):
+            #axi = ax if len(obs_names)==1 else ax[i]
             # Top row: U(30 km) 
             obs_xst = funlib[obs_names[i]]["fun"](self.tpt_obs_xst)
             obs = funlib[obs_names[i]]["fun"](self.tpt_observables(xmin))

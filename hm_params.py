@@ -9,9 +9,9 @@ def get_algo_params():
     nshort = 500000
     istart = 0 # Highly dependent on the existing static database
     basis_type = 'MSM'
-    basis_size = 1000 
-    lag_time = 5.0 
-    nlags = 21 
+    basis_size = 1200 
+    lag_time = 10.0 
+    nlags = int(lag_time/dt_save) + 1 
     num_moments = 2
     lag_time_seq = np.linspace(0,lag_time,nlags)
     lag_time_current = lag_time_seq[1] # For computing rates

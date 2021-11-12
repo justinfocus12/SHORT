@@ -2960,15 +2960,14 @@ class TPT:
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
     def plot_transition_states_all(self,model,data,collect_flag=True):
-        # TODO: put FW and TPT results side by side as parallel as possible
         for dirn in ['ab']: #,'ba']:
-            frac_of_max = 0.1
+            frac_of_max = 0.0
             # First plot the profiles with a small number of levels
             num_levels = 3
             num_per_level = 5
             if collect_flag: 
                 _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.1,0.9])
-                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.25,0.75])
+                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.0,1.0])
             for func_key in ["U","vT"]:
                 self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
                 self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
@@ -2982,8 +2981,8 @@ class TPT:
             #ramp_projection = np.array([funlib["magref"]["fun"](data.X.reshape((Nx*Nt,xdim))),funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim)))]).T.reshape((Nx,Nt,2))
             if ramp_projection is not None: print("ramp_projection.shape = {}".format(ramp_projection.shape))
             if collect_flag: 
-                _ = self.collect_transition_states(model,data,'daeltime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.01,0.99],ramp_projection=ramp_projection)
-                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=5.0,ramp_bounds=[0.01,0.99],ramp_projection=ramp_projection)
+                _ = self.collect_transition_states(model,data,'daeltime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=2.0,ramp_bounds=[0.01,0.99],ramp_projection=ramp_projection)
+                _ = self.collect_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=2.0,ramp_bounds=[0.01,0.99],ramp_projection=ramp_projection)
                 _ = self.collect_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,tolerance=0.05,ramp_bounds=[0.05,0.95],ramp_projection=ramp_projection)
             # Plot least-action Uref and max-flux Uref
             time_symbol = 'leadtime'
