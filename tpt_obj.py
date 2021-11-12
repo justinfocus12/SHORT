@@ -2935,8 +2935,8 @@ class TPT:
             print("WARNING: no datapoints are close to the level")
             return [],[],[]
         # Maximize reactive density constrained to the surface
-        rflux = np.abs(Jdn[idx] + Jup[idx])
-        rflux_max_idx = np.where(rflux > frac_of_max*np.max(rflux))[0]
+        rflux = Jdn[idx] + Jup[idx] #np.abs(Jdn[idx] + Jup[idx])
+        rflux_max_idx = np.where(np.abs(rflux) > frac_of_max*np.max(np.abs(rflux)))[0]
         print(" and len(rflux_max_idx) = {}".format(len(rflux_max_idx)))
         #num = min(max_num_states,len(idx))
         #if num < len(idx):
@@ -3093,6 +3093,145 @@ class TPT:
             })
         pickle.dump(flux_dict,open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"wb"))
         return rflux_idx
+    def plot_flux_distributions_1d_driver(self,model,data):
+        funlib = model.observable_function_library()
+        Nx,Nt,xdim = data.X.shape
+        ramp_abbrv_list = ["Uref","Uref","Uref","Uref"]
+        func_abbrv_list = ["magref","vTintref","vTinttop","U67"]
+        for i in range(len(ramp_abbrv_list)):
+            ramp_abbrv = ramp_abbrv_list[i]
+            func_abbrv = func_abbrv_list[i]
+            ramp = funlib[ramp_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+            ramp_name = funlib[ramp_abbrv]["name"]
+            ramp_units = funlib[ramp_abbrv]["units"]
+            ramp_unit_symbol = funlib[ramp_abbrv]["unit_symbol"]
+            func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+            func_name = funlib[func_abbrv]["name"]
+            func_units = funlib[func_abbrv]["units"]
+            func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+            dirn = 'ab'
+            fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
+            fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+        # Now do surfaces of committor and lead time 
+        eps = 0.01
+        comm_fwd = self.dam_moments['one']['xb'][0,:,:]
+        tb = self.dam_moments['one']['xb'][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
+        tb[np.where(comm_fwd < eps)[0]] = np.nan
+        # Committor and Uref
+        ramp_abbrv = "qp"
+        func_abbrv = "Uref"
+        ramp = comm_fwd
+        ramp_name = r"$q^+$"
+        ramp_units = 1.0
+        ramp_unit_symbol = "probability"
+        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        func_name = funlib[func_abbrv]["name"]
+        func_units = funlib[func_abbrv]["units"]
+        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        dirn = 'ab'
+        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
+        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Committor and magref
+        ramp_abbrv = "qp"
+        func_abbrv = "magref"
+        ramp = comm_fwd
+        ramp_name = r"$q^+$"
+        ramp_units = 1.0
+        ramp_unit_symbol = "probability"
+        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        func_name = funlib[func_abbrv]["name"]
+        func_units = funlib[func_abbrv]["units"]
+        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        dirn = 'ab'
+        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
+        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Lead time and magref
+        ramp_abbrv = "tb"
+        func_abbrv = "magref"
+        ramp = tb
+        ramp_name = r"$\eta^+$"
+        ramp_units = 1.0
+        ramp_unit_symbol = "days"
+        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        func_name = funlib[func_abbrv]["name"]
+        func_units = funlib[func_abbrv]["units"]
+        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        dirn = 'ab'
+        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
+        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Lead time and Uref
+        ramp_abbrv = "tb"
+        func_abbrv = "Uref"
+        ramp = tb
+        ramp_name = r"$\eta^+$"
+        ramp_units = 1.0
+        ramp_unit_symbol = "days"
+        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        func_name = funlib[func_abbrv]["name"]
+        func_units = funlib[func_abbrv]["units"]
+        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        dirn = 'ab'
+        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
+        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        return
+    def plot_flux_distributions_1d(self,model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=5,frac_of_max=0.0,fig=None,ax=None,clim=None):
+        # At each level set of ramp, plot a distribution of flux density across the other variable func. (Will later extend to 2d). 
+        # The observable should be correlated with the committor...
+        # Add a second curve, dotted, for A->A phase
+
+        max_num_states = None
+        fwd_key = 'xb' if dirn=='ab' else 'xa'
+        bwd_key = 'ax' if dirn=='ab' else 'bx'
+        comm_fwd = self.dam_moments['one'][fwd_key][0,:,:]
+        comm_bwd = self.dam_moments['one'][fwd_key][0,:,:]
+        eps = 0.001
+        interior_idx = np.where((comm_fwd > eps)*(comm_fwd < 1-eps))
+        ramp_min = np.nanmin(ramp[interior_idx])
+        ramp_max = np.nanmax(ramp[interior_idx])
+        func_min = np.nanmin(func[interior_idx])
+        func_max = np.nanmax(func[interior_idx])
+        print("ramp_min = {}, ramp_max = {}".format(ramp_min,ramp_max))
+        ramp_comm_corr = np.nanmean((ramp - np.nanmean(ramp))*(comm_fwd - np.nanmean(comm_fwd)))
+        print("ramp_comm_corr = {}".format(ramp_comm_corr))
+        ramp_levels = np.linspace(ramp_min,ramp_max,num_levels+2)[1:-1]
+        if ramp_comm_corr < 0:
+            ramp_levels = ramp_levels[::-1]
+        ramp_tol = np.min(np.abs(np.diff(ramp_levels)))/10
+        print("ramp_levels = {}".format(ramp_levels))
+        weight = self.chom
+        Nx,Nt,xdim = data.X.shape
+        if fig is None or ax is None:
+            fig,ax = plt.subplots(ncols=num_levels,figsize=(6*num_levels,6),sharey=True)
+        for ri in range(len(ramp_levels)):
+            handles = []
+            ax[ri].axhline(0,color='black')
+            # A -> B
+            ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
+            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max))
+            rate_ab = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
+            normalizer = np.max(np.abs(hist))
+            bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
+            h, = ax[ri].plot(bin_centers*func_units,hist/normalizer,color='darkorange',marker='o',label=r"$A\to B$ flux $= %.2e$"%(rate_ab),linestyle='-')
+            handles += [h]
+            # A -> A
+            ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,1-comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
+            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max))
+            rate_aa = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
+            bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
+            normalizer = np.max(np.abs(hist))
+            h, = ax[ri].plot(bin_centers*func_units,hist/normalizer,color='deepskyblue',marker='o',label=r"$A\to A$ flux $= %.2e$"%(rate_aa),linestyle='-')
+            handles += [h]
+            ax[ri].set_title("%s = %.2f %s"%(ramp_name,ramp_levels[ri]*ramp_units,ramp_unit_symbol))
+            ax[ri].set_xlabel("%s [%s]"%(func_name,func_unit_symbol))
+            ax[ri].legend(handles=handles)
+        return fig,ax
     def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="U",func_key_ref="Uref",fig=None,ax=None,clim=None):
         # Plot the mean profile evolving over time (not committor)
         funlib = model.observable_function_library()
