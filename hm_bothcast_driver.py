@@ -35,7 +35,7 @@ simfolder = join(datafolder,"runs")
 if not exists(simfolder): mkdir(simfolder)
 resultfolder = join(datafolder,"results")
 if not exists(resultfolder): mkdir(resultfolder)
-dayfolder = join(resultfolder,"2021-11-01")
+dayfolder = join(resultfolder,"2021-11-13")
 if not exists(dayfolder): mkdir(dayfolder)
 expfolder = join(dayfolder,"0")
 if not exists(expfolder): mkdir(expfolder)
@@ -242,6 +242,7 @@ if trans_state_flag:
 # -------------------------------------------------
 # ---------- Plot flux distributions -----------
 if flux_dist_flag:
+    print("Entering plot_flux_distributions_1d_driver")
     tpt.plot_flux_distributions_1d_driver(model,data)
 # -------------------------------------------------
 

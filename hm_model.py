@@ -45,6 +45,8 @@ class HoltonMassModel(Model):
         # E[(dU)^2]/dt = (du_perday m/s)^2/day
         # E[(dpsi)^2]/dt = (g/f0*dh_perday m^2/s)^2/day
         self.abdefdim = physical_params['abdefdim']
+        self.radius_a = physical_params['radius_a']
+        self.radius_b = physical_params['radius_b']
         self.state_dim = 3*(self.q['Nz']-1)
         tpt_obs_dim = self.state_dim # We're dealing with full state here
         self.noise_rank = self.q['nfreq']
@@ -223,26 +225,24 @@ class HoltonMassModel(Model):
         return x # No reduction happening here
     def adist(self,cvx):
         cva = self.tpt_observables(self.xst[0])
+        radius_a = self.radius_a #8.0
         if self.abdefdim == 75:
-            radius_a = 8.0
             da = np.sqrt(np.sum((cvx - cva)**2, 1))
-            return np.maximum(0, da-radius_a)
         else:
             n = self.q['Nz']-1
             zi = self.q['zi']
             da = cva[2*n+zi] - cvx[:,2*n+zi]
-            return np.maximum(da,0)
+        return np.maximum(0, da-radius_a)
     def bdist(self,cvx):
         cvb = self.tpt_observables(self.xst[1])
+        radius_b = self.radius_b # 30.0 
         if self.abdefdim == 75:
-            radius_b = 30.0 #20.0
             db = np.sqrt(np.sum((cvx - cvb)**2, 1))
-            return np.maximum(0, db-radius_b)
         else:
             n = self.q['Nz']-1
             zi = self.q['zi']
             db = cvx[:,2*n+zi] - cvb[2*n+zi]
-            return np.maximum(db,0)
+        return np.maximum(0, db-radius_b)
     def set_param_folder(self):
         self.param_foldername = ("du{}_h{}".format(self.q['du_per_day'],self.q['hB_d'])).replace(".","p")
         return
@@ -1080,7 +1080,8 @@ class HoltonMassModel(Model):
         hb, = ax.plot(units*Ub,z,color='red',linestyle='dashed',linewidth=3,label=bsymb)
         handles += [ha,hb]
         if colors is None: colorlist = plt.cm.coolwarm(qlevels)
-        if labels is None: labellist = ["" for i in range(num_levels)]
+        if labels is None: labels = ["" for i in range(num_levels)]
+        print("Before for loop: num_levels = {}, len(rflux) = {}, len(rflux_idx) = {}".format(num_levels,len(rflux),len(rflux_idx)))
         for i in range(num_levels):
             if len(rflux_idx[i]) > 0:
                 U = funlib[key]["fun"](X[rflux_idx[i]])

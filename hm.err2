@@ -1,3 +1,19 @@
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1243: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1380: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:1166: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1181: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1228: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1355: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ab = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
 /home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
   if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
 /home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in less
@@ -26,16 +42,49 @@
   field[np.where(field > vmax**j)[0]] = np.nan
 /home/jf4241/SHORT/tpt_obj.py:1668: RuntimeWarning: invalid value encountered in less
   field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1243: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1380: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:1166: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1181: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1228: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1355: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ab = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:2932: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
 Traceback (most recent call last):
-  File "hm_bothcast_driver.py", line 237, in <module>
-    tpt.plot_transition_states_all(model,data,collect_flag=False)
+  File "hm_bothcast_driver.py", line 239, in <module>
+    tpt.plot_transition_states_all(model,data,collect_flag=True)
   File "/home/jf4241/SHORT/tpt_obj.py", line 2973, in plot_transition_states_all
-    self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
-  File "/home/jf4241/SHORT/tpt_obj.py", line 3217, in plot_transition_states
-    flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
-FileNotFoundError: [Errno 2] No such file or directory: '/scratch/jf4241/SHORT_holtonmass/results/2021-11-01/0/du1p0_h38p5_abdd1/istart0_tlong1000000p0_N200000_bs1200_lag10p0_nlags21_lagj0p5_sf0magref/flux_committor_ab_fom0p1_nlev3_nplev5'
+    self.plot_transition_states(model,data,'leadtime',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 3420, in plot_transition_states
+    print("dirn={}, func_key={}, plsi = {}. committor range = {},{}. Uref range = {},{}".format(dirn,func_key,plsi,np.min(comm_fwd[rflux_idx[plsi]]),np.max(comm_fwd[rflux_idx[plsi]]),np.min(Uref),np.max(Uref)))
+  File "<__array_function__ internals>", line 5, in amin
+  File "/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py", line 2792, in amin
+    return _wrapreduction(a, np.minimum, 'min', axis, None, out,
+  File "/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/core/fromnumeric.py", line 90, in _wrapreduction
+    return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
+ValueError: zero-size array to reduction operation minimum which has no identity
  This problem is unconstrained.
  This problem is unconstrained.
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1243: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1380: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:1228: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
 /home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
   if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
 /home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in less
@@ -64,51 +113,31 @@ FileNotFoundError: [Errno 2] No such file or directory: '/scratch/jf4241/SHORT_h
   field[np.where(field > vmax**j)[0]] = np.nan
 /home/jf4241/SHORT/tpt_obj.py:1668: RuntimeWarning: invalid value encountered in less
   field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1243: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1380: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:1228: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:2932: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2932: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:3350: RuntimeWarning: invalid value encountered in double_scalars
+  fx_mean[i] = np.sum(fxi*rflux[i])/np.sum(rflux[i])   #np.mean(fxi)
+/home/jf4241/SHORT/tpt_obj.py:3351: RuntimeWarning: invalid value encountered in double_scalars
+  fx_std[i] = np.sqrt(np.sum((fxi-fx_mean[i])**2*rflux[i])/(np.sum(rflux[i]))) #np.std(fxi)
 Traceback (most recent call last):
-  File "hm_bothcast_driver.py", line 237, in <module>
-    tpt.plot_transition_states_all(model,data,collect_flag=False)
-  File "/home/jf4241/SHORT/tpt_obj.py", line 2973, in plot_transition_states_all
-    self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
-  File "/home/jf4241/SHORT/tpt_obj.py", line 3217, in plot_transition_states
-    flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
-FileNotFoundError: [Errno 2] No such file or directory: '/scratch/jf4241/SHORT_holtonmass/results/2021-11-01/0/du1p0_h38p5_abdd1/istart0_tlong1000000p0_N500000_bs1200_lag10p0_nlags21_lagj0p5_sf0magref/flux_committor_ab_fom0p1_nlev3_nplev5'
- This problem is unconstrained.
- This problem is unconstrained.
-/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
-  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
-/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in less
-  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
-/home/jf4241/SHORT/tpt_obj.py:1519: RuntimeWarning: invalid value encountered in greater
-  field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1520: RuntimeWarning: invalid value encountered in less
-  field[np.where(field < vmin**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1554: RuntimeWarning: invalid value encountered in greater
-  field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1555: RuntimeWarning: invalid value encountered in less
-  field[np.where(field < vmin**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1587: RuntimeWarning: invalid value encountered in greater
-  field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1588: RuntimeWarning: invalid value encountered in less
-  field[np.where(field < vmin**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1614: RuntimeWarning: invalid value encountered in greater
-  field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1615: RuntimeWarning: invalid value encountered in less
-  field[np.where(field < vmin**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1640: RuntimeWarning: invalid value encountered in greater
-  field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1641: RuntimeWarning: invalid value encountered in less
-  field[np.where(field < vmin**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1667: RuntimeWarning: invalid value encountered in greater
-  field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1668: RuntimeWarning: invalid value encountered in less
-  field[np.where(field < vmin**j)[0]] = np.nan
-Traceback (most recent call last):
-  File "hm_bothcast_driver.py", line 237, in <module>
-    tpt.plot_transition_states_all(model,data,collect_flag=False)
-  File "/home/jf4241/SHORT/tpt_obj.py", line 2973, in plot_transition_states_all
-    self.plot_transition_states(model,data,'committor',dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key=func_key)
-  File "/home/jf4241/SHORT/tpt_obj.py", line 3217, in plot_transition_states
-    flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
-FileNotFoundError: [Errno 2] No such file or directory: '/scratch/jf4241/SHORT_holtonmass/results/2021-11-01/0/du1p0_h38p5_abdd1/istart0_tlong1000000p0_N500000_bs1500_lag10p0_nlags21_lagj0p5_sf0magref/flux_committor_ab_fom0p1_nlev3_nplev5'
+  File "hm_bothcast_driver.py", line 239, in <module>
+    tpt.plot_transition_states_all(model,data,collect_flag=True)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 2992, in plot_transition_states_all
+    self.plot_maxflux_path(model,data,time_symbol,dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key="Uref",fig=fig,ax=ax[0,1])
+  File "/home/jf4241/SHORT/tpt_obj.py", line 3353, in plot_maxflux_path
+    if cdf[-1] <= 0: sys.exit("CDF[-1] = {}".format(cdf[-1]))
+IndexError: index -1 is out of bounds for axis 0 with size 0
  This problem is unconstrained.
  This problem is unconstrained.

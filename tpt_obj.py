@@ -3112,12 +3112,43 @@ class TPT:
             dirn = 'ab'
             fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
             fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+            print("Just saved a flux dist fig")
             plt.close(fig)
         # Now do surfaces of committor and lead time 
         eps = 0.01
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
         tb = self.dam_moments['one']['xb'][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
         tb[np.where(comm_fwd < eps)[0]] = np.nan
+        # Committor and Lead time
+        ramp_abbrv = "qp"
+        func_abbrv = "tb"
+        ramp = comm_fwd
+        ramp_name = r"$q^+$"
+        ramp_units = 1.0
+        ramp_unit_symbol = "probability"
+        func = tb
+        func_name = r"$\eta^+$"
+        func_units = 1.0
+        func_unit_symbol = "days"
+        dirn = 'ab'
+        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
+        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Lead time and Committor
+        ramp_abbrv = "tb"
+        func_abbrv = "qp"
+        ramp = tb
+        ramp_name = r"$\eta^+$"
+        ramp_units = 1.0
+        ramp_unit_symbol = "days"
+        func = comm_fwd
+        func_name = r"$q^+$"
+        func_units = 1.0
+        func_unit_symbol = "probability"
+        dirn = 'ab'
+        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
+        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
         # Committor and Uref
         ramp_abbrv = "qp"
         func_abbrv = "Uref"
@@ -3221,13 +3252,13 @@ class TPT:
         weight = self.chom
         Nx,Nt,xdim = data.X.shape
         if fig is None or ax is None:
-            fig,ax = plt.subplots(nrows=2,ncols=num_levels,figsize=(6*num_levels,6),sharey="row",sharex=True)
+            fig,ax = plt.subplots(nrows=2,ncols=num_levels,figsize=(4*num_levels,8),sharey="row",sharex=True)
         for ri in range(len(ramp_levels)):
             # A -> B
             ax[0,ri].axhline(0,color='black')
             ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
             tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max))
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=15)
             rate_ab = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
             normalizer = 1.0 #np.max(np.abs(hist))
             bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
@@ -3307,26 +3338,28 @@ class TPT:
         print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
         fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
         # Instead of a scatter plot, make a mean-std plot
-        fx_mean = np.zeros(num_levels)
-        fx_std = np.zeros(num_levels)
-        fx_lower = np.zeros(num_levels) # 5th percentile
-        fx_upper = np.zeros(num_levels) # 95th percentile
+        fx_mean = np.nan*np.ones(num_levels)
+        fx_std = np.nan*np.ones(num_levels)
+        fx_lower = np.nan*np.ones(num_levels) # 5th percentile
+        fx_upper = np.nan*np.ones(num_levels) # 95th percentile
         for i in range(num_levels):
             #print("rflux_idx[i]={}".format(rflux_idx[i]))
-            fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
-            order = np.argsort(fxi)
-            fxi = np.array(fxi)[order]
-            rflux[i] = np.array(rflux[i])[order]
-            fx_mean[i] = np.sum(fxi*rflux[i])/np.sum(rflux[i])   #np.mean(fxi)
-            fx_std[i] = np.sqrt(np.sum((fxi-fx_mean[i])**2*rflux[i])/(np.sum(rflux[i]))) #np.std(fxi)
-            cdf = np.cumsum(rflux[i])
-            if cdf[-1] <= 0: sys.exit("CDF[-1] = {}".format(cdf[-1]))
-            cdf *= 1.0/cdf[-1]
-            fx_lower[i] = fxi[np.where(cdf > 0.05)[0][0]]
-            fx_upper[i] = fxi[np.where(cdf > 0.95)[0][0]]
-            #fx_mean[i] = np.mean(fxi)
-            #fx_std[i] = np.std(fxi)
-            #ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
+            if len(rflux_idx[i]) > 0:
+                fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
+                order = np.argsort(fxi)
+                fxi = np.array(fxi)[order]
+                rflux[i] = np.array(rflux[i])[order]
+                fx_mean[i] = np.sum(fxi*rflux[i])/np.sum(rflux[i])   #np.mean(fxi)
+                fx_std[i] = np.sqrt(np.sum((fxi-fx_mean[i])**2*rflux[i])/(np.sum(rflux[i]))) #np.std(fxi)
+                cdf = np.cumsum(rflux[i])
+                #if cdf[-1] <= 0: sys.exit("CDF[-1] = {}".format(cdf[-1]))
+                if cdf[-1] > 0:
+                    cdf *= 1.0/cdf[-1]
+                    fx_lower[i] = fxi[np.where(cdf > 0.05)[0][0]]
+                    fx_upper[i] = fxi[np.where(cdf > 0.95)[0][0]]
+                    #fx_mean[i] = np.mean(fxi)
+                    #fx_std[i] = np.std(fxi)
+                    #ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
         levels_interp = np.linspace(levels[0],levels[-1],200)
         fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean,kind='cubic')(levels_interp)
         fx_std_interp = scipy.interpolate.interp1d(levels,fx_std,kind='cubic')(levels_interp)
@@ -3369,7 +3402,10 @@ class TPT:
         flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
         rflux_idx = flux_dict["idx"]
         levels = flux_dict["levels"]
+        levels_nondegenerate = []
         rflux = flux_dict["rflux"]
+        if len(rflux_idx) != len(rflux):
+            raise Exception("DOH: len(rflux_idx) = {}, len(rflux) = {}".format(len(rflux_idx),len(rflux)))
         minlevel,maxlevel = flux_dict["minlevel"],flux_dict["maxlevel"]
         cmap = plt.cm.coolwarm if dirn=='ab' else plt.cm.coolwarm_r
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
@@ -3387,7 +3423,7 @@ class TPT:
         for i in range(len(plot_level_subset)):
             plsi = plot_level_subset[i]
             Uref = funlib["Uref"]["fun"](data.X[rflux_idx[plsi],tidx])
-            print("dirn={}, func_key={}, plsi = {}. committor range = {},{}. Uref range = {},{}".format(dirn,func_key,plsi,np.min(comm_fwd[rflux_idx[plsi]]),np.max(comm_fwd[rflux_idx[plsi]]),np.min(Uref),np.max(Uref)))
+            #print("dirn={}, func_key={}, plsi = {}. committor range = {},{}. Uref range = {},{}".format(dirn,func_key,plsi,np.min(comm_fwd[rflux_idx[plsi]]),np.max(comm_fwd[rflux_idx[plsi]]),np.min(Uref),np.max(Uref)))
             #print("rflux_idx[plsi] = {}".format(rflux_idx[plsi]))
             numi = len(rflux_idx[plsi])
             num_total_states += numi
@@ -3399,6 +3435,7 @@ class TPT:
             if numi > 0: 
                 labellist_unique += [r"$%s=%.1f$"%(flux_dict["symbol"],levels[plsi])]
                 labellist += [labellist_unique[-1]] + ["" for j in range(numi-1)]
+                levels_nondegenerate += [levels[plsi]]
             real_levels += [levels[plsi] for j in range(numi)] #[i,:] = levels[plot_level_subset[i]]
         zorderlist = np.random.permutation(np.arange(num_total_states))
         # DO NOT plot all the lines. 
@@ -3408,7 +3445,9 @@ class TPT:
         #fig.savefig(join(self.savefolder,"trans_states_plot_{}_{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,num_levels,num_per_level,func_key)),bbox_inches="tight",pad_inches=0.2)
         #plt.close(fig)
         # Plot mean and standard deviation
-        fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,levels[plot_level_subset],ramp_name,colors=colorlist_unique,key=func_key,labels=labellist_unique)
+        #fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,levels[plot_level_subset],ramp_name,colors=colorlist_unique,key=func_key,labels=labellist_unique)
+        print("Before calling plot_state_distribution: len(rflux) = %i, len(rflux_idx) = %i, len(levels_nondegenerate) = %i, len(colorlist_unique) = %i, len(labellist_unique) = %i"%(len(rflux),len(rflux_idx),len(levels_nondegenerate),len(colorlist_unique),len(labellist_unique)))
+        fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,levels_nondegenerate,ramp_name,colors=colorlist_unique,key=func_key,labels=labellist_unique)
         fig.savefig(join(self.savefolder,("trans_state_dist_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
         print("Saved transition state distribution in {}".format(self.savefolder))
         plt.close(fig)
