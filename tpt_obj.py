@@ -2991,63 +2991,141 @@ class TPT:
         prof_key_list = ["U","vT"]
         rflux = []
         rflux_idx = []
-        for qi in range(len(qp_levels)):
-            ridx_qi,rflux_qi,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[qi],qp_tol,None,0.0)
-            rflux += [rflux_qi]
-            rflux_idx += [ridx_qi]
-        for ki in range(len(prof_key_list)):
-            prof_key = prof_key_list[ki]
-            fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
-            fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)))
-            plt.close(fig)
+        #for qi in range(len(qp_levels)):
+        #    ridx_qi,rflux_qi,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[qi],qp_tol,None,0.0)
+        #    rflux += [rflux_qi]
+        #    rflux_idx += [ridx_qi]
+        #for ki in range(len(prof_key_list)):
+        #    prof_key = prof_key_list[ki]
+        #    fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
+        #    fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)))
+        #    plt.close(fig)
         # 2. Plot the evolution of the least action path alongside max-flux path
         funlib = model.observable_function_library()
         eps = 0.01
-        tb = self.dam_moments['one']['xb'][0,:,:]
+        tb = self.dam_moments['one']['xb'][1,:,:]
         tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd < eps))
         tb[comm_fwd < eps] == np.nan
         tb_min,tb_max = np.nanmin(tb),np.nanmax(tb)
-        tb_levels = np.linspace(tb_max,tb_min,12)[1:-1]
-        tb_tol = np.abs(tb_levels[1]-tb_levels[0])/4
+        tb_levels = np.linspace(tb_min,tb_max,17)[1:-1]
         tb_qp_corr = np.nanmean((tb - np.nanmean(tb))*(comm_fwd - np.nanmean(comm_fwd)))
+        if tb_qp_corr < 0:
+            tb_levels = tb_levels[::-1]
+        print("tb_levels = {}".format(tb_levels))
+        tb_tol = np.abs(tb_levels[1]-tb_levels[0])/1
+        print("tb_qp_corr = ", tb_qp_corr)
         rflux = []
         rflux_idx = []
         Uprof = []
         magprof = []
+        Uprof_lower = []
+        Uprof_upper = []
+        magprof_lower = []
+        magprof_upper = []
+        ramp = tb.reshape((Nx,Nt,1)) * np.sign(tb_qp_corr)
         for ti in range(len(tb_levels)):
-            ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,tb_levels[ti],tb_tol,None,0.0)
+            print("tb_levels[ti] * np.sign(tb_qp_corr) = {}".format(tb_levels[ti]*np.sign(tb_qp_corr)))
+            ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,tb_levels[ti]*np.sign(tb_qp_corr),tb_tol,None,0.0)
+            ridx_ti = np.array(ridx_ti)
+            rflux_ti = np.array(rflux_ti)
             rflux += [rflux_ti]
             rflux_idx += [ridx_ti]
             # Determine height-by-height median
             U = funlib["U"]["fun"](data.X[ridx_ti,tidx])
             Umed = np.zeros(U.shape[1])
+            Ulow = np.zeros(U.shape[1])
+            Uhigh = np.zeros(U.shape[1])
             for j in range(U.shape[1]):
-                order = np.argsort(Uprof[:,j])
-                cdf = np.cumsum(rflux[order])
+                order = np.argsort(U[:,j])
+                #print("rflux_ti = {}".format(rflux_ti))
+                #print("order = {}".format(order))
+                #print("rflux_ti[order[:3]] = {}".format(rflux_ti[order[:3]]))
+                cdf = np.cumsum(rflux_ti[order])
                 median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
-                Umed[j] = U[median_idx,j]
+                Umed[j] = U[order[median_idx],j]
+                lower_idx = np.where(cdf/cdf[-1] > 0.05)[0][0]
+                upper_idx = np.where(cdf/cdf[-1] > 0.95)[0][0]
+                Ulow[j] = U[order[lower_idx],j]
+                Uhigh[j] = U[order[upper_idx],j]
             Uprof += [Umed]
+            Uprof_lower += [Ulow]
+            Uprof_upper += [Uhigh]
             mag = funlib["mag"]["fun"](data.X[ridx_ti,tidx])
             magmed = np.zeros(mag.shape[1])
+            maglow = np.zeros(mag.shape[1])
+            maghigh = np.zeros(mag.shape[1])
             for j in range(mag.shape[1]):
-                order = np.argsort(magprof[:,j])
-                cdf = np.cumsum(rflux[order])
+                order = np.argsort(mag[:,j])
+                #print("rflux_ti = {}".format(rflux_ti))
+                #print("order = {}".format(order))
+                #print("rflux_ti[order[:3]] = {}".format(rflux_ti[order[:3]]))
+                cdf = np.cumsum(rflux_ti[order])
                 median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
-                magmed[j] = mag[median_idx,j]
+                magmed[j] = mag[order[median_idx],j]
+                lower_idx = np.where(cdf/cdf[-1] > 0.1)[0][0]
+                upper_idx = np.where(cdf/cdf[-1] > 0.9)[0][0]
+                maglow[j] = mag[order[lower_idx],j]
+                maghigh[j] = mag[order[upper_idx],j]
             magprof += [magmed]
+            magprof_lower += [maglow]
+            magprof_upper += [maghigh]
         Uprof = np.array(Uprof)
+        Uprof_lower = np.array(Uprof_lower)
+        Uprof_upper = np.array(Uprof_upper)
         magprof = np.array(magprof)
+        magprof_lower = np.array(magprof_lower)
+        magprof_upper = np.array(magprof_upper)
         # Plot least-action Uref and max-flux Uref
         fig,ax = plt.subplots(ncols=2,nrows=3,figsize=(16,18),sharey='row',sharex='col')
         # Least action path in upper left
         model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]],negtime=True)
         # Max-probability path in upper right
-        self.plot_maxflux_path(model,data,time_symbol,dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key="Uref",fig=fig,ax=ax[0,1])
-        ax[0,1].set_xlim(ax[0,0].get_xlim())
+        #ax[0,1].set_xlim(ax[0,0].get_xlim())
+        zi = np.argmin(np.abs(model.q['z_d']/1000 - model.ref_alt))
+        print("zi = {}".format(zi))
+        print("Uprof[:,zi] = {}".format(Uprof[:,zi]))
+        print("Uprof_lower[:,zi] = {}".format(Uprof_lower[:,zi]))
+        print("Uprof_upper[:,zi] = {}".format(Uprof_upper[:,zi]))
+        print("tb_levels = {}".format(tb_levels))
+        levels_interp = np.linspace(tb_levels[0],tb_levels[-1],200)
+        Uzi_med_interp = scipy.interpolate.interp1d(tb_levels,Uprof[:,zi],kind='cubic')(levels_interp)
+        Uzi_lower_interp = scipy.interpolate.interp1d(tb_levels,Uprof_lower[:,zi],kind='cubic')(levels_interp)
+        Uzi_upper_interp = scipy.interpolate.interp1d(tb_levels,Uprof_upper[:,zi],kind='cubic')(levels_interp)
+        ax[0,1].plot(-levels_interp,Uzi_med_interp*funlib["U"]["units"],color='black')
+        ax[0,1].scatter(-tb_levels,Uprof[:,zi]*funlib["U"]["units"],color='black',marker='o')
+        Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
+        Uzi_a -= model.radius_a
+        Uzi_b += model.radius_b
+        ax[0,1].fill_between(-levels_interp,Uzi_lower_interp*funlib["U"]["units"],Uzi_upper_interp*funlib["U"]["units"],color='darkorange',alpha=0.5)
+        ax[0,1].axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
+        ax[0,1].axhline(y=Uzi_b*funlib["U"]["units"],color='red',linewidth=3)
+
+        # Least action profiles in bottom two left
+        func_key_list = ["U","mag"]
+        _,_,ims_lap = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0],negtime=True)
         # U profile in middle right
-        model.plot_profile_evolution(Uprof,-tb_levels,"U",fig=fig,ax=ax[1,1])
-        # vT profile in bottom right
-        model.plot_profile_evolution(vTprof,-tb_levels,"vT",fig=fig,ax=ax[1,1])
+        clim_u = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
+        _,_,imu = model.plot_profile_evolution(Uprof,-tb_levels,"U",fig=fig,ax=ax[1,1],clim=clim_u)
+        fig.colorbar(imu,ax=ax[1,1])
+        # mag profile in bottom right
+        clim_mag = np.array([ims_lap[1].levels[0],ims_lap[1].levels[-1]])
+        _,_,immag = model.plot_profile_evolution(magprof,-tb_levels,"mag",fig=fig,ax=ax[2,1],clim=clim_mag)
+        fig.colorbar(immag,ax=ax[2,1])
+        # Set x labels to False
+        for i in range(ax.shape[0]-1):
+            ax[i,0].xaxis.set_visible(False)
+            ax[i,1].xaxis.set_visible(False)
+        for i in range(ax.shape[0]):
+            ax[i,1].yaxis.set_visible(False)
+        # Correct position of top row
+        pos00 = ax[0,0].get_position()
+        pos10 = ax[1,0].get_position()
+        ax[0,0].set_position([pos10.x0,pos00.y0,pos10.width,pos00.height])
+        pos01 = ax[0,1].get_position()
+        pos11 = ax[1,1].get_position()
+        ax[0,1].set_position([pos11.x0,pos01.y0,pos11.width,pos01.height])
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
         # Save
         fig.savefig(join(self.savefolder,"lap_vs_lap_new"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
@@ -3419,6 +3497,74 @@ class TPT:
         #plt.close(fig)
         #print("Just saved in {}".format(self.savefolder))
         return fig,ax,im
+    def plot_maxflux_path_new(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="Uref",fig=None,ax=None):
+        # Plot any observable function at the gates, as a timeseries.
+        funlib = model.observable_function_library()
+        flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
+        minlevel = flux_dict["minlevel"]
+        rflux_idx = flux_dict["idx"]
+        rflux = flux_dict["rflux"]
+        levels = flux_dict["levels"]
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
+        fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
+        # Instead of a scatter plot, make a mean-std plot
+        fx_mean = np.nan*np.ones(num_levels)
+        fx_std = np.nan*np.ones(num_levels)
+        fx_lower = np.nan*np.ones(num_levels) # 5th percentile
+        fx_upper = np.nan*np.ones(num_levels) # 95th percentile
+        for i in range(num_levels):
+            #print("rflux_idx[i]={}".format(rflux_idx[i]))
+            if len(rflux_idx[i]) > 0:
+                fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
+                order = np.argsort(fxi)
+                fxi = np.array(fxi)[order]
+                rflux[i] = np.array(rflux[i])[order]
+                fx_mean[i] = np.sum(fxi*rflux[i])/np.sum(rflux[i])   #np.mean(fxi)
+                fx_std[i] = np.sqrt(np.sum((fxi-fx_mean[i])**2*rflux[i])/(np.sum(rflux[i]))) #np.std(fxi)
+                cdf = np.cumsum(rflux[i])
+                #if cdf[-1] <= 0: sys.exit("CDF[-1] = {}".format(cdf[-1]))
+                if cdf[-1] > 0:
+                    cdf *= 1.0/cdf[-1]
+                    fx_lower[i] = fxi[np.where(cdf > 0.05)[0][0]]
+                    fx_upper[i] = fxi[np.where(cdf > 0.95)[0][0]]
+                    #fx_mean[i] = np.mean(fxi)
+                    #fx_std[i] = np.std(fxi)
+                    #ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
+        levels_interp = np.linspace(levels[0],levels[-1],200)
+        fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean,kind='cubic')(levels_interp)
+        fx_std_interp = scipy.interpolate.interp1d(levels,fx_std,kind='cubic')(levels_interp)
+        fx_lower_interp = scipy.interpolate.interp1d(levels,fx_lower,kind='cubic')(levels_interp)
+        fx_upper_interp = scipy.interpolate.interp1d(levels,fx_upper,kind='cubic')(levels_interp)
+        # Find where fx_lower_interp crosses the b line first
+        if fxb < fxa:
+            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_lower_interp-fxb)))==2)[0]
+        else:
+            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_upper_interp-fxb)))==2)[0]
+        if fig is None or ax is None:
+            fig,ax = plt.subplots()
+        ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
+        ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
+        ax.scatter(levels,fx_mean*funlib[func_key]["units"],color='black',marker='o')
+        color = 'darkorange' if dirn=='ab' else 'mediumspringgreen'
+        ax.plot(levels_interp,fx_mean_interp*funlib[func_key]["units"],color='black')
+        ax.fill_between(levels_interp,fx_lower_interp*funlib[func_key]["units"],fx_upper_interp*funlib[func_key]["units"],color=color,alpha=0.5)
+        if ramp_name == "committor":
+            xlab = r"$P_x\{x\to B\}$" if dirn=='ab' else r"$P_x\{x\to A\}$"
+        elif ramp_name == "leadtime":
+            xlab = r"Time to $B$" if dirn=='ab' else r"Time to $A$"
+        elif ramp_name == "daeltime":
+            xlab = r"Time since $A$" if dirn=='ab' else r"Time since $B$"
+        ax.set_xlabel(xlab,fontdict=font)
+        ax.set_ylabel("%s (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
+        title = r"High prob. flux path ($A\to B$)" if dirn=='ab' else r"Max-flux path ($B\to A$)"
+        ax.set_title(title,fontdict=font)
+        #fig.savefig(join(self.savefolder,("flux_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        if len(ub_crossing_idx) > 0: 
+            #ax.plot(np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2])*np.ones(2),funlib[func_key]["units"]*np.array([np.min(fx_lower_interp),np.max(fx_upper_interp)]),color='black',linestyle='--')
+            ax.axvline(x=np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2]),color='black',linestyle='--')
+        return fig,ax
     def plot_maxflux_path(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="Uref",fig=None,ax=None):
         # Plot any observable function at the gates, as a timeseries.
         funlib = model.observable_function_library()

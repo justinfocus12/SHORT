@@ -264,6 +264,8 @@ class HoltonMassModel(Model):
             fig,ax = plt.subplots(nrows=len(obs_names),ncols=1,figsize=(6,6*len(obs_names)),sharex=True)
         # Find where U(30 km) drops below b
         uref_xst = funlib["Uref"]["fun"](self.tpt_obs_xst)
+        uref_xst[0] -= self.radius_a
+        uref_xst[1] += self.radius_b
         ulb_idx = np.where(funlib["Uref"]["fun"](self.tpt_observables(xmin)) < uref_xst[1])[0][0]
         print("ulb_idx = {}, tmin[ulb_idx] = {}".format(ulb_idx,tmin[ulb_idx]))
         for i in range(len(obs_names)):
@@ -277,7 +279,7 @@ class HoltonMassModel(Model):
             ax[i].plot(tmin[[0,-1]],units*obs_xst[0]*np.ones(2),color='skyblue',linewidth=3)
             ax[i].plot(tmin[[0,-1]],units*obs_xst[1]*np.ones(2),color='red',linewidth=3)
             #ax[i].plot(np.mean(tmin[ulb_idx:ulb_idx+2])*np.ones(2),units*np.array([np.min(obs),np.max(obs)]),color='black',linestyle='--')
-            ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
+            #ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
             ax[i].set_ylabel("%s (%s)"%(funlib[obs_names[i]]["name"],funlib[obs_names[i]]["unit_symbol"]),fontdict=font)
             ax[i].set_xlabel(r"Time to $B$ (days)",fontdict=font)
             ax[i].set_title(r"Least action path ($A\to B$)",fontdict=font)

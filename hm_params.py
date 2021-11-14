@@ -3,13 +3,13 @@ import numpy as np
 
 def get_algo_params():
     # Algorithm parameters
-    tmax_long = 200000.0
+    tmax_long = 1000000.0
     tmax_short = 20.0
     dt_save = 0.5
-    nshort = 200000
+    nshort = 500000
     istart = 0 # Highly dependent on the existing static database
     basis_type = 'MSM'
-    basis_size = 1000 
+    basis_size = 1200 
     lag_time = 10.0 
     nlags = int(lag_time/dt_save) + 1 
     num_moments = 2
@@ -51,7 +51,7 @@ def get_physical_params():
     time = 86500.0 
     abdefdim =               1
     radius_a =               0.0
-    radius_b =               10.0/(length/time)
+    radius_b =               0.0/(length/time)
     ref_alt =                30.0 # 21.5 or 26.9 or 29.6
     dt_sim = 0.005
     physical_params = dict({
