@@ -1435,8 +1435,9 @@ class TPT:
             plt.close(fig)
             # Committor
             fieldname = r"$P_x\{x\to B\}$"  #r"$\pi_{AB},J_{AB}$"
-            field = self.dam_moments[keys[k]]['xb'][0] # just (q-)*(q+)
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            field = self.dam_moments[keys[k]]['xb'][0] 
+            field *= (comm_fwd > 0)*(comm_fwd < 1)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
             fig.savefig(join(self.savefolder,"piabj_qp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Lead time 
@@ -1444,7 +1445,8 @@ class TPT:
             field = self.dam_moments['one']['xb'][1] # just (q-)*(q+)
             eps = 0.01
             field = field*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            field *= (comm_fwd > 0)*(comm_fwd < 1)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
             fig.savefig(join(self.savefolder,"piabj_tb_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             #sys.exit()
@@ -2998,6 +3000,57 @@ class TPT:
             fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
             fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)))
             plt.close(fig)
+        # 2. Plot the evolution of the least action path alongside max-flux path
+        funlib = model.observable_function_library()
+        eps = 0.01
+        tb = self.dam_moments['one']['xb'][0,:,:]
+        tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd < eps))
+        tb[comm_fwd < eps] == np.nan
+        tb_min,tb_max = np.nanmin(tb),np.nanmax(tb)
+        tb_levels = np.linspace(tb_max,tb_min,12)[1:-1]
+        tb_tol = np.abs(tb_levels[1]-tb_levels[0])/4
+        tb_qp_corr = np.nanmean((tb - np.nanmean(tb))*(comm_fwd - np.nanmean(comm_fwd)))
+        rflux = []
+        rflux_idx = []
+        Uprof = []
+        magprof = []
+        for ti in range(len(tb_levels)):
+            ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,tb_levels[ti],tb_tol,None,0.0)
+            rflux += [rflux_ti]
+            rflux_idx += [ridx_ti]
+            # Determine height-by-height median
+            U = funlib["U"]["fun"](data.X[ridx_ti,tidx])
+            Umed = np.zeros(U.shape[1])
+            for j in range(U.shape[1]):
+                order = np.argsort(Uprof[:,j])
+                cdf = np.cumsum(rflux[order])
+                median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
+                Umed[j] = U[median_idx,j]
+            Uprof += [Umed]
+            mag = funlib["mag"]["fun"](data.X[ridx_ti,tidx])
+            magmed = np.zeros(mag.shape[1])
+            for j in range(mag.shape[1]):
+                order = np.argsort(magprof[:,j])
+                cdf = np.cumsum(rflux[order])
+                median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
+                magmed[j] = mag[median_idx,j]
+            magprof += [magmed]
+        Uprof = np.array(Uprof)
+        magprof = np.array(magprof)
+        # Plot least-action Uref and max-flux Uref
+        fig,ax = plt.subplots(ncols=2,nrows=3,figsize=(16,18),sharey='row',sharex='col')
+        # Least action path in upper left
+        model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]],negtime=True)
+        # Max-probability path in upper right
+        self.plot_maxflux_path(model,data,time_symbol,dirn,num_per_level,num_levels,frac_of_max=frac_of_max,func_key="Uref",fig=fig,ax=ax[0,1])
+        ax[0,1].set_xlim(ax[0,0].get_xlim())
+        # U profile in middle right
+        model.plot_profile_evolution(Uprof,-tb_levels,"U",fig=fig,ax=ax[1,1])
+        # vT profile in bottom right
+        model.plot_profile_evolution(vTprof,-tb_levels,"vT",fig=fig,ax=ax[1,1])
+        # Save
+        fig.savefig(join(self.savefolder,"lap_vs_lap_new"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
         return
     def plot_transition_states_all(self,model,data,collect_flag=True):
         for dirn in ['ab']: #,'ba']:
