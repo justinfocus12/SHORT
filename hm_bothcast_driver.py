@@ -45,22 +45,23 @@ asymb = r"$\mathbf{a}$"
 bsymb = r"$\mathbf{b}$"
 
 # ---------- Decide what to do ----------
-least_action_flag = 0
-run_long_flag =     0
-run_short_flag =    0
-compute_tpt_flag =  0
-regression_flag =   0
-proj_1d_flag =      0
-demo_flag =         0
-qp_tb_coords_flag = 0
-trans_state_flag =  0
-flux_dist_flag =    1
-plot_long_2d_flag = 0
-lifecycle_flag =    0
-display_cast_flag = 0
-gen_rates_flag =    0
-plot_long_1d_flag = 0
-validation_flag =   0
+least_action_flag =     0
+run_long_flag =         0
+run_short_flag =        0
+compute_tpt_flag =      0
+regression_flag =       0
+proj_1d_flag =          0
+demo_flag =             0
+qp_tb_coords_flag =     0
+trans_state_flag =      1
+flux_dist_flag =        0
+plot_long_2d_flag =     0
+lifecycle_flag =        0
+display_cast_flag =     0
+display_current_flag =  1
+gen_rates_flag =        0
+plot_long_1d_flag =     0
+validation_flag =       0
 # ---------------------------------------
 
 # ---------- Set parameters --------------------------
@@ -201,12 +202,14 @@ if plot_long_2d_flag:
 # ----------------------------------------------------
 
 # ----------- Display casts and currents in 2d -----------
-if display_cast_flag:
+if display_cast_flag or display_current_flag:
     theta_2d_abbs = [["magref","Uref"],["vTintref","Uref"]]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
-        tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
-    tpt.display_2d_currents(model,data,theta_2d_abbs)
+        if display_cast_flag:
+            tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
+        if display_current_flag:
+            tpt.display_2d_currents(model,data,theta_2d_abbs)
 # --------------------------------------------------------
 
 # ----------- Display lifecycle correlations -----------
@@ -236,7 +239,8 @@ if plot_long_1d_flag:
 
 # ---------- Plot dominant transition states-----------
 if trans_state_flag:
-    tpt.plot_transition_states_all(model,data,collect_flag=True)
+    tpt.plot_transition_states_new(model,data)
+    #tpt.plot_transition_states_all(model,data,collect_flag=True)
     #tpt.plot_transition_states_committor(model,data,preload_idx=True)
     #tpt.plot_transition_states_leadtime(model,data,preload_idx=True)
 # -------------------------------------------------

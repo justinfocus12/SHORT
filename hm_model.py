@@ -1079,13 +1079,15 @@ class HoltonMassModel(Model):
         ha, = ax.plot(units*Ua,z,color='blue',linestyle='dashed',linewidth=3,label=asymb)
         hb, = ax.plot(units*Ub,z,color='red',linestyle='dashed',linewidth=3,label=bsymb)
         handles += [ha,hb]
-        if colors is None: colorlist = plt.cm.coolwarm(qlevels)
+        if colors is None: colors = plt.cm.coolwarm(qlevels)
         if labels is None: labels = ["" for i in range(num_levels)]
+        print("colors = {}, labels = {}".format(colors,labels))
         print("Before for loop: num_levels = {}, len(rflux) = {}, len(rflux_idx) = {}".format(num_levels,len(rflux),len(rflux_idx)))
         for i in range(num_levels):
             if len(rflux_idx[i]) > 0:
                 U = funlib[key]["fun"](X[rflux_idx[i]])
                 Umean = np.zeros(len(z))
+                Umedian = np.zeros(len(z))
                 Ulower = np.zeros(len(z))
                 Uupper = np.zeros(len(z))
                 for zi in range(len(z)):
@@ -1094,12 +1096,13 @@ class HoltonMassModel(Model):
                     Uzi = U[order,zi]
                     cdf = np.cumsum(rfzi)
                     cdf *= 1.0/cdf[-1]
-                    Ulower[zi] = Uzi[np.where(cdf > 0.05)[0][0]]
-                    Uupper[zi] = Uzi[np.where(cdf > 0.95)[0][0]]
+                    Ulower[zi] = Uzi[np.where(cdf > 0.2)[0][0]]
+                    Uupper[zi] = Uzi[np.where(cdf > 0.8)[0][0]]
                     Umean[zi] = np.sum(Uzi*rfzi)/np.sum(rfzi)
+                    Umedian[zi] = Uzi[np.where(cdf > 0.5)[0][0]]
                 #Umean = np.mean(U,axis=0)
                 #Ustd = np.std(U,axis=0)
-                handle, = ax.plot(units*Umean,z,color=colors[i],linewidth=3,label=labels[i])
+                handle, = ax.plot(units*Umedian,z,color=colors[i],linewidth=3,label=labels[i])
                 handles += [handle]
                 ax.fill_betweenx(z,x1=units*Ulower,x2=units*Uupper,color=colors[i],alpha=0.5)
         ax.legend(handles=handles,prop={'size':13})
