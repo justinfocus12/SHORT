@@ -1,6 +1,290 @@
-Traceback (most recent call last):
-  File "hm_bothcast_driver.py", line 242, in <module>
-    tpt.plot_transition_states_new(model,data)
-  File "/home/jf4241/SHORT/tpt_obj.py", line 3025, in plot_transition_states_new
-    order = np.argsort(Uprof[:,j])
-TypeError: list indices must be integers or slices, not tuple
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1243: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1380: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:1228: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 2.601995947897194, tolerance: 1.986547713135
+  model = cd_fast.enet_coordinate_descent(
+/home/jf4241/SHORT/tpt_obj.py:1757: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1757: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1536: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1537: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1571: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1572: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1604: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1605: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1631: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1632: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1657: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1658: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1684: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1685: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1536: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1537: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1571: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1572: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1604: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1605: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1631: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1632: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1657: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1658: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1684: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1685: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1243: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1380: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:1228: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1242: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+ This problem is unconstrained.
+ This problem is unconstrained.
+/home/jf4241/SHORT/tpt_obj.py:1757: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1757: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1536: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1537: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1571: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1572: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1604: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1605: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1631: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1632: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1657: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1658: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1684: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1685: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1536: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1537: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1571: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1572: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1604: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1605: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1631: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1632: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1657: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1658: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1684: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1685: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:839: RuntimeWarning: invalid value encountered in greater_equal
+  keep = (tmp_a >= first_edge)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/numpy/lib/histograms.py:840: RuntimeWarning: invalid value encountered in less_equal
+  keep &= (tmp_a <= last_edge)
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+/home/jf4241/SHORT/tpt_obj.py:2949: RuntimeWarning: invalid value encountered in less
+  idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+ This problem is unconstrained.
+ This problem is unconstrained.

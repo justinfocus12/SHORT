@@ -309,7 +309,7 @@ class HoltonMassModel(Model):
             units = funlib[prof_names[i]]["units"]
             unit_symbol = funlib[prof_names[i]]["unit_symbol"]
             im = ax[i].contourf(tz,zt,units*obs,cmap=plt.cm.coolwarm)
-            ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
+            #ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
             ims += [im]
             fig.colorbar(im,ax=ax[i])
             ax[i].set_ylabel(r"$z$ (km)",fontdict=font)

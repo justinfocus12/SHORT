@@ -2946,7 +2946,9 @@ class TPT:
         Jup = Jup.flatten()
         Jdn = Jdn.flatten()
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-        idx = np.where(np.sqrt(np.sum((theta_x[:,tidx] - theta_level)**2, 1)) < theta_tol)[0]
+        nnidx = np.where(np.isnan(theta_x[:,tidx,0]) + np.isnan(Jup) + np.isnan(Jdn) == 0)[0]
+        theta_discrepancy = np.sqrt(np.sum((theta_x[nnidx,tidx] - theta_level)**2, 1))
+        idx = nnidx[np.where(theta_discrepancy < theta_tol)[0]]
         print("\tAt level {}, len(idx) = {}".format(theta_level,len(idx)),end="")
         if len(idx) == 0:
             print("WARNING: no datapoints are close to the level")
@@ -2982,6 +2984,20 @@ class TPT:
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
         comm_bwd = self.dam_moments['one']['ax'][0,:,:]
+        # Quick test: do any points have bdist=0 and lead time > 0?
+        funlib = model.observable_function_library()
+        eps = 0.01
+        tb = self.dam_moments['one']['xb'][1,:,:]
+        tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
+        tb[comm_fwd <= eps] == np.nan
+        bdist = model.bdist(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        U = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        bbndy = funlib["Uref"]["fun"](model.tpt_obs_xst)[1] + model.radius_b
+        numbad = np.nansum((bdist==0)*(tb>0))
+        nb = np.sum(bdist<=0)
+        nsmallu = np.sum(U < bbndy)
+        print("nb = {}, nsmallu = {}, numbad = {}".format(nb,nsmallu,numbad))
+        # ---------------------
         ramp = comm_fwd.reshape((Nx,Nt,1))
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
         qp_levels = np.array([0.2,0.5,0.8])
@@ -3004,15 +3020,15 @@ class TPT:
         funlib = model.observable_function_library()
         eps = 0.01
         tb = self.dam_moments['one']['xb'][1,:,:]
-        tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd < eps))
-        tb[comm_fwd < eps] == np.nan
+        tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
+        tb[comm_fwd <= eps] == np.nan
         tb_min,tb_max = np.nanmin(tb),np.nanmax(tb)
         tb_levels = np.linspace(tb_min,tb_max,17)[1:-1]
         tb_qp_corr = np.nanmean((tb - np.nanmean(tb))*(comm_fwd - np.nanmean(comm_fwd)))
         if tb_qp_corr < 0:
             tb_levels = tb_levels[::-1]
         print("tb_levels = {}".format(tb_levels))
-        tb_tol = np.abs(tb_levels[1]-tb_levels[0])/1
+        tb_tol = np.abs(tb_levels[1]-tb_levels[0])/2.0
         print("tb_qp_corr = ", tb_qp_corr)
         rflux = []
         rflux_idx = []
@@ -3022,56 +3038,62 @@ class TPT:
         Uprof_upper = []
         magprof_lower = []
         magprof_upper = []
+        tb_levels_real = []
         ramp = tb.reshape((Nx,Nt,1)) * np.sign(tb_qp_corr)
         for ti in range(len(tb_levels)):
             print("tb_levels[ti] * np.sign(tb_qp_corr) = {}".format(tb_levels[ti]*np.sign(tb_qp_corr)))
             ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,tb_levels[ti]*np.sign(tb_qp_corr),tb_tol,None,0.0)
-            ridx_ti = np.array(ridx_ti)
-            rflux_ti = np.array(rflux_ti)
-            rflux += [rflux_ti]
-            rflux_idx += [ridx_ti]
-            # Determine height-by-height median
-            U = funlib["U"]["fun"](data.X[ridx_ti,tidx])
-            Umed = np.zeros(U.shape[1])
-            Ulow = np.zeros(U.shape[1])
-            Uhigh = np.zeros(U.shape[1])
-            for j in range(U.shape[1]):
-                order = np.argsort(U[:,j])
-                #print("rflux_ti = {}".format(rflux_ti))
-                #print("order = {}".format(order))
-                #print("rflux_ti[order[:3]] = {}".format(rflux_ti[order[:3]]))
-                cdf = np.cumsum(rflux_ti[order])
-                median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
-                Umed[j] = U[order[median_idx],j]
-                lower_idx = np.where(cdf/cdf[-1] > 0.05)[0][0]
-                upper_idx = np.where(cdf/cdf[-1] > 0.95)[0][0]
-                Ulow[j] = U[order[lower_idx],j]
-                Uhigh[j] = U[order[upper_idx],j]
-            Uprof += [Umed]
-            Uprof_lower += [Ulow]
-            Uprof_upper += [Uhigh]
-            mag = funlib["mag"]["fun"](data.X[ridx_ti,tidx])
-            magmed = np.zeros(mag.shape[1])
-            maglow = np.zeros(mag.shape[1])
-            maghigh = np.zeros(mag.shape[1])
-            for j in range(mag.shape[1]):
-                order = np.argsort(mag[:,j])
-                #print("rflux_ti = {}".format(rflux_ti))
-                #print("order = {}".format(order))
-                #print("rflux_ti[order[:3]] = {}".format(rflux_ti[order[:3]]))
-                cdf = np.cumsum(rflux_ti[order])
-                median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
-                magmed[j] = mag[order[median_idx],j]
-                lower_idx = np.where(cdf/cdf[-1] > 0.1)[0][0]
-                upper_idx = np.where(cdf/cdf[-1] > 0.9)[0][0]
-                maglow[j] = mag[order[lower_idx],j]
-                maghigh[j] = mag[order[upper_idx],j]
-            magprof += [magmed]
-            magprof_lower += [maglow]
-            magprof_upper += [maghigh]
+            if len(ridx_ti) > 0:
+                tb_levels_real += [tb_levels[ti]]
+                ridx_ti = np.array(ridx_ti)
+                rflux_ti = np.array(rflux_ti)
+                rflux += [rflux_ti]
+                rflux_idx += [ridx_ti]
+                # Determine height-by-height median
+                U = funlib["U"]["fun"](data.X[ridx_ti,tidx])
+                Umed = np.zeros(U.shape[1])
+                Ulow = np.zeros(U.shape[1])
+                Uhigh = np.zeros(U.shape[1])
+                for j in range(U.shape[1]):
+                    order = np.argsort(U[:,j])
+                    #print("rflux_ti = {}".format(rflux_ti))
+                    #print("order = {}".format(order))
+                    #print("rflux_ti[order[:3]] = {}".format(rflux_ti[order[:3]]))
+                    cdf = np.cumsum(rflux_ti[order])
+                    median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
+                    Umed[j] = U[order[median_idx],j]
+                    lower_idx = np.where(cdf/cdf[-1] > 0.05)[0][0]
+                    upper_idx = np.where(cdf/cdf[-1] > 0.95)[0][0]
+                    Ulow[j] = U[order[lower_idx],j]
+                    Uhigh[j] = U[order[upper_idx],j]
+                Uprof += [Umed]
+                Uprof_lower += [Ulow]
+                Uprof_upper += [Uhigh]
+                mag = funlib["mag"]["fun"](data.X[ridx_ti,tidx])
+                magmed = np.zeros(mag.shape[1])
+                maglow = np.zeros(mag.shape[1])
+                maghigh = np.zeros(mag.shape[1])
+                for j in range(mag.shape[1]):
+                    order = np.argsort(mag[:,j])
+                    #print("rflux_ti = {}".format(rflux_ti))
+                    #print("order = {}".format(order))
+                    #print("rflux_ti[order[:3]] = {}".format(rflux_ti[order[:3]]))
+                    cdf = np.cumsum(rflux_ti[order])
+                    median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
+                    magmed[j] = mag[order[median_idx],j]
+                    lower_idx = np.where(cdf/cdf[-1] > 0.05)[0][0]
+                    upper_idx = np.where(cdf/cdf[-1] > 0.95)[0][0]
+                    maglow[j] = mag[order[lower_idx],j]
+                    maghigh[j] = mag[order[upper_idx],j]
+                magprof += [magmed]
+                magprof_lower += [maglow]
+                magprof_upper += [maghigh]
+        tb_levels_real = np.array(tb_levels_real)
+        print("len(tb_levels_real) = {}".format(len(tb_levels_real)))
         Uprof = np.array(Uprof)
         Uprof_lower = np.array(Uprof_lower)
         Uprof_upper = np.array(Uprof_upper)
+        #print("on Uprof, min bdist = {} \n on Uprof_lower, min bdist = {}\n on Uprof_upper, min bdist = {}".format(np.min(model.bdist(Uprof)),np.min(model.bdist(Uprof_lower)),np.min(model.bdist(Uprof_upper))))
         magprof = np.array(magprof)
         magprof_lower = np.array(magprof_lower)
         magprof_upper = np.array(magprof_upper)
@@ -3081,18 +3103,20 @@ class TPT:
         model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]],negtime=True)
         # Max-probability path in upper right
         #ax[0,1].set_xlim(ax[0,0].get_xlim())
-        zi = np.argmin(np.abs(model.q['z_d']/1000 - model.ref_alt))
+        zi = model.q['zi']
         print("zi = {}".format(zi))
         print("Uprof[:,zi] = {}".format(Uprof[:,zi]))
         print("Uprof_lower[:,zi] = {}".format(Uprof_lower[:,zi]))
         print("Uprof_upper[:,zi] = {}".format(Uprof_upper[:,zi]))
         print("tb_levels = {}".format(tb_levels))
-        levels_interp = np.linspace(tb_levels[0],tb_levels[-1],200)
-        Uzi_med_interp = scipy.interpolate.interp1d(tb_levels,Uprof[:,zi],kind='cubic')(levels_interp)
-        Uzi_lower_interp = scipy.interpolate.interp1d(tb_levels,Uprof_lower[:,zi],kind='cubic')(levels_interp)
-        Uzi_upper_interp = scipy.interpolate.interp1d(tb_levels,Uprof_upper[:,zi],kind='cubic')(levels_interp)
+        levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
+        Uzi_med_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof[:,zi],kind='cubic')(levels_interp)
+        Uzi_lower_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_lower[:,zi],kind='cubic')(levels_interp)
+        Uzi_upper_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_upper[:,zi],kind='cubic')(levels_interp)
         ax[0,1].plot(-levels_interp,Uzi_med_interp*funlib["U"]["units"],color='black')
-        ax[0,1].scatter(-tb_levels,Uprof[:,zi]*funlib["U"]["units"],color='black',marker='o')
+        ax[0,1].scatter(-tb_levels_real,Uprof[:,zi]*funlib["U"]["units"],color='black',marker='o')
+        #ax[0,1].scatter(-tb_levels_real,Uprof_lower[:,zi]*funlib["U"]["units"],color='darkorange',marker='o')
+        #ax[0,1].scatter(-tb_levels_real,Uprof_upper[:,zi]*funlib["U"]["units"],color='darkorange',marker='o')
         Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
         Uzi_a -= model.radius_a
         Uzi_b += model.radius_b
@@ -3105,11 +3129,11 @@ class TPT:
         _,_,ims_lap = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0],negtime=True)
         # U profile in middle right
         clim_u = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
-        _,_,imu = model.plot_profile_evolution(Uprof,-tb_levels,"U",fig=fig,ax=ax[1,1],clim=clim_u)
+        _,_,imu = model.plot_profile_evolution(Uprof,-tb_levels_real,"U",fig=fig,ax=ax[1,1],clim=clim_u)
         fig.colorbar(imu,ax=ax[1,1])
         # mag profile in bottom right
         clim_mag = np.array([ims_lap[1].levels[0],ims_lap[1].levels[-1]])
-        _,_,immag = model.plot_profile_evolution(magprof,-tb_levels,"mag",fig=fig,ax=ax[2,1],clim=clim_mag)
+        _,_,immag = model.plot_profile_evolution(magprof,-tb_levels_real,"mag",fig=fig,ax=ax[2,1],clim=clim_mag)
         fig.colorbar(immag,ax=ax[2,1])
         # Set x labels to False
         for i in range(ax.shape[0]-1):
@@ -3125,9 +3149,6 @@ class TPT:
         pos11 = ax[1,1].get_position()
         ax[0,1].set_position([pos11.x0,pos01.y0,pos11.width,pos01.height])
         fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles"),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Save
-        fig.savefig(join(self.savefolder,"lap_vs_lap_new"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
     def plot_transition_states_all(self,model,data,collect_flag=True):
