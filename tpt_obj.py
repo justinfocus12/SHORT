@@ -2984,6 +2984,14 @@ class TPT:
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
         comm_bwd = self.dam_moments['one']['ax'][0,:,:]
+        # --------------------
+        # Test on a and b levels
+        funlib = model.observable_function_library()
+        zi = model.q['zi']
+        Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
+        print("Uzi_b*units = {}".format(Uzi_b*funlib["U"]["units"]))
+        print("(Uzi_b + radius_b)*units = {}".format((Uzi_b+model.radius_b)*funlib["U"]["units"]))
+        #---------------
         # Quick test: do any points have bdist=0 and lead time > 0?
         funlib = model.observable_function_library()
         eps = 0.01
@@ -3007,15 +3015,15 @@ class TPT:
         prof_key_list = ["U","vT"]
         rflux = []
         rflux_idx = []
-        #for qi in range(len(qp_levels)):
-        #    ridx_qi,rflux_qi,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[qi],qp_tol,None,0.0)
-        #    rflux += [rflux_qi]
-        #    rflux_idx += [ridx_qi]
-        #for ki in range(len(prof_key_list)):
-        #    prof_key = prof_key_list[ki]
-        #    fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
-        #    fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)))
-        #    plt.close(fig)
+        for qi in range(len(qp_levels)):
+            ridx_qi,rflux_qi,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[qi],qp_tol,None,0.0)
+            rflux += [rflux_qi]
+            rflux_idx += [ridx_qi]
+        for ki in range(len(prof_key_list)):
+            prof_key = prof_key_list[ki]
+            fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
+            fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)))
+            plt.close(fig)
         # 2. Plot the evolution of the least action path alongside max-flux path
         funlib = model.observable_function_library()
         eps = 0.01
@@ -3110,19 +3118,21 @@ class TPT:
         print("Uprof_upper[:,zi] = {}".format(Uprof_upper[:,zi]))
         print("tb_levels = {}".format(tb_levels))
         levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
-        Uzi_med_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof[:,zi],kind='cubic')(levels_interp)
-        Uzi_lower_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_lower[:,zi],kind='cubic')(levels_interp)
-        Uzi_upper_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_upper[:,zi],kind='cubic')(levels_interp)
+        Uzi_med_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof[:,zi],kind='linear')(levels_interp)
+        Uzi_lower_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_lower[:,zi],kind='linear')(levels_interp)
+        Uzi_upper_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_upper[:,zi],kind='linear')(levels_interp)
         ax[0,1].plot(-levels_interp,Uzi_med_interp*funlib["U"]["units"],color='black')
         ax[0,1].scatter(-tb_levels_real,Uprof[:,zi]*funlib["U"]["units"],color='black',marker='o')
         #ax[0,1].scatter(-tb_levels_real,Uprof_lower[:,zi]*funlib["U"]["units"],color='darkorange',marker='o')
         #ax[0,1].scatter(-tb_levels_real,Uprof_upper[:,zi]*funlib["U"]["units"],color='darkorange',marker='o')
         Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
+        print("Uzi_b*units = {}".format(Uzi_b*funlib["U"]["units"]))
         Uzi_a -= model.radius_a
         Uzi_b += model.radius_b
         ax[0,1].fill_between(-levels_interp,Uzi_lower_interp*funlib["U"]["units"],Uzi_upper_interp*funlib["U"]["units"],color='darkorange',alpha=0.5)
         ax[0,1].axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
         ax[0,1].axhline(y=Uzi_b*funlib["U"]["units"],color='red',linewidth=3)
+        print("hline y = {}".format(Uzi_b*funlib["U"]["units"]))
 
         # Least action profiles in bottom two left
         func_key_list = ["U","mag"]

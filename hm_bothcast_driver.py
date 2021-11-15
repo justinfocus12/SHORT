@@ -77,6 +77,9 @@ copyfile(join(codefolder,"hm_params.py"),join(savefolder,"hm_params.py"))
 np.random.seed(0)
 # ---------- 1. Initialize the model ----------
 model = HoltonMassModel(physical_params)
+funlib = model.observable_function_library()
+print("model Uref xst = {}".format(funlib["Uref"]["fun"](model.tpt_obs_xst)*funlib["Uref"]["units"]))
+print("model U xst[:,zi] = {}".format(funlib["U"]["fun"](model.tpt_obs_xst)[:,model.q['zi']]*funlib["Uref"]["units"]))
 q = model.q # Dictionary of model parameters
 print("q['Gsq'] = {}".format(q['Gsq']))
 fig,ax = model.plot_two_snapshots(model.xst[0],model.xst[1],asymb,bsymb)

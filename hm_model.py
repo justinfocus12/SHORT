@@ -264,9 +264,9 @@ class HoltonMassModel(Model):
             fig,ax = plt.subplots(nrows=len(obs_names),ncols=1,figsize=(6,6*len(obs_names)),sharex=True)
         # Find where U(30 km) drops below b
         uref_xst = funlib["Uref"]["fun"](self.tpt_obs_xst)
-        uref_xst[0] -= self.radius_a
-        uref_xst[1] += self.radius_b
-        ulb_idx = np.where(funlib["Uref"]["fun"](self.tpt_observables(xmin)) < uref_xst[1])[0][0]
+        #uref_xst[0] -= self.radius_a
+        #uref_xst[1] += self.radius_b
+        ulb_idx = np.where(funlib["Uref"]["fun"](self.tpt_observables(xmin)) < uref_xst[1] + self.radius_b)[0][0]
         print("ulb_idx = {}, tmin[ulb_idx] = {}".format(ulb_idx,tmin[ulb_idx]))
         for i in range(len(obs_names)):
             #axi = ax if len(obs_names)==1 else ax[i]
@@ -276,8 +276,8 @@ class HoltonMassModel(Model):
             units = funlib[obs_names[i]]["units"]
             unit_symbol = funlib[obs_names[i]]["unit_symbol"]
             ax[i].plot(tmin,units*obs,color='black')
-            ax[i].plot(tmin[[0,-1]],units*obs_xst[0]*np.ones(2),color='skyblue',linewidth=3)
-            ax[i].plot(tmin[[0,-1]],units*obs_xst[1]*np.ones(2),color='red',linewidth=3)
+            ax[i].plot(tmin[[0,-1]],units*(obs_xst[0]-self.radius_a)*np.ones(2),color='skyblue',linewidth=3)
+            ax[i].plot(tmin[[0,-1]],units*(obs_xst[1]+self.radius_b)*np.ones(2),color='red',linewidth=3)
             #ax[i].plot(np.mean(tmin[ulb_idx:ulb_idx+2])*np.ones(2),units*np.array([np.min(obs),np.max(obs)]),color='black',linestyle='--')
             #ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
             ax[i].set_ylabel("%s (%s)"%(funlib[obs_names[i]]["name"],funlib[obs_names[i]]["unit_symbol"]),fontdict=font)
@@ -1124,7 +1124,7 @@ class HoltonMassModel(Model):
         levels_interp = np.linspace(levels[0],levels[-1],num_snaps)
         prof_interp = np.zeros((num_snaps,n))
         for i in range(n):
-            prof_interp[:,i] = interp1d(levels,prof[:,i],kind='cubic')(levels_interp)
+            prof_interp[:,i] = interp1d(levels,prof[:,i],kind='linear')(levels_interp)
         z = self.q['z_d'][1:-1]/1000
         lz,zl = np.meshgrid(levels_interp,z,indexing='ij')
         if fig is None or ax is None:
