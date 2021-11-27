@@ -1404,7 +1404,7 @@ class TPT:
         ba_starts = np.where(np.diff(ba_reactive_flag)==1)[0] + 1
         ba_ends = np.where(np.diff(ba_reactive_flag)==-1)[0] + 1
         # Randomly select a few transitions
-        num_obs = min([5,len(ab_starts),len(ba_starts)])
+        num_obs = min([10,len(ab_starts),len(ba_starts)])
         ab_obs_idx = np.arange(num_obs) #np.random.choice(np.arange(len(ab_starts)),num_obs)
         ba_obs_idx = np.arange(num_obs) #np.random.choice(np.arange(len(ba_starts)),num_obs)
         theta_ab_obs = []
@@ -1418,7 +1418,7 @@ class TPT:
         keys = list(model.dam_dict.keys())
         num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
         theta_xst = theta_2d_fun(model.tpt_obs_xst) # Possibly to be used as theta_ab
-        for k in range(1):
+        for k in range(1): # num_moments):
             # -----------------------------
             # A->B
             comm_bwd = self.dam_moments[keys[k]]['ax'][0]
@@ -1434,14 +1434,15 @@ class TPT:
             fig.savefig(join(self.savefolder,"piabj_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Committor
-            fieldname = r"$P_x\{x\to B\}$"  #r"$\pi_{AB},J_{AB}$"
+            fieldname = r"$q_B^+$"  #r"$\pi_{AB},J_{AB}$"
             field = self.dam_moments[keys[k]]['xb'][0] 
             field *= (comm_fwd > 0)*(comm_fwd < 1)
+            field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
             fig.savefig(join(self.savefolder,"piabj_qp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Lead time 
-            fieldname = r"$\eta^+$"  #r"$\pi_{AB},J_{AB}$"
+            fieldname = r"$\eta_B^+$"  #r"$\pi_{AB},J_{AB}$"
             field = self.dam_moments['one']['xb'][1] # just (q-)*(q+)
             eps = 0.01
             field = field*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
@@ -1463,6 +1464,23 @@ class TPT:
             # Add current
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             fig.savefig(join(self.savefolder,"pibaj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # Committor
+            fieldname = r"$q^+_A$"  #r"$\pi_{AB},J_{AB}$"
+            field = self.dam_moments[keys[k]]['xa'][0] 
+            field *= (comm_fwd > 0)*(comm_fwd < 1)
+            field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            fig.savefig(join(self.savefolder,"pibaj_qp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # Lead time 
+            fieldname = r"$\eta_A^+$"  #r"$\pi_{AB},J_{AB}$"
+            field = self.dam_moments['one']['xa'][1] # just (q-)*(q+)
+            eps = 0.01
+            field = field*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
+            field *= (comm_fwd > 0)*(comm_fwd < 1)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            fig.savefig(join(self.savefolder,"pibaj_tb_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
         return
     def display_casts_abba(self,model,data,theta_2d_abbs):
@@ -2979,7 +2997,7 @@ class TPT:
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
     def plot_transition_states_new(self,model,data):
-        # All new version. One straightforward file. Plot max-flux path, and also plot profiles. 
+        # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
         # 1. For three committor levels, plot the profile of zonal wind and heat flux.
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
@@ -3388,6 +3406,21 @@ class TPT:
         ramp_name = r"$q^+$"
         ramp_units = 1.0
         ramp_unit_symbol = "probability"
+        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        func_name = funlib[func_abbrv]["name"]
+        func_units = funlib[func_abbrv]["units"]
+        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        dirn = 'ab'
+        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
+        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Lead time and vTintref
+        ramp_abbrv = "tb"
+        func_abbrv = "vTintref"
+        ramp = tb
+        ramp_name = r"$\eta^+$"
+        ramp_units = 1.0
+        ramp_unit_symbol = "days"
         func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
         func_name = funlib[func_abbrv]["name"]
         func_units = funlib[func_abbrv]["units"]
