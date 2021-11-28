@@ -259,6 +259,17 @@ class HoltonMassModel(Model):
         wmin = load(join(physical_param_folder,"wmin_dirn1.npy"))
         xmin = load(join(physical_param_folder,"xmin_dirn1.npy"))
         tmin = load(join(physical_param_folder,"tmin_dirn1.npy"))
+        # Bound the times by entering A and B
+        adist = self.adist(xmin)
+        bdist = self.bdist(xmin)
+        tmin_idx0 = np.where((adist>0)*(bdist>0))[0][0]
+        if np.min(bdist) <= 0:
+            tmin_idx1 = np.where(bdist<=0)[0][0]
+        else:
+            tmin_idx1 = np.where((adist>0)*(bdist>0))[0][-1]
+        tmin = tmin[tmin_idx0:tmin_idx1+1]
+        wmin = wmin[tmin_idx0:tmin_idx1+1]
+        xmin = xmin[tmin_idx0:tmin_idx1+1]
         if negtime: tmin -= tmin[-1]
         if fig is None or ax is None: # Must be a nx1 array of ax, where n=len(ob_names)
             fig,ax = plt.subplots(nrows=len(obs_names),ncols=1,figsize=(6,6*len(obs_names)),sharex=True)
@@ -280,8 +291,8 @@ class HoltonMassModel(Model):
             ax[i].plot(tmin[[0,-1]],units*(obs_xst[1]+self.radius_b)*np.ones(2),color='red',linewidth=3)
             #ax[i].plot(np.mean(tmin[ulb_idx:ulb_idx+2])*np.ones(2),units*np.array([np.min(obs),np.max(obs)]),color='black',linestyle='--')
             #ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
-            ax[i].set_ylabel("%s (%s)"%(funlib[obs_names[i]]["name"],funlib[obs_names[i]]["unit_symbol"]),fontdict=font)
-            ax[i].set_xlabel(r"Time to $B$ (days)",fontdict=font)
+            ax[i].set_ylabel("%s [%s]"%(funlib[obs_names[i]]["name"],funlib[obs_names[i]]["unit_symbol"]),fontdict=font)
+            ax[i].set_xlabel(r"Time to $B$ [days]",fontdict=font)
             ax[i].set_title(r"Least action path ($A\to B$)",fontdict=font)
         return fig,ax
     def plot_least_action_profiles(self,physical_param_folder,prof_names=["U","mag"],fig=None,ax=None,negtime=False):
@@ -295,6 +306,17 @@ class HoltonMassModel(Model):
         wmin = load(join(physical_param_folder,"wmin_dirn1.npy"))
         xmin = load(join(physical_param_folder,"xmin_dirn1.npy"))
         tmin = load(join(physical_param_folder,"tmin_dirn1.npy"))
+        # Bound the times by entering A and B
+        adist = self.adist(xmin)
+        bdist = self.bdist(xmin)
+        tmin_idx0 = np.where((adist>0)*(bdist>0))[0][0]
+        if np.min(bdist) <= 0:
+            tmin_idx1 = np.where(bdist<=0)[0][0]
+        else:
+            tmin_idx1 = np.where((adist>0)*(bdist>0))[0][-1]
+        tmin = tmin[tmin_idx0:tmin_idx1+1]
+        wmin = wmin[tmin_idx0:tmin_idx1+1]
+        xmin = xmin[tmin_idx0:tmin_idx1+1]
         if negtime: tmin -= tmin[-1]
         tz,zt = np.meshgrid(tmin,z,indexing='ij')
         uref_xst = funlib["Uref"]["fun"](self.tpt_obs_xst)
@@ -312,9 +334,9 @@ class HoltonMassModel(Model):
             #ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
             ims += [im]
             fig.colorbar(im,ax=ax[i])
-            ax[i].set_ylabel(r"$z$ (km)",fontdict=font)
-            ax[i].set_title(r"Least action %s$(z)$ profile (%s)"%(name,unit_symbol),fontdict=font)
-            ax[i].set_xlabel(r"Time to $B$ (days)",fontdict=font)
+            ax[i].set_ylabel(r"$z$ [km]",fontdict=font)
+            ax[i].set_title(r"Least action %s$(z)$ profile [%s]"%(name,unit_symbol),fontdict=font)
+            ax[i].set_xlabel(r"Time to $B$ [days]",fontdict=font)
         # Save
         #fig.savefig(join(savefolder,"fw_ab_plot"))
         #plt.close(fig)
@@ -943,7 +965,7 @@ class HoltonMassModel(Model):
         U = np.outer(np.sin(3*y*np.pi/180),xt[2*n:3*n])
         im = ax[0].contourf(yz,zy,U,cmap='seismic')
         ax[0].set_xlabel("Latitude",fontdict=bigfont)
-        ax[0].set_ylabel("Height (km)",fontdict=bigfont)
+        ax[0].set_ylabel("Height [km]",fontdict=bigfont)
         ax[0].set_title("Zonal wind {}".format(suffix),fontdict=bigfont)
         fig.colorbar(im,ax=ax[0],format=ticker.FuncFormatter(fmt),
                 orientation='horizontal',pad=0.15,ticks=np.linspace(np.nanmin(U),np.nanmax(U),4))
@@ -956,7 +978,7 @@ class HoltonMassModel(Model):
         fig.colorbar(im,ax=ax[1],format=ticker.FuncFormatter(fmt),
                 orientation='horizontal',pad=0.15,ticks=np.linspace(np.nanmin(psi),np.nanmax(psi),4))
         ax[1].set_xlabel("Longitude",fontdict=font)
-        ax[1].set_ylabel("Height (km)",fontdict=font)
+        ax[1].set_ylabel("Height [km]",fontdict=font)
         ax[1].set_title("Streamfunction {}".format(suffix),fontdict=font)
         return fig,ax
     def plot_two_snapshots(self,xt0,xt1,suffix0="",suffix1=""):
@@ -971,8 +993,8 @@ class HoltonMassModel(Model):
         handles += [handle]
         handle, = ax[0].plot(xt1[2*n:3*n]*q['length']/q['time'],z,color='red',linewidth=1.5,label=suffix1)
         handles += [handle]
-        ax[0].set_xlabel(r"$U$ (m/s)",fontdict=ffont)
-        ax[0].set_ylabel("Altitude (km)",fontdict=ffont)
+        ax[0].set_xlabel(r"$U$ [m/s]",fontdict=ffont)
+        ax[0].set_ylabel(r"$z$ [km]",fontdict=ffont)
         ax[0].set_title("Zonal wind",fontdict=ffont)
         ax[0].tick_params(axis='both', which='major', labelsize=20)
         base_x = 20.0
@@ -992,9 +1014,9 @@ class HoltonMassModel(Model):
         im = ax[1].contour(xz,zx,psi0,colors='skyblue')
         im = ax[1].contour(xz,zx,psi1,colors='red')
         ax[1].set_xlabel("Longitude",fontdict=ffont)
-        #ax[1].set_ylabel("Altitude (km)",fontdict=font)
+        #ax[1].set_ylabel("Altitude [km]",fontdict=font)
         dpsi = im.levels[1]-im.levels[0]
-        ax[1].set_title(r"$\Psi$ (m$^2$/s) ($\Delta=%.1e$)"%(dpsi),fontdict=ffont)
+        ax[1].set_title(r"$\Psi$ [m$^2$/s]",fontdict=ffont) # ($\Delta=%.1e$)"%(dpsi),fontdict=ffont)
         ax[1].tick_params(axis='both', which='major', labelsize=20)
         base_x = 90.0
         base_y = 20.0
@@ -1015,7 +1037,7 @@ class HoltonMassModel(Model):
             handle, = ax[0].plot(coeffs[:,i],z,label=theta_names[i])
             handles += [handle]
         ax[0].set_xlabel("Coefficient",fontdict=font)
-        ax[0].set_ylabel("Altitude (km)",fontdict=font)
+        ax[0].set_ylabel("Altitude [km]",fontdict=font)
         ax[0].set_title(r"{} Coefficients$(z)$".format(method),fontdict=font)
         ax[0].tick_params(axis='both', which='major', labelsize=20)
         ax[0].legend(handles=handles, prop={'size': 15}, loc='upper right')
@@ -1108,8 +1130,8 @@ class HoltonMassModel(Model):
                 handles += [handle]
                 ax.fill_betweenx(z,x1=units*Ulower,x2=units*Uupper,color=colors[i],alpha=0.5)
         ax.legend(handles=handles,prop={'size':13})
-        ax.set_ylabel(r"$z$ (km)",fontdict=font)
-        ax.set_xlabel("{} ({})".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
+        ax.set_ylabel(r"$z$ [km]",fontdict=font)
+        ax.set_xlabel("{} [{}]".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
         xlim = ax.get_xlim()
         fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
         ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
@@ -1131,7 +1153,8 @@ class HoltonMassModel(Model):
             fig,ax = plt.subplots()
         vmin,vmax = (None,None) if clim is None else clim
         im = ax.contourf(lz,zl,prof_interp*funlib[func_key]["units"],cmap=plt.cm.coolwarm,vmin=vmin,vmax=vmax)
-        ax.set_ylabel(r"$z$ (km)",fontdict=font)
+        ax.set_ylabel(r"$z$ [km]",fontdict=font)
+        ax.set_xlabel(r"Time to $B$ [days]",fontdict=font)
         return fig,ax,im
     def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None,zorderlist=None,key="U",labellist=None):
     #def plot_zdep_family_weighted(self,cv_x,cv_a,cv_b,labels,weights=None,cv_name=None,colorlist=None,units=1.0,unit_symbol=""):
@@ -1158,8 +1181,8 @@ class HoltonMassModel(Model):
             if len(labellist[i]) > 0: handles += [handle]
             #if i % len(np.unique(qlevels)) == 0: handles += [handle]
         ax.legend(handles=handles,prop={'size':13})
-        ax.set_ylabel(r"$z$ (km)",fontdict=font)
-        ax.set_xlabel("{} ({})".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
+        ax.set_ylabel(r"$z$ [km]",fontdict=font)
+        ax.set_xlabel("{} [{}]".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
         #if cv_name is not None:
         #    xlab = cv_name
         #    if len(unit_symbol) > 0: xlab += " (%s)"%(unit_symbol)
@@ -1197,15 +1220,15 @@ def unit_test():
     ax[0].plot(model.xst[0,:n],qnew['z_d'][1:-1]/1000,color='blue')
     ax[0].plot(model.xst[1,:n],qnew['z_d'][1:-1]/1000,color='red')
     ax[0].set_xlabel("Re(Psi)")
-    ax[0].set_ylabel("Alitude (km)")
+    ax[0].set_ylabel("Alitude [km]")
     ax[1].plot(model.xst[0,n:2*n],qnew['z_d'][1:-1]/1000,color='blue')
     ax[1].plot(model.xst[1,n:2*n],qnew['z_d'][1:-1]/1000,color='red')
     ax[1].set_xlabel("Im(Psi)")
-    ax[1].set_ylabel("Alitude (km)")
+    ax[1].set_ylabel("Alitude [km]")
     ax[2].plot(model.xst[0,2*n:3*n],qnew['z_d'][1:-1]/1000,color='blue')
     ax[2].plot(model.xst[1,2*n:3*n],qnew['z_d'][1:-1]/1000,color='red')
     ax[2].set_xlabel("U")
-    ax[2].set_ylabel("Alitude (km)")
+    ax[2].set_ylabel("Alitude [km]")
     fig.savefig(os.path.join(savefolder,"fixed_points"))
     # 3. Plot a timeseries
     t = np.linspace(0,5000,10000)

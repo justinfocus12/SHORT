@@ -57,8 +57,8 @@ trans_state_flag =      0
 flux_dist_flag =        0
 plot_long_2d_flag =     0
 lifecycle_flag =        0
-display_cast_flag =     1
-display_current_flag =  1
+display_cast_flag =     0
+display_current_flag =  0
 gen_rates_flag =        0
 plot_long_1d_flag =     0
 validation_flag =       0
@@ -206,7 +206,7 @@ if plot_long_2d_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["magref","Uref"],["vTintref","Uref"]]
+    theta_2d_abbs = [["vTintref","Uref"]] #,["magref","Uref"]]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:

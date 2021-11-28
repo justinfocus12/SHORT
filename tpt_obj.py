@@ -585,8 +585,8 @@ class TPT:
                 ax.plot(field0[tss]*units[0],field1[tss]*units[1],color='springgreen',linewidth=3,zorder=2)
         ax.text(ab0[0]*units[0],ab1[0]*units[1],asymb,bbox=dict(facecolor='white',alpha=1.0),color='black',fontsize=25,horizontalalignment='center',verticalalignment='center',zorder=10)
         ax.text(ab0[1]*units[0],ab1[1]*units[1],bsymb,bbox=dict(facecolor='white',alpha=1.0),color='black',fontsize=25,horizontalalignment='center',verticalalignment='center',zorder=10)
-        ax.set_xlabel(r"%s (%s)"%(fieldnames[0],field_unit_symbols[0]),fontdict=ffont)
-        ax.set_ylabel(r"%s (%s)"%(fieldnames[1],field_unit_symbols[1]),fontdict=ffont)
+        ax.set_xlabel(r"%s [%s]"%(fieldnames[0],field_unit_symbols[0]),fontdict=ffont)
+        ax.set_ylabel(r"%s [%s]"%(fieldnames[1],field_unit_symbols[1]),fontdict=ffont)
         ax.tick_params(axis='both',labelsize=20)
         # Set tick formats
         xlim,ylim = ax.get_xlim(),ax.get_ylim()
@@ -1439,7 +1439,7 @@ class TPT:
             field = comm_bwd*comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
             #field *= (comm_fwd > 0)*(comm_fwd < 1)
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,current_bdy_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1466,7 +1466,7 @@ class TPT:
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
             #field *= (comm_fwd > 0)*(comm_fwd < 1)
             #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,current_bdy_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1491,15 +1491,16 @@ class TPT:
             field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['ab'][0] # just (q-)*(q+)
             #field[(comm_fwd > eps)*(comm_fwd < 1-eps) == 0] = np.nan
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             fig.savefig(join(self.savefolder,"piabj_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Committor
             fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
             field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
+            field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
             #field *= (comm_fwd > 0)*(comm_fwd < 1)
             #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,current_bdy_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1522,16 +1523,7 @@ class TPT:
             xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=-1)
             theta_fw = theta_2d_fun(xfw)
             # Add current
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            if horz_lines > 0:
-                print("---------------Drawing in some horizontal lines for flux distributions")
-                # Draw in lines for reactive flux densities
-                nnidx = np.where(np.isnan(field) == 0)[0]
-                th1_min,th1_max = thmin[1],thmax[1]
-                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min,th1_max,horz_lines+2)[1:-1]
-                for i_th in range(len(th_levels)):
-                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             fig.savefig(join(self.savefolder,"pibaj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Committor
@@ -1541,7 +1533,16 @@ class TPT:
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
             #field *= (comm_fwd > 0)*(comm_fwd < 1)
             #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,current_bdy_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            if horz_lines > 0:
+                print("---------------Drawing in some horizontal lines for flux distributions")
+                # Draw in lines for reactive flux densities
+                nnidx = np.where(np.isnan(field) == 0)[0]
+                th1_min,th1_max = thmin[1],thmax[1]
+                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
+                th_levels = np.linspace(th1_min,th1_max,horz_lines+2)[1:-1]
+                for i_th in range(len(th_levels)):
+                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
             fig.savefig(join(self.savefolder,"pibaj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
         return
@@ -1751,10 +1752,10 @@ class TPT:
                     else:
                         prob = comm_bwd*comm_fwd
                         if j == 1: 
-                            fieldname = r"$E_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                            fieldname = r"$E_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
                             field = field_units**j*self.dam_moments[keys[k]]['ax'][j]
                         elif j == 2:
-                            fieldname = r"$Var_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                            fieldname = r"$Var_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
                             field = field_units**j*(self.dam_moments[keys[k]]['ax'][j] - self.dam_moments[keys[k]]['ax'][1]**2)
                         field[np.where(prob==0)[0]] = np.nan
                         field *= 1.0/(prob + 1*(prob == 0))
@@ -2438,9 +2439,9 @@ class TPT:
         comm_fwd = np.ones((Nx,Nt))
         comm_bwd = np.ones((Nx,Nt))
         field = np.ones((Nx,Nt))
-        fieldname = "Eqm. density, current"
+        fieldname = "Steady-state density"
         weight = self.chom
-        fig,ax = self.plot_field_2d(model,data,field,weight,theta_2d_short,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,cmap=plt.cm.YlOrBr)
+        fig,ax = self.plot_field_2d(model,data,field,weight,theta_2d_short,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,cmap=plt.cm.YlOrBr)
         #fig.set_tight_layout(True)
         fig.savefig(join(self.savefolder,"pij_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
@@ -2560,7 +2561,7 @@ class TPT:
             _,dth,thaxes,cgrid,J1,J1_std,_,_,_ = helper.project_field(field1[:,d],chomss,theta_yj,shp=shp,avg_flag=False)
             J[:,d] = 1/(2*self.lag_time_current_display*np.prod(dth))*(J0 + J1)
         return thaxes,J
-    def plot_field_2d(self,model,data,field,weight,theta_x,shp=[60,60],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",current_flag=False,comm_bwd=None,comm_fwd=None,current_shp=[25,25],abpoints_flag=False,theta_ab=None,avg_flag=True,logscale=False,ss=None,magu_fw=None,magu_obs=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',fig=None,ax=None,vmin=None,vmax=None):
+    def plot_field_2d(self,model,data,field,weight,theta_x,shp=[60,60],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",current_flag=False,current_bdy_flag=False,comm_bwd=None,comm_fwd=None,current_shp=[25,25],abpoints_flag=False,theta_ab=None,avg_flag=True,logscale=False,ss=None,magu_fw=None,magu_obs=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',fig=None,ax=None,vmin=None,vmax=None):
         # theta_x is the observable on all of the x's
         # First plot the scalar
         #print("About to call Helper to plot 2d")
@@ -2582,7 +2583,10 @@ class TPT:
             ax.text(units[0]*theta_ab[0,0],units[1]*theta_ab[0,1],asymb,bbox=dict(facecolor='white',alpha=1.0),color='black',fontsize=15,horizontalalignment='center',verticalalignment='center',zorder=100)
             ax.text(units[0]*theta_ab[1,0],units[1]*theta_ab[1,1],bsymb,bbox=dict(facecolor='white',alpha=1.0),color='black',fontsize=15,horizontalalignment='center',verticalalignment='center',zorder=100)
         if current_flag:
-            bdy_dist = lambda x: np.minimum(model.adist(x),model.bdist(x))
+            if current_bdy_flag: # The equilibrium current will not have this.
+                bdy_dist = lambda x: np.minimum(model.adist(x),model.bdist(x))
+            else:
+                bdy_dist = lambda x: np.ones(x.shape[0])
             data.insert_boundaries(bdy_dist,lag_time_max=self.lag_time_current_display)
             #theta_yj,theta_xpj,theta_ypj = thetaj # thetaj better not be None either
             print("comm_bwd.shape = {}".format(comm_bwd.shape))
@@ -2592,8 +2596,7 @@ class TPT:
             dth = np.array([thax[1] - thax[0] for thax in thaxes_current])
             Jmag_full = np.sqrt(np.sum(J**2, 1))
             minmag,maxmag = np.nanmin(Jmag_full),np.nanmax(Jmag_full)
-            #print("minmag={}, maxmag={}".format(minmag,maxmag))
-            dsmin,dsmax = 0*np.max(current_shp)/100,np.max(current_shp)/8 # lengths if arrows in grid box units
+            print("minmag={}, maxmag={}".format(minmag,maxmag))
             th0_subset = np.arange(current_shp[0]) #np.linspace(0,p[0]-2,current_shp[0]-2)).astype(int)
             th1_subset = np.arange(current_shp[1]) #np.linspace(0,len(thaxes_current[1])-2,min(shp[1]-2,current_shp[1]-2)).astype(int)
             J0 = J[:,0].reshape(current_shp)[th0_subset,:][:,th1_subset] #*units[0]
@@ -2601,10 +2604,11 @@ class TPT:
             Jmag = np.sqrt(J0**2 + J1**2)
             print("Jmag range = ({},{})".format(np.nanmin(Jmag),np.nanmax(Jmag)))
             print("J0.shape = {}".format(J0.shape))
+            dsmin,dsmax = np.max(current_shp)/40,np.max(current_shp)/20 # lengths if arrows in grid box units
+            coeff1 = 10.0/maxmag
+            coeff0 = dsmax / (np.exp(-coeff1 * maxmag) - 1)
+            ds = coeff0 * (np.exp(-coeff1 * Jmag) - 1)
             #ds = dsmin + (dsmax - dsmin)*(Jmag - minmag)/(maxmag - minmag)
-            coeff1 = 10.0
-            coeff0 = dsmax/np.log(coeff1*maxmag + 1)
-            ds = coeff0 * np.log(coeff1*Jmag + 1)
             normalizer = ds*(Jmag != 0)/(np.sqrt((J0/(dth[0]))**2 + (J1/(dth[1]))**2) + (Jmag == 0))
             J0 *= normalizer*(1 - np.isnan(J0))
             J1 *= normalizer*(1 - np.isnan(J1))
@@ -3094,7 +3098,7 @@ class TPT:
         qp_levels = np.array([0.2,0.5,0.8])
         colors = np.array([plt.cm.coolwarm(qp_levels[0]),'orange',plt.cm.coolwarm(qp_levels[2])])
         labels = [r"$q^+=%.1f$"%(qp_levels[i]) for i in range(len(qp_levels))]
-        qp_tol = 0.05
+        qp_tol = 0.1
         prof_key_list = ["U","vT"]
         rflux = []
         rflux_idx = []
@@ -3105,7 +3109,7 @@ class TPT:
         for ki in range(len(prof_key_list)):
             prof_key = prof_key_list[ki]
             fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
-            fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)))
+            fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
         # 2. Plot the evolution of the least action path alongside max-flux path
         funlib = model.observable_function_library()
@@ -3201,9 +3205,9 @@ class TPT:
         print("Uprof_upper[:,zi] = {}".format(Uprof_upper[:,zi]))
         print("tb_levels = {}".format(tb_levels))
         levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
-        Uzi_med_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof[:,zi],kind='linear')(levels_interp)
-        Uzi_lower_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_lower[:,zi],kind='linear')(levels_interp)
-        Uzi_upper_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_upper[:,zi],kind='linear')(levels_interp)
+        Uzi_med_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof[:,zi],kind='cubic')(levels_interp)
+        Uzi_lower_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_lower[:,zi],kind='cubic')(levels_interp)
+        Uzi_upper_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_upper[:,zi],kind='cubic')(levels_interp)
         ax[0,1].plot(-levels_interp,Uzi_med_interp*funlib["U"]["units"],color='black')
         ax[0,1].scatter(-tb_levels_real,Uprof[:,zi]*funlib["U"]["units"],color='black',marker='o')
         #ax[0,1].scatter(-tb_levels_real,Uprof_lower[:,zi]*funlib["U"]["units"],color='darkorange',marker='o')
@@ -3215,6 +3219,7 @@ class TPT:
         ax[0,1].fill_between(-levels_interp,Uzi_lower_interp*funlib["U"]["units"],Uzi_upper_interp*funlib["U"]["units"],color='darkorange',alpha=0.5)
         ax[0,1].axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
         ax[0,1].axhline(y=Uzi_b*funlib["U"]["units"],color='red',linewidth=3)
+        ax[0,1].set_title(r"Max-probability path ($A\to B$)",fontdict=font)
         print("hline y = {}".format(Uzi_b*funlib["U"]["units"]))
 
         # Least action profiles in bottom two left
@@ -3381,8 +3386,8 @@ class TPT:
     def plot_flux_distributions_1d_driver(self,model,data):
         funlib = model.observable_function_library()
         Nx,Nt,xdim = data.X.shape
-        ramp_abbrv_list = ["Uref","Uref","Uref","Uref"]
-        func_abbrv_list = ["magref","vTintref","vTinttop","U67"]
+        ramp_abbrv_list = ["Uref"] #,"Uref","Uref","Uref"]
+        func_abbrv_list = ["vTintref"] #,"vTinttop","U67"]
         for i in range(len(ramp_abbrv_list)):
             ramp_abbrv = ramp_abbrv_list[i]
             func_abbrv = func_abbrv_list[i]
@@ -3394,147 +3399,144 @@ class TPT:
             func_name = funlib[func_abbrv]["name"]
             func_units = funlib[func_abbrv]["units"]
             func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-            dirn = 'ab'
-            fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
+            fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
             fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
             print("Just saved a flux dist fig")
             plt.close(fig)
-        # Now do surfaces of committor and lead time 
-        eps = 0.01
-        comm_fwd = self.dam_moments['one']['xb'][0,:,:]
-        tb = self.dam_moments['one']['xb'][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
-        tb[np.where(comm_fwd < eps)[0]] = np.nan
-        # Committor and Lead time
-        ramp_abbrv = "qp"
-        func_abbrv = "tb"
-        ramp = comm_fwd
-        ramp_name = r"$q^+$"
-        ramp_units = 1.0
-        ramp_unit_symbol = "probability"
-        func = tb
-        func_name = r"$\eta^+$"
-        func_units = 1.0
-        func_unit_symbol = "days"
-        dirn = 'ab'
-        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
-        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Lead time and Committor
-        ramp_abbrv = "tb"
-        func_abbrv = "qp"
-        ramp = tb
-        ramp_name = r"$\eta^+$"
-        ramp_units = 1.0
-        ramp_unit_symbol = "days"
-        func = comm_fwd
-        func_name = r"$q^+$"
-        func_units = 1.0
-        func_unit_symbol = "probability"
-        dirn = 'ab'
-        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
-        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Committor and Uref
-        ramp_abbrv = "qp"
-        func_abbrv = "Uref"
-        ramp = comm_fwd
-        ramp_name = r"$q^+$"
-        ramp_units = 1.0
-        ramp_unit_symbol = "probability"
-        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        func_name = funlib[func_abbrv]["name"]
-        func_units = funlib[func_abbrv]["units"]
-        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        dirn = 'ab'
-        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
-        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Committor and vTintref
-        ramp_abbrv = "qp"
-        func_abbrv = "vTintref"
-        ramp = comm_fwd
-        ramp_name = r"$q^+$"
-        ramp_units = 1.0
-        ramp_unit_symbol = "probability"
-        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        func_name = funlib[func_abbrv]["name"]
-        func_units = funlib[func_abbrv]["units"]
-        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        dirn = 'ab'
-        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
-        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Committor and magref
-        ramp_abbrv = "qp"
-        func_abbrv = "magref"
-        ramp = comm_fwd
-        ramp_name = r"$q^+$"
-        ramp_units = 1.0
-        ramp_unit_symbol = "probability"
-        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        func_name = funlib[func_abbrv]["name"]
-        func_units = funlib[func_abbrv]["units"]
-        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        dirn = 'ab'
-        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
-        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Lead time and vTintref
-        ramp_abbrv = "tb"
-        func_abbrv = "vTintref"
-        ramp = tb
-        ramp_name = r"$\eta^+$"
-        ramp_units = 1.0
-        ramp_unit_symbol = "days"
-        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        func_name = funlib[func_abbrv]["name"]
-        func_units = funlib[func_abbrv]["units"]
-        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        dirn = 'ab'
-        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
-        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Lead time and magref
-        ramp_abbrv = "tb"
-        func_abbrv = "magref"
-        ramp = tb
-        ramp_name = r"$\eta^+$"
-        ramp_units = 1.0
-        ramp_unit_symbol = "days"
-        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        func_name = funlib[func_abbrv]["name"]
-        func_units = funlib[func_abbrv]["units"]
-        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        dirn = 'ab'
-        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
-        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Lead time and Uref
-        ramp_abbrv = "tb"
-        func_abbrv = "Uref"
-        ramp = tb
-        ramp_name = r"$\eta^+$"
-        ramp_units = 1.0
-        ramp_unit_symbol = "days"
-        func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        func_name = funlib[func_abbrv]["name"]
-        func_units = funlib[func_abbrv]["units"]
-        func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        dirn = 'ab'
-        fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=4)
-        fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
+        ## Now do surfaces of committor and lead time 
+        #eps = 0.01
+        #comm_fwd = self.dam_moments['one']['xb'][0,:,:]
+        #tb = self.dam_moments['one']['xb'][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
+        #tb[np.where(comm_fwd < eps)[0]] = np.nan
+        ## Committor and Lead time
+        #ramp_abbrv = "qp"
+        #func_abbrv = "tb"
+        #ramp = comm_fwd
+        #ramp_name = r"$q^+$"
+        #ramp_units = 1.0
+        #ramp_unit_symbol = "probability"
+        #func = tb
+        #func_name = r"$\eta^+$"
+        #func_units = 1.0
+        #func_unit_symbol = "days"
+        #dirn = 'ab'
+        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
+        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        ## Lead time and Committor
+        #ramp_abbrv = "tb"
+        #func_abbrv = "qp"
+        #ramp = tb
+        #ramp_name = r"$\eta^+$"
+        #ramp_units = 1.0
+        #ramp_unit_symbol = "days"
+        #func = comm_fwd
+        #func_name = r"$q^+$"
+        #func_units = 1.0
+        #func_unit_symbol = "probability"
+        #dirn = 'ab'
+        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
+        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        ## Committor and Uref
+        #ramp_abbrv = "qp"
+        #func_abbrv = "Uref"
+        #ramp = comm_fwd
+        #ramp_name = r"$q^+$"
+        #ramp_units = 1.0
+        #ramp_unit_symbol = "probability"
+        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        #func_name = funlib[func_abbrv]["name"]
+        #func_units = funlib[func_abbrv]["units"]
+        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        #dirn = 'ab'
+        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
+        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        ## Committor and vTintref
+        #ramp_abbrv = "qp"
+        #func_abbrv = "vTintref"
+        #ramp = comm_fwd
+        #ramp_name = r"$q^+$"
+        #ramp_units = 1.0
+        #ramp_unit_symbol = "probability"
+        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        #func_name = funlib[func_abbrv]["name"]
+        #func_units = funlib[func_abbrv]["units"]
+        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        #dirn = 'ab'
+        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
+        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        ## Committor and magref
+        #ramp_abbrv = "qp"
+        #func_abbrv = "magref"
+        #ramp = comm_fwd
+        #ramp_name = r"$q^+$"
+        #ramp_units = 1.0
+        #ramp_unit_symbol = "probability"
+        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        #func_name = funlib[func_abbrv]["name"]
+        #func_units = funlib[func_abbrv]["units"]
+        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        #dirn = 'ab'
+        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
+        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        ## Lead time and vTintref
+        #ramp_abbrv = "tb"
+        #func_abbrv = "vTintref"
+        #ramp = tb
+        #ramp_name = r"$\eta^+$"
+        #ramp_units = 1.0
+        #ramp_unit_symbol = "days"
+        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        #func_name = funlib[func_abbrv]["name"]
+        #func_units = funlib[func_abbrv]["units"]
+        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        #dirn = 'ab'
+        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
+        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        ## Lead time and magref
+        #ramp_abbrv = "tb"
+        #func_abbrv = "magref"
+        #ramp = tb
+        #ramp_name = r"$\eta^+$"
+        #ramp_units = 1.0
+        #ramp_unit_symbol = "days"
+        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        #func_name = funlib[func_abbrv]["name"]
+        #func_units = funlib[func_abbrv]["units"]
+        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        #dirn = 'ab'
+        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
+        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        ## Lead time and Uref
+        #ramp_abbrv = "tb"
+        #func_abbrv = "Uref"
+        #ramp = tb
+        #ramp_name = r"$\eta^+$"
+        #ramp_units = 1.0
+        #ramp_unit_symbol = "days"
+        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        #func_name = funlib[func_abbrv]["name"]
+        #func_units = funlib[func_abbrv]["units"]
+        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
+        #dirn = 'ab'
+        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
+        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
         return
-    def plot_flux_distributions_1d(self,model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,dirn,num_levels=5,frac_of_max=0.0,fig=None,ax=None,clim=None):
+    def plot_flux_distributions_1d(self,model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=5,frac_of_max=0.0,fig=None,ax=None,clim=None):
         # At each level set of ramp, plot a distribution of flux density across the other variable func. (Will later extend to 2d). 
         # The observable should be correlated with the committor...
         # Add a second curve, dotted, for A->A phase
 
         max_num_states = None
-        fwd_key = 'xb' if dirn=='ab' else 'xa'
-        bwd_key = 'ax' if dirn=='ab' else 'bx'
-        comm_fwd = self.dam_moments['one'][fwd_key][0,:,:]
-        comm_bwd = self.dam_moments['one'][fwd_key][0,:,:]
+        comm_fwd = self.dam_moments['one']['xb'][0,:,:]
+        comm_bwd = self.dam_moments['one']['ax'][0,:,:]
         eps = 0.001
         interior_idx = np.where((comm_fwd > eps)*(comm_fwd < 1-eps))
         ramp_min = np.nanmin(ramp[interior_idx])
@@ -3547,35 +3549,59 @@ class TPT:
         ramp_levels = np.linspace(ramp_min,ramp_max,num_levels+2)[1:-1]
         if ramp_comm_corr < 0:
             ramp_levels = ramp_levels[::-1]
-        ramp_tol = np.min(np.abs(np.diff(ramp_levels)))/10
+        ramp_tol = np.min(np.abs(np.diff(ramp_levels)))/5
         print("ramp_levels = {}".format(ramp_levels))
         weight = self.chom
         Nx,Nt,xdim = data.X.shape
         if fig is None or ax is None:
-            fig,ax = plt.subplots(nrows=2,ncols=num_levels,figsize=(4*num_levels,8),sharey="row",sharex=True)
+            fig,ax = plt.subplots(nrows=4,ncols=num_levels,figsize=(4*num_levels,16),sharey="row",sharex=True)
         for ri in range(len(ramp_levels)):
-            # A -> B
-            ax[0,ri].axhline(0,color='black')
-            ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
-            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=15)
-            rate_ab = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
-            normalizer = 1.0 #np.max(np.abs(hist))
-            bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
-            h, = ax[0,ri].plot(bin_centers*func_units,hist/normalizer,color='darkorange',marker='o',label=r"$A\to B$",linestyle='-')
-            ax[0,ri].legend(handles=[h])
-            ax[0,ri].set_title("%s = %.2f %s"%(ramp_name,ramp_levels[ri]*ramp_units,ramp_unit_symbol))
             # A -> A
-            ax[1,ri].axhline(0,color='black')
+            ax[0,ri].axhline(0,color='black')
             ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,1-comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
             tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max))
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=15)
             rate_aa = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
+            normalizer = 1.0 #np.max(np.abs(hist))
+            bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
+            h, = ax[0,ri].plot(bin_centers*func_units,hist/normalizer,color='deepskyblue',marker='o',label=r"$A\to A$",linestyle='-')
+            ax[0,ri].legend(handles=[h])
+            ax[0,ri].set_title("%s = %.2f %s"%(ramp_name,ramp_levels[ri]*ramp_units,ramp_unit_symbol))
+            if ri == 0: ax[0,ri].set_ylabel("Flux density")
+            # A -> B
+            ax[1,ri].axhline(0,color='black')
+            ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
+            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max))
+            rate_ab = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
             bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
             normalizer = 1.0 #np.max(np.abs(hist))
-            h, = ax[1,ri].plot(bin_centers*func_units,hist/normalizer,color='deepskyblue',marker='o',label=r"$A\to A$",linestyle='-')
+            h, = ax[1,ri].plot(bin_centers*func_units,hist/normalizer,color='darkorange',marker='o',label=r"$A\to B$",linestyle='-')
             ax[1,ri].legend(handles=[h])
-            ax[1,ri].set_xlabel("%s [%s]"%(func_name,func_unit_symbol))
+            if ri == 0: ax[1,ri].set_ylabel("Flux density")
+            # B -> B
+            ax[2,ri].axhline(0,color='black')
+            ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),1-comm_bwd,comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
+            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=15)
+            rate_aa = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
+            normalizer = 1.0 #np.max(np.abs(hist))
+            bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
+            h, = ax[2,ri].plot(bin_centers*func_units,hist/normalizer,color='red',marker='o',label=r"$B\to B$",linestyle='-')
+            ax[2,ri].legend(handles=[h])
+            if ri == 0: ax[2,ri].set_ylabel("Flux density")
+            # B -> A
+            ax[3,ri].axhline(0,color='black')
+            ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),1-comm_bwd,1-comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
+            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max))
+            rate_ba = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
+            bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
+            normalizer = 1.0 #np.max(np.abs(hist))
+            h, = ax[3,ri].plot(bin_centers*func_units,hist/normalizer,color='mediumspringgreen',marker='o',label=r"$B\to A$",linestyle='-')
+            ax[3,ri].legend(handles=[h])
+            if ri == 0: ax[3,ri].set_ylabel("Flux density")
+            ax[3,ri].set_xlabel("%s [%s]"%(func_name,func_unit_symbol))
         return fig,ax
     def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="U",func_key_ref="Uref",fig=None,ax=None,clim=None):
         # Plot the mean profile evolving over time (not committor)
