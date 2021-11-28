@@ -305,9 +305,9 @@ def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldnam
         ax1.tick_params(axis='y',labelsize=10)
     ax0.set_title("{}".format(fieldname),fontdict=font,y=1.0) #,loc='left')
     xlab = fun0name
-    if len(unit_symbols[0]) > 0: xlab += " ({})".format(unit_symbols[0])
+    if len(unit_symbols[0]) > 0: xlab += " [{}]".format(unit_symbols[0])
     ylab = fun1name
-    if len(unit_symbols[1]) > 0: ylab += " ({})".format(unit_symbols[1])
+    if len(unit_symbols[1]) > 0: ylab += " [{}]".format(unit_symbols[1])
     ax0.set_xlabel("{}".format(xlab),fontdict=font)
     ax0.set_ylabel("{}".format(ylab),fontdict=font)
     if std_flag: 

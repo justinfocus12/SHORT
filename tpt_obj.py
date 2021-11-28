@@ -1392,7 +1392,7 @@ class TPT:
             plt.close(fig)
         f.close()
         return
-    def display_dam_moments_abba_current(self,model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs):
+    def display_dam_moments_abba_current(self,model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs,horz_lines=0):
         # Plot the whole shebang, including current and eventually FW and observed paths
         # But do it in increments: least action path, then sample paths, then reactive density, then reactive current
         # Load the transitions
@@ -1418,39 +1418,99 @@ class TPT:
         keys = list(model.dam_dict.keys())
         num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
         theta_xst = theta_2d_fun(model.tpt_obs_xst) # Possibly to be used as theta_ab
+        eps = 0.001
+        adist = model.adist(data.X.reshape((Nx*Nt,xdim)))
+        bdist = model.bdist(data.X.reshape((Nx*Nt,xdim)))
+        theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim)))
+        interior_idx = np.where((adist>eps)*(bdist>eps))[0]
+        thmin,thmax = np.min(theta_x[interior_idx,:],axis=0),np.max(theta_x[interior_idx,:],axis=0)
+        theta_x = theta_x.reshape((Nx,Nt,2))
         for k in range(1): # num_moments):
+            # -----------------------------
+            # A->A
+            comm_bwd = self.dam_moments[keys[k]]['ax'][0]
+            comm_fwd = self.dam_moments[keys[k]]['xa'][0]
+            weight = self.chom
+            #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
+            xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=1)
+            theta_fw = theta_2d_fun(xfw)
+            # Committor
+            fieldname = r"$A\to A$"  #r"$\pi_{AB},J_{AB}$"
+            field = comm_bwd*comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
+            #field *= (comm_fwd > 0)*(comm_fwd < 1)
+            field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            if horz_lines > 0:
+                print("---------------Drawing in some horizontal lines for flux distributions")
+                # Draw in lines for reactive flux densities
+                nnidx = np.where(np.isnan(field) == 0)[0]
+                th1_min,th1_max = thmin[1],thmax[1]
+                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
+                th_levels = np.linspace(th1_min,th1_max,horz_lines+2)[1:-1]
+                for i_th in range(len(th_levels)):
+                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
+            fig.savefig(join(self.savefolder,"piaaj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # -----------------------------
+            # B->B
+            comm_bwd = self.dam_moments[keys[k]]['bx'][0]
+            comm_fwd = self.dam_moments[keys[k]]['xb'][0]
+            weight = self.chom
+            #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
+            xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=1)
+            theta_fw = theta_2d_fun(xfw)
+            # Committor
+            fieldname = r"$B\to B$"  #r"$\pi_{AB},J_{AB}$"
+            field = comm_bwd*comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
+            #field[(comm_fwd > eps)*(comm_fwd < 1-eps) == 0] = np.nan
+            field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+            #field *= (comm_fwd > 0)*(comm_fwd < 1)
+            #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            if horz_lines > 0:
+                print("---------------Drawing in some horizontal lines for flux distributions")
+                # Draw in lines for reactive flux densities
+                nnidx = np.where(np.isnan(field) == 0)[0]
+                th1_min,th1_max = thmin[1],thmax[1]
+                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
+                th_levels = np.linspace(th1_min,th1_max,horz_lines+2)[1:-1]
+                for i_th in range(len(th_levels)):
+                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
+            fig.savefig(join(self.savefolder,"pibbj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
             # -----------------------------
             # A->B
             comm_bwd = self.dam_moments[keys[k]]['ax'][0]
             comm_fwd = self.dam_moments[keys[k]]['xb'][0]
             weight = self.chom
-            theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
+            #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
             xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=1)
             theta_fw = theta_2d_fun(xfw)
             # Reactive density
             fieldname = r"$A\to B$ density, current"  #r"$\pi_{AB},J_{AB}$"
-            field = self.dam_moments[keys[k]]['ab'][0] # just (q-)*(q+)
+            field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['ab'][0] # just (q-)*(q+)
+            #field[(comm_fwd > eps)*(comm_fwd < 1-eps) == 0] = np.nan
+            field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             fig.savefig(join(self.savefolder,"piabj_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Committor
-            fieldname = r"$q_B^+$"  #r"$\pi_{AB},J_{AB}$"
-            field = self.dam_moments[keys[k]]['xb'][0] 
-            field *= (comm_fwd > 0)*(comm_fwd < 1)
-            field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
+            fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
+            field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
+            #field *= (comm_fwd > 0)*(comm_fwd < 1)
+            #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"piabj_qp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            if horz_lines > 0:
+                print("---------------Drawing in some horizontal lines for flux distributions")
+                # Draw in lines for reactive flux densities
+                nnidx = np.where(np.isnan(field) == 0)[0]
+                th1_min,th1_max = thmin[1],thmax[1]
+                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
+                th_levels = np.linspace(th1_min,th1_max,horz_lines+2)[1:-1]
+                for i_th in range(len(th_levels)):
+                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
+            fig.savefig(join(self.savefolder,"piabj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
-            # Lead time 
-            fieldname = r"$\eta_B^+$"  #r"$\pi_{AB},J_{AB}$"
-            field = self.dam_moments['one']['xb'][1] # just (q-)*(q+)
-            eps = 0.01
-            field = field*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
-            field *= (comm_fwd > 0)*(comm_fwd < 1)
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"piabj_tb_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            #sys.exit()
             # ---------------------------------
             # B->A
             fieldname = r"$B\to A$ density, current" #r"$\pi_{BA},J_{BA}$"
@@ -1458,29 +1518,31 @@ class TPT:
             comm_bwd = self.dam_moments[keys[k]]['bx'][0]
             comm_fwd = self.dam_moments[keys[k]]['xa'][0]
             weight = self.chom
-            theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
+            #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
             xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=-1)
             theta_fw = theta_2d_fun(xfw)
             # Add current
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            if horz_lines > 0:
+                print("---------------Drawing in some horizontal lines for flux distributions")
+                # Draw in lines for reactive flux densities
+                nnidx = np.where(np.isnan(field) == 0)[0]
+                th1_min,th1_max = thmin[1],thmax[1]
+                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
+                th_levels = np.linspace(th1_min,th1_max,horz_lines+2)[1:-1]
+                for i_th in range(len(th_levels)):
+                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
             fig.savefig(join(self.savefolder,"pibaj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Committor
-            fieldname = r"$q^+_A$"  #r"$\pi_{AB},J_{AB}$"
-            field = self.dam_moments[keys[k]]['xa'][0] 
-            field *= (comm_fwd > 0)*(comm_fwd < 1)
-            field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
+            fieldname = r"$B\to A$"  #r"$\pi_{AB},J_{AB}$"
+            field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
+            #field[(comm_fwd > eps)*(comm_fwd < 1-eps) == 0] = np.nan
+            field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+            #field *= (comm_fwd > 0)*(comm_fwd < 1)
+            #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"pibaj_qp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # Lead time 
-            fieldname = r"$\eta_A^+$"  #r"$\pi_{AB},J_{AB}$"
-            field = self.dam_moments['one']['xa'][1] # just (q-)*(q+)
-            eps = 0.01
-            field = field*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
-            field *= (comm_fwd > 0)*(comm_fwd < 1)
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"pibaj_tb_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            fig.savefig(join(self.savefolder,"pibaj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
         return
     def display_casts_abba(self,model,data,theta_2d_abbs):
@@ -2365,7 +2427,7 @@ class TPT:
             theta_2d_units = np.array([fun0["units"],fun1["units"]])
             theta_2d_unit_symbols = [fun0["unit_symbol"],fun1["unit_symbol"]]
             self.display_change_of_measure_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k])
-            self.display_dam_moments_abba_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k])
+            self.display_dam_moments_abba_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k],horz_lines=4)
         return
     def display_change_of_measure_current(self,model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs):
         # Put the equilibrium current on top of the change of measure
@@ -2531,7 +2593,7 @@ class TPT:
             Jmag_full = np.sqrt(np.sum(J**2, 1))
             minmag,maxmag = np.nanmin(Jmag_full),np.nanmax(Jmag_full)
             #print("minmag={}, maxmag={}".format(minmag,maxmag))
-            dsmin,dsmax = np.max(current_shp)/40,np.max(current_shp)/5 # lengths if arrows in grid box units
+            dsmin,dsmax = 0*np.max(current_shp)/100,np.max(current_shp)/8 # lengths if arrows in grid box units
             th0_subset = np.arange(current_shp[0]) #np.linspace(0,p[0]-2,current_shp[0]-2)).astype(int)
             th1_subset = np.arange(current_shp[1]) #np.linspace(0,len(thaxes_current[1])-2,min(shp[1]-2,current_shp[1]-2)).astype(int)
             J0 = J[:,0].reshape(current_shp)[th0_subset,:][:,th1_subset] #*units[0]
@@ -2539,7 +2601,10 @@ class TPT:
             Jmag = np.sqrt(J0**2 + J1**2)
             print("Jmag range = ({},{})".format(np.nanmin(Jmag),np.nanmax(Jmag)))
             print("J0.shape = {}".format(J0.shape))
-            ds = dsmin + (dsmax - dsmin)*(Jmag - minmag)/(maxmag - minmag)
+            #ds = dsmin + (dsmax - dsmin)*(Jmag - minmag)/(maxmag - minmag)
+            coeff1 = 10.0
+            coeff0 = dsmax/np.log(coeff1*maxmag + 1)
+            ds = coeff0 * np.log(coeff1*Jmag + 1)
             normalizer = ds*(Jmag != 0)/(np.sqrt((J0/(dth[0]))**2 + (J1/(dth[1]))**2) + (Jmag == 0))
             J0 *= normalizer*(1 - np.isnan(J0))
             J1 *= normalizer*(1 - np.isnan(J1))
