@@ -527,10 +527,10 @@ class TPT:
                 if ba_ends[i] < timax:
                     ax[0].axvspan(t_long[ba_starts[i]],t_long[ba_ends[i]],facecolor='mediumspringgreen',alpha=0.5,zorder=-1)
         xlab = "Time"
-        if time_unit_symbol is not None: xlab += " ({})".format(time_unit_symbol)
+        if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
         ax[0].set_xlabel(xlab,fontdict=bigfont)
         ylab = fieldname
-        if field_unit_symbol is not None: ylab += " ({})".format(field_unit_symbol)
+        if field_unit_symbol is not None: ylab += " [{}]".format(field_unit_symbol)
         ax[0].set_ylabel(ylab,fontdict=bigfont)
         ylim = ax[0].get_ylim()
         fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
@@ -3111,13 +3111,13 @@ class TPT:
             fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
             fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
-        # 2. Plot the evolution of the least action path alongside max-flux path
+        # ------------ 2. Plot the evolution of the least action path alongside max-flux path --------
         funlib = model.observable_function_library()
         eps = 0.01
         tb = self.dam_moments['one']['xb'][1,:,:]
         tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
         tb[comm_fwd <= eps] == np.nan
-        tb_min,tb_max = np.nanmin(tb),np.nanmax(tb)
+        tb_min,tb_max = 0*np.nanmin(tb),np.nanmax(tb)
         tb_levels = np.linspace(tb_min,tb_max,17)[1:-1]
         tb_qp_corr = np.nanmean((tb - np.nanmean(tb))*(comm_fwd - np.nanmean(comm_fwd)))
         if tb_qp_corr < 0:
@@ -3192,7 +3192,7 @@ class TPT:
         magprof = np.array(magprof)
         magprof_lower = np.array(magprof_lower)
         magprof_upper = np.array(magprof_upper)
-        # Plot least-action Uref and max-flux Uref
+        # ----------------- 2. Plot least-action Uref and max-flux Uref ------------------
         fig,ax = plt.subplots(ncols=2,nrows=3,figsize=(16,18),sharey='row',sharex='col')
         # Least action path in upper left
         model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]],negtime=True)
@@ -3246,6 +3246,9 @@ class TPT:
         pos01 = ax[0,1].get_position()
         pos11 = ax[1,1].get_position()
         ax[0,1].set_position([pos11.x0,pos01.y0,pos11.width,pos01.height])
+        ## Fix horizontal ranges
+        #for i in range(3):
+        #    ax[i,1].set_xlim(ax[i,0].get_xlim())
         fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return

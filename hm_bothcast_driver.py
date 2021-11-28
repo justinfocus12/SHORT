@@ -60,7 +60,7 @@ lifecycle_flag =        0
 display_cast_flag =     0
 display_current_flag =  0
 gen_rates_flag =        0
-plot_long_1d_flag =     0
+plot_long_1d_flag =     1
 validation_flag =       0
 # ---------------------------------------
 

@@ -6,11 +6,11 @@ def get_algo_params():
     tmax_long = 1000000.0
     tmax_short = 20.0
     dt_save = 0.5
-    nshort = 500000
+    nshort = 300000
     istart = 0 # Highly dependent on the existing static database
     basis_type = 'MSM'
     basis_size = 1200 
-    lag_time = 10.0 
+    lag_time = 20.0 
     nlags = int(lag_time/dt_save) + 1 
     num_moments = 2
     lag_time_seq = np.linspace(0,lag_time,nlags)

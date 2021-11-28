@@ -472,7 +472,7 @@ class HoltonMassModel(Model):
                     'pay': lambda x: np.ones(len(x)),
                     'name': 'Time',
                     'name_fwd': "\\tau^+", #r"$\tau^+$",
-                    'name_bwd': "\\tau^-", #r"$\tau^-$",
+                    'name_bwd': "-\\tau^-", #r"$\tau^-$",
                     'name_full': "\\tau^+-\\tau^-", #r"$\tau^+-\tau^-$",
                     'abb_fwd': 't+',
                     'abb_bwd': 't-',
@@ -1016,7 +1016,7 @@ class HoltonMassModel(Model):
         ax[1].set_xlabel("Longitude",fontdict=ffont)
         #ax[1].set_ylabel("Altitude [km]",fontdict=font)
         dpsi = im.levels[1]-im.levels[0]
-        ax[1].set_title(r"$\Psi$ [m$^2$/s]",fontdict=ffont) # ($\Delta=%.1e$)"%(dpsi),fontdict=ffont)
+        ax[1].set_title(r"Streamfunction [m$^2$/s]",fontdict=ffont) # ($\Delta=%.1e$)"%(dpsi),fontdict=ffont)
         ax[1].tick_params(axis='both', which='major', labelsize=20)
         base_x = 90.0
         base_y = 20.0
