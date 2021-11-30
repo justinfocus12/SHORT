@@ -544,9 +544,45 @@ class TPT:
         ax[1].set_xlabel("Probability density",fontdict=bigfont)
         ax[1].tick_params(axis='both',labelsize=25)
         fig.savefig(join(self.savefolder,"{}_long".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
-        del x_long
         plt.close(fig)
         print("Done plotting field long")
+        # ------------ Next: plot only some transitions on their own plot --------------
+        if any_trans:
+            fig,ax = plt.subplots(ncols=2,figsize=(12,6),sharey=True)
+            num_trans = min(10,len(ab_starts))
+            max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
+            print("max_duration = {}".format(max_duration))
+            field_trans_composite_0 = np.zeros(max_duration)
+            field_trans_composite_1 = np.zeros(max_duration)
+            for i in range(min(10,len(ab_starts))):
+                k0,k1 = ab_starts[i],ab_ends[i]
+                pad = max_duration - (k1-k0)
+                print("pad = ", pad)
+                if field_fun is None:
+                    field_trans = self.out_of_sample_extension(field,data,x_long[k0-pad:k1+pad])
+                else:
+                    field_trans = field_fun(x_long[k0-pad:k1+pad]).flatten()
+                print("field_trans.shape = {}".format(field_trans.shape))
+                ax[0].plot(t_long[k0:k1+pad]-t_long[k0],field_trans[pad:]) 
+                ax[1].plot(t_long[k0-pad:k1]-t_long[k1],field_trans[:(k1-k0+pad)])
+                field_trans_composite_0 += field_trans[pad:]/num_trans
+                field_trans_composite_1 += field_trans[:(k1-k0+pad)]/num_trans
+            ax[0].plot(t_long[:max_duration],field_trans_composite_0,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
+            ax[1].plot(t_long[:max_duration]-t_long[max_duration],field_trans_composite_1,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
+            xlab_list = [r"Time $-$ start",r"Time $-$ end"]
+            for i in range(2):
+                xlab = xlab_list[i]
+                if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
+                ax[i].set_xlabel(xlab,fontdict=bigfont)
+                ylab = fieldname
+                if field_unit_symbol is not None: ylab += " [{}]".format(field_unit_symbol)
+                ax[i].set_ylabel(ylab,fontdict=bigfont)
+                ylim = ax[i].get_ylim()
+                fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+                ax[i].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+            fig.savefig(join(self.savefolder,"transitory_{}".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+        del x_long
         return
     def plot_field_long_2d(self,model,data,fieldnames,field_funs,field_abbs,units=[1.0,1.0],tmax=70,field_unit_symbols=["",""],orientation=None):
         t_long,x_long = model.load_long_traj(self.long_simfolder)
@@ -1600,7 +1636,7 @@ class TPT:
                     comm_bwd = self.dam_moments[keys[k]]['ax'][0]
                     comm_fwd = self.dam_moments[keys[k]]['xb'][0]
                     if j == 0: 
-                        fieldname = r"$P_x\{A\to B\}$"
+                        fieldname = r"$q_A^-(x)q_B^+(x)$" #r"$P_x\{A\to B\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['ab'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
@@ -1694,7 +1730,7 @@ class TPT:
                     comm_fwd = self.dam_moments[keys[k]]['xa'][0]
                     comm_bwd = 1.0
                     if j == 0: 
-                        fieldname = r"$P_x\{x\to A\}$"
+                        fieldname = r"$q_A^-(x)$" #r"$P_x\{x\to A\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['xa'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
@@ -1721,7 +1757,7 @@ class TPT:
                     comm_fwd = self.dam_moments[keys[k]]['bx'][0]
                     comm_bwd = 1.0
                     if j == 0: 
-                        fieldname = r"$P_x\{B\to x\}$"
+                        fieldname = r"$q_B^-(x)$" #r"$P_x\{B\to x\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['bx'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
@@ -1747,7 +1783,7 @@ class TPT:
                     comm_fwd = self.dam_moments[keys[k]]['ax'][0]
                     comm_bwd = 1.0
                     if j == 0: 
-                        fieldname = r"$P_x\{A\to x\}$"
+                        fieldname = r"$q_A^-(x)$" #r"$P_x\{A\to x\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['ax'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
