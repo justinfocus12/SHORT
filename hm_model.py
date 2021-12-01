@@ -1183,7 +1183,7 @@ class HoltonMassModel(Model):
         else:
             im = ax.contourf(lz,zl,prof_interp*funlib[func_key]["units"],cmap=plt.cm.coolwarm,vmin=vmin,vmax=vmax)
         ax.set_ylabel(r"$z$ [km]",fontdict=font)
-        ax.set_xlabel(r"Time to $B$ [days]",fontdict=font)
+        ax.set_xlabel(r"$-\eta_B^+$ [days]",fontdict=font)
         return fig,ax,im
     def plot_multiple_states(self,X,qlevels,qsymbol,colorlist=None,zorderlist=None,key="U",labellist=None):
     #def plot_zdep_family_weighted(self,cv_x,cv_a,cv_b,labels,weights=None,cv_name=None,colorlist=None,units=1.0,unit_symbol=""):

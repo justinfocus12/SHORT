@@ -2643,7 +2643,7 @@ class TPT:
             print("Jmag range = ({},{})".format(np.nanmin(Jmag),np.nanmax(Jmag)))
             print("J0.shape = {}".format(J0.shape))
             dsmin,dsmax = np.max(current_shp)/40,np.max(current_shp)/20 # lengths if arrows in grid box units
-            coeff1 = 10.0/maxmag
+            coeff1 = 20.0/maxmag
             coeff0 = dsmax / (np.exp(-coeff1 * maxmag) - 1)
             ds = coeff0 * (np.exp(-coeff1 * Jmag) - 1)
             #ds = dsmin + (dsmax - dsmin)*(Jmag - minmag)/(maxmag - minmag)
@@ -3150,6 +3150,7 @@ class TPT:
             fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
         # ------------ 2. Plot the evolution of the least action path alongside max-flux path --------
+        quantiles = 0.01*np.array([5.0,25.0,50.0,75.0,95.0])
         funlib = model.observable_function_library()
         eps = 0.01
         tb = self.dam_moments['one']['xb'][1,:,:]
@@ -3165,15 +3166,9 @@ class TPT:
         print("tb_qp_corr = ", tb_qp_corr)
         rflux = []
         rflux_idx = []
-        Uprof = []
-        vTprof = []
-        Uprof_lower = []
-        Uprof_upper = []
-        vTprof_lower = []
-        vTprof_upper = []
-        vTintref_med = []
-        vTintref_lower = []
-        vTintref_upper = []
+        Uprof_quants = []
+        vTprof_quants = []
+        vTintref_quants = []
         tb_levels_real = []
         ramp = tb.reshape((Nx,Nt,1)) * np.sign(tb_qp_corr)
         for ti in range(len(tb_levels)):
@@ -3187,85 +3182,54 @@ class TPT:
                 rflux_idx += [ridx_ti]
                 # Determine height-by-height median
                 U = funlib["U"]["fun"](data.X[ridx_ti,tidx])
-                Umed = np.zeros(U.shape[1])
-                Ulow = np.zeros(U.shape[1])
-                Uhigh = np.zeros(U.shape[1])
+                Uq = np.zeros((len(quantiles),U.shape[1]))
                 for j in range(U.shape[1]):
                     order = np.argsort(U[:,j])
-                    #print("rflux_ti = {}".format(rflux_ti))
-                    #print("order = {}".format(order))
-                    #print("rflux_ti[order[:3]] = {}".format(rflux_ti[order[:3]]))
                     cdf = np.cumsum(rflux_ti[order])
-                    median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
-                    Umed[j] = U[order[median_idx],j]
-                    lower_idx = np.where(cdf/cdf[-1] > 0.05)[0][0]
-                    upper_idx = np.where(cdf/cdf[-1] > 0.95)[0][0]
-                    Ulow[j] = U[order[lower_idx],j]
-                    Uhigh[j] = U[order[upper_idx],j]
-                Uprof += [Umed]
-                Uprof_lower += [Ulow]
-                Uprof_upper += [Uhigh]
+                    for qi in range(len(quantiles)):
+                        quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
+                        Uq[qi,j] = U[order[quant_idx],j]
+                Uprof_quants += [Uq]
                 vT = funlib["vT"]["fun"](data.X[ridx_ti,tidx])
-                vTmed = np.zeros(vT.shape[1])
-                vTlow = np.zeros(vT.shape[1])
-                vThigh = np.zeros(vT.shape[1])
+                vTq = np.zeros((len(quantiles),vT.shape[1]))
                 for j in range(vT.shape[1]):
                     order = np.argsort(vT[:,j])
-                    #print("rflux_ti = {}".format(rflux_ti))
-                    #print("order = {}".format(order))
-                    #print("rflux_ti[order[:3]] = {}".format(rflux_ti[order[:3]]))
                     cdf = np.cumsum(rflux_ti[order])
-                    median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
-                    vTmed[j] = vT[order[median_idx],j]
-                    lower_idx = np.where(cdf/cdf[-1] > 0.05)[0][0]
-                    upper_idx = np.where(cdf/cdf[-1] > 0.95)[0][0]
-                    vTlow[j] = vT[order[lower_idx],j]
-                    vThigh[j] = vT[order[upper_idx],j]
-                vTprof += [vTmed]
-                vTprof_lower += [vTlow]
-                vTprof_upper += [vThigh]
+                    for qi in range(len(quantiles)):
+                        quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
+                        vTq[qi,j] = vT[order[quant_idx],j]
+                vTprof_quants += [vTq]
                 vTintref = funlib["vTintref"]["fun"](data.X[ridx_ti,tidx])
+                vTirq = np.zeros(len(quantiles))
                 order = np.argsort(vTintref)
                 cdf = np.cumsum(vTintref[order])
-                median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
-                lower_idx = np.where(cdf/cdf[-1] > 0.05)[0][0]
-                upper_idx = np.where(cdf/cdf[-1] > 0.95)[0][0]
-                vTintref_lower += [vTintref[order[lower_idx]]]
-                vTintref_upper += [vTintref[order[upper_idx]]]
-                vTintref_med += [vTintref[order[median_idx]]]
+                for qi in range(len(quantiles)):
+                    quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
+                    vTirq[qi] = vTintref[order[quant_idx]]
+                vTintref_quants += [vTirq]
         tb_levels_real = np.array(tb_levels_real)
         print("len(tb_levels_real) = {}".format(len(tb_levels_real)))
-        Uprof = np.array(Uprof)
-        Uprof_lower = np.array(Uprof_lower)
-        Uprof_upper = np.array(Uprof_upper)
-        vTprof = np.array(vTprof)
-        vTprof_lower = np.array(vTprof_lower)
-        vTprof_upper = np.array(vTprof_upper)
-        vTintref_med = np.array(vTintref_med)
-        vTintref_lower = np.array(vTintref_lower)
-        vTintref_upper = np.array(vTintref_upper)
         # Now create two figures: one for zonal wind, and one for heat flux / vTint
+        Uprof_quants = np.array(Uprof_quants)
+        vTprof_quants = np.array(vTprof_quants)
+        vTintref_quants = np.array(vTintref_quants)
         # ----------- Zonal wind --------------
         fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex='col')
         # Least action path in upper left
         model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]],negtime=True)
         # Max-probability path in upper right
-        #ax[0,1].set_xlim(ax[0,0].get_xlim())
         zi = model.q['zi']
-        print("zi = {}".format(zi))
-        print("Uprof[:,zi] = {}".format(Uprof[:,zi]))
-        print("Uprof_lower[:,zi] = {}".format(Uprof_lower[:,zi]))
-        print("Uprof_upper[:,zi] = {}".format(Uprof_upper[:,zi]))
-        print("tb_levels = {}".format(tb_levels))
         levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
-        Uzi_med_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof[:,zi],kind='cubic')(levels_interp)
-        Uzi_lower_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_lower[:,zi],kind='cubic')(levels_interp)
-        Uzi_upper_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_upper[:,zi],kind='cubic')(levels_interp)
-        ax[0,1].plot(-levels_interp,Uzi_med_interp*funlib["U"]["units"],color='black')
-        ax[0,1].scatter(-tb_levels_real,Uprof[:,zi]*funlib["U"]["units"],color='black',marker='o')
+        Uzi_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
+        for qi in range(len(quantiles)):
+            Uzi_quant_interp[qi] = scipy.interpolate.interp1d(tb_levels_real,Uprof_quants[:,qi,zi],kind='cubic')(levels_interp)
+        med_qi = len(quantiles)//2
+        for qi in range(med_qi): # Assume an odd number with the middle is 50%
+            ax[0,1].fill_between(-levels_interp,Uzi_quant_interp[qi]*funlib["U"]["units"],Uzi_quant_interp[len(quantiles)-1-qi]*funlib["U"]["units"],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
+        ax[0,1].plot(-levels_interp,Uzi_quant_interp[med_qi]*funlib["U"]["units"],color='black',zorder=med_qi)
+        ax[0,1].scatter(-tb_levels_real,Uprof_quants[:,med_qi,zi]*funlib["U"]["units"],color='black',marker='o',zorder=med_qi)
         Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
         print("Uzi_b*units = {}".format(Uzi_b*funlib["U"]["units"]))
-        ax[0,1].fill_between(-levels_interp,Uzi_lower_interp*funlib["U"]["units"],Uzi_upper_interp*funlib["U"]["units"],color='darkorange',alpha=0.5)
         ax[0,1].axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
         ax[0,1].axhline(y=Uzi_b*funlib["U"]["units"],color='red',linewidth=3)
         ax[0,1].set_title(r"Max-probability path ($A\to B$)",fontdict=font)
@@ -3276,7 +3240,7 @@ class TPT:
         _,_,ims_lap = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0],negtime=True)
         # U profile in middle right
         clim_u = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
-        _,_,imu = model.plot_profile_evolution(Uprof,-tb_levels_real,"U",fig=fig,ax=ax[1,1],clim=clim_u)
+        _,_,imu = model.plot_profile_evolution(Uprof_quants[:,med_qi,:],-tb_levels_real,"U",fig=fig,ax=ax[1,1],clim=clim_u)
         ax[1,1].set_title(r"Max-probability %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
         fig.colorbar(imu,ax=ax[1,1])
         # Set x labels to False
@@ -3305,13 +3269,15 @@ class TPT:
         #ax[0,1].set_xlim(ax[0,0].get_xlim())
         zi = model.q['zi']
         levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
-        vTintref_med_interp = scipy.interpolate.interp1d(tb_levels_real,vTintref_med,kind='cubic')(levels_interp)
-        vTintref_lower_interp = scipy.interpolate.interp1d(tb_levels_real,vTintref_lower,kind='cubic')(levels_interp)
-        vTintref_upper_interp = scipy.interpolate.interp1d(tb_levels_real,vTintref_upper,kind='cubic')(levels_interp)
-        ax[0,1].plot(-levels_interp,vTintref_med_interp*funlib["vTintref"]["units"],color='black')
-        ax[0,1].scatter(-tb_levels_real,vTintref_med*funlib["vTintref"]["units"],color='black',marker='o')
+        vTintref_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
+        for qi in range(len(quantiles)):
+            vTintref_quant_interp[qi] = scipy.interpolate.interp1d(tb_levels_real,vTintref_quants[:,qi],kind='cubic')(levels_interp)
+        med_qi = len(quantiles)//2
+        for qi in range(med_qi): # Assume an odd number with the middle is 50%
+            ax[0,1].fill_between(-levels_interp,vTintref_quant_interp[qi]*funlib["vTintref"]["units"],vTintref_quant_interp[len(quantiles)-1-qi]*funlib["vTintref"]["units"],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
+        ax[0,1].plot(-levels_interp,vTintref_quant_interp[med_qi]*funlib["vTintref"]["units"],color='black',zorder=med_qi)
+        ax[0,1].scatter(-tb_levels_real,vTintref_quants[:,med_qi]*funlib["vTintref"]["units"],color='black',marker='o',zorder=med_qi)
         vTintref_a,vTintref_b = funlib["vTintref"]["fun"](model.tpt_obs_xst)
-        ax[0,1].fill_between(-levels_interp,vTintref_lower_interp*funlib["vTintref"]["units"],vTintref_upper_interp*funlib["vTintref"]["units"],color='darkorange',alpha=0.5)
         ax[0,1].axhline(y=vTintref_a*funlib["vTintref"]["units"],color='skyblue',linewidth=3)
         ax[0,1].axhline(y=vTintref_b*funlib["vTintref"]["units"],color='red',linewidth=3)
         ax[0,1].set_title(r"Max-probability path ($A\to B$)",fontdict=font)
@@ -3321,7 +3287,7 @@ class TPT:
         _,_,ims_lap = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0],negtime=True,logscale=True)
         # vT profile in middle right
         clim_vT = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
-        _,_,imvT = model.plot_profile_evolution(vTprof,-tb_levels_real,"vT",fig=fig,ax=ax[1,1],clim=clim_vT,logscale=True)
+        _,_,imvT = model.plot_profile_evolution(vTprof_quants[:,med_qi,:],-tb_levels_real,"vT",fig=fig,ax=ax[1,1],clim=clim_vT,logscale=True)
         ax[1,1].set_title(r"Max-probability %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
         fig.colorbar(imvT,ax=ax[1,1])
         # Set x labels to False
