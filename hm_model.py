@@ -15,6 +15,7 @@ ffont = {'family': 'serif', 'size': 25}
 bigfont = {'family': 'serif', 'size': 40}
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import matplotlib.colors as mpl_colors
 import scipy.sparse as sps
 from scipy.interpolate import interp1d
 import time
@@ -295,7 +296,7 @@ class HoltonMassModel(Model):
             ax[i].set_xlabel(r"Time to $B$ [days]",fontdict=font)
             ax[i].set_title(r"Least action path ($A\to B$)",fontdict=font)
         return fig,ax
-    def plot_least_action_profiles(self,physical_param_folder,prof_names=["U","mag"],fig=None,ax=None,negtime=False):
+    def plot_least_action_profiles(self,physical_param_folder,prof_names=["U","mag"],fig=None,ax=None,negtime=False,logscale=False):
         funlib = self.observable_function_library()
         # Given the noise forcing, plot a picture of the least action pathway
         q = self.q
@@ -330,13 +331,17 @@ class HoltonMassModel(Model):
             obs = funlib[prof_names[i]]["fun"](self.tpt_observables(xmin))
             units = funlib[prof_names[i]]["units"]
             unit_symbol = funlib[prof_names[i]]["unit_symbol"]
-            im = ax[i].contourf(tz,zt,units*obs,cmap=plt.cm.coolwarm)
+            eps = np.min(np.abs(obs))/2
+            if logscale:
+                im = ax[i].contourf(tz,zt,np.maximum(eps,obs)*units,cmap=plt.cm.coolwarm,norm=mpl_colors.LogNorm(vmin=eps,vmax=np.max(np.abs(obs))))
+            else:
+                im = ax[i].contourf(tz,zt,units*obs,cmap=plt.cm.coolwarm)
             #ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
             ims += [im]
             fig.colorbar(im,ax=ax[i])
             ax[i].set_ylabel(r"$z$ [km]",fontdict=font)
             ax[i].set_title(r"Least action %s$(z)$ profile [%s]"%(name,unit_symbol),fontdict=font)
-            ax[i].set_xlabel(r"Time to $B$ [days]",fontdict=font)
+            ax[i].set_xlabel(r"$-\eta_B^+$ [days]",fontdict=font)
         # Save
         #fig.savefig(join(savefolder,"fw_ab_plot"))
         #plt.close(fig)
@@ -574,6 +579,20 @@ class HoltonMassModel(Model):
         Xz = first_derivative(x[:,:n],q['Psi0'],0,q['dz']) 
         Yz = first_derivative(x[:,n:2*n],0,0,q['dz'])
         heat_flux *= (x[:,:n]*Yz - x[:,n:2*n]*Xz)
+        return heat_flux
+    def weighted_meridional_heat_flux(self,x):
+        q = self.q
+        n = q['Nz']-1
+        Nt = len(x)
+        heat_flux = np.ones([Nt,n])
+        heat_flux *= q['k'] #q['k_d']*q['H']*q['f0_d']/(2*q['ideal_gas_constant'])
+        #heat_flux *= np.exp(q['z'][:-1])*17.0/35
+        # Now it has to be multiplied by vertical derivatives
+        Xz = first_derivative(x[:,:n],q['Psi0'],0,q['dz']) 
+        Yz = first_derivative(x[:,n:2*n],0,0,q['dz'])
+        Yz0 = (4*x[:,2*n] - x[:,2*n+1])/(2*q['dz'])
+        heat_flux *= (x[:,:n]*Yz - x[:,n:2*n]*Xz)
+        heat_flux *= np.exp(-q['z'][1:-1])
         return heat_flux
     def integrated_meridional_heat_flux(self,x):
         q = self.q
@@ -855,7 +874,7 @@ class HoltonMassModel(Model):
                 {"fun": lambda X: self.integrated_meridional_heat_flux(X),
                  "name": r"$\int_{0}^{z}e^{-z/H}\overline{v'T'}dz$",
                  "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
-                 "unit_symbol": r"$K\cdot m^2/s$",
+                 "unit_symbol": r"K$\cdot$m$^2/$s",
                  },
                 "vTint13p5": 
                 {"fun": lambda X: self.integrated_meridional_heat_flux(X)[:,zlevel(13.5)],
@@ -886,6 +905,12 @@ class HoltonMassModel(Model):
                  "name": r"$\int_{z_b}^{%.0f}e^{-z/H}\overline{v'T'}dz$"%(q['z_d'][-2]/1000),
                  "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"$K\cdot m^2/s$",
+                 },
+                "wvT": # ADJUSTED UNITS 
+                {"fun": lambda X: self.weighted_meridional_heat_flux(X),
+                 "name": r"$e^{-z/H}\overline{v'T'}$",
+                 "units": q['H']*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
+                 "unit_symbol": r"K$\cdot$m/s",
                  },
                 "vT": # ADJUSTED UNITS 
                 {"fun": lambda X: self.meridional_heat_flux(X),
@@ -1136,7 +1161,7 @@ class HoltonMassModel(Model):
         fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
         ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
         return fig,ax
-    def plot_profile_evolution(self,prof,levels,func_key,fig=None,ax=None,clim=None):
+    def plot_profile_evolution(self,prof,levels,func_key,fig=None,ax=None,clim=None,logscale=False):
         # Plot a sequence of profiles, smoothly, as in the least action path.
         print("prof.shape = {}".format(prof.shape))
         print("levels.shape = {}".format(levels.shape))
@@ -1146,13 +1171,17 @@ class HoltonMassModel(Model):
         levels_interp = np.linspace(levels[0],levels[-1],num_snaps)
         prof_interp = np.zeros((num_snaps,n))
         for i in range(n):
-            prof_interp[:,i] = interp1d(levels,prof[:,i],kind='linear')(levels_interp)
+            prof_interp[:,i] = interp1d(levels,prof[:,i],kind='cubic')(levels_interp)
         z = self.q['z_d'][1:-1]/1000
         lz,zl = np.meshgrid(levels_interp,z,indexing='ij')
         if fig is None or ax is None:
             fig,ax = plt.subplots()
         vmin,vmax = (None,None) if clim is None else clim
-        im = ax.contourf(lz,zl,prof_interp*funlib[func_key]["units"],cmap=plt.cm.coolwarm,vmin=vmin,vmax=vmax)
+        eps = np.min(np.abs(prof))/2
+        if logscale:
+            im = ax.contourf(lz,zl,np.maximum(eps,prof_interp)*funlib[func_key]["units"],cmap=plt.cm.coolwarm,norm=mpl_colors.LogNorm(vmin=vmin,vmax=vmax))
+        else:
+            im = ax.contourf(lz,zl,prof_interp*funlib[func_key]["units"],cmap=plt.cm.coolwarm,vmin=vmin,vmax=vmax)
         ax.set_ylabel(r"$z$ [km]",fontdict=font)
         ax.set_xlabel(r"Time to $B$ [days]",fontdict=font)
         return fig,ax,im

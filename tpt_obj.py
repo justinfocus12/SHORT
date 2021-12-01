@@ -549,12 +549,12 @@ class TPT:
         # ------------ Next: plot only some transitions on their own plot --------------
         if any_trans:
             fig,ax = plt.subplots(ncols=2,figsize=(12,6),sharey=True)
-            num_trans = min(10,len(ab_starts))
+            num_trans = min(5,len(ab_starts))
             max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
             print("max_duration = {}".format(max_duration))
             field_trans_composite_0 = np.zeros(max_duration)
             field_trans_composite_1 = np.zeros(max_duration)
-            for i in range(min(10,len(ab_starts))):
+            for i in range(num_trans):
                 k0,k1 = ab_starts[i],ab_ends[i]
                 pad = max_duration - (k1-k0)
                 print("pad = ", pad)
@@ -563,20 +563,22 @@ class TPT:
                 else:
                     field_trans = field_fun(x_long[k0-pad:k1+pad]).flatten()
                 print("field_trans.shape = {}".format(field_trans.shape))
-                ax[0].plot(t_long[k0:k1+pad]-t_long[k0],field_trans[pad:]) 
-                ax[1].plot(t_long[k0-pad:k1]-t_long[k1],field_trans[:(k1-k0+pad)])
+                ax[0].plot(t_long[k0:k1+pad]-t_long[k0],field_trans[pad:]*units) 
+                ax[1].plot(t_long[k0-pad:k1]-t_long[k1],field_trans[:(k1-k0+pad)]*units)
                 field_trans_composite_0 += field_trans[pad:]/num_trans
                 field_trans_composite_1 += field_trans[:(k1-k0+pad)]/num_trans
-            ax[0].plot(t_long[:max_duration],field_trans_composite_0,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
-            ax[1].plot(t_long[:max_duration]-t_long[max_duration],field_trans_composite_1,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
-            xlab_list = [r"Time $-$ start",r"Time $-$ end"]
+            ax[0].plot(t_long[:max_duration],field_trans_composite_0*units,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
+            ax[1].plot(t_long[:max_duration]-t_long[max_duration],field_trans_composite_1*units,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
+            xlab_list = [r"Time$-\tau_A^-$",r"Time$-\tau_B^+$"]
             for i in range(2):
+                ax[i].axhline(ab_long[0]*units,color='skyblue',zorder=-1)
+                ax[i].axhline(ab_long[1]*units,color='red',zorder=-1)
                 xlab = xlab_list[i]
                 if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
-                ax[i].set_xlabel(xlab,fontdict=bigfont)
+                ax[i].set_xlabel(xlab,fontdict=font)
                 ylab = fieldname
                 if field_unit_symbol is not None: ylab += " [{}]".format(field_unit_symbol)
-                ax[i].set_ylabel(ylab,fontdict=bigfont)
+                if i == 0: ax[i].set_ylabel(ylab,fontdict=font)
                 ylim = ax[i].get_ylim()
                 fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
                 ax[i].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
@@ -1704,7 +1706,7 @@ class TPT:
                     comm_fwd = self.dam_moments[keys[k]]['xb'][0]
                     comm_bwd = 1.0
                     if j == 0: 
-                        fieldname = r"$P_x\{x\to B\}$"
+                        fieldname = r"$q_B^+(x)$" #r"$P_x\{x\to B\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['xb'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
@@ -3103,7 +3105,7 @@ class TPT:
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
     def plot_transition_states_new(self,model,data):
         # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
-        # 1. For three committor levels, plot the profile of zonal wind and heat flux.
+        # ------------------------------ 1. For three committor levels, plot the profile of zonal wind and heat flux. ----------------------------------
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
         comm_bwd = self.dam_moments['one']['ax'][0,:,:]
@@ -3135,7 +3137,7 @@ class TPT:
         colors = np.array([plt.cm.coolwarm(qp_levels[0]),'orange',plt.cm.coolwarm(qp_levels[2])])
         labels = [r"$q^+=%.1f$"%(qp_levels[i]) for i in range(len(qp_levels))]
         qp_tol = 0.1
-        prof_key_list = ["U","vT"]
+        prof_key_list = ["U","vT","wvT"]
         rflux = []
         rflux_idx = []
         for qi in range(len(qp_levels)):
@@ -3164,11 +3166,14 @@ class TPT:
         rflux = []
         rflux_idx = []
         Uprof = []
-        magprof = []
+        vTprof = []
         Uprof_lower = []
         Uprof_upper = []
-        magprof_lower = []
-        magprof_upper = []
+        vTprof_lower = []
+        vTprof_upper = []
+        vTintref_med = []
+        vTintref_lower = []
+        vTintref_upper = []
         tb_levels_real = []
         ramp = tb.reshape((Nx,Nt,1)) * np.sign(tb_qp_corr)
         for ti in range(len(tb_levels)):
@@ -3200,36 +3205,48 @@ class TPT:
                 Uprof += [Umed]
                 Uprof_lower += [Ulow]
                 Uprof_upper += [Uhigh]
-                mag = funlib["mag"]["fun"](data.X[ridx_ti,tidx])
-                magmed = np.zeros(mag.shape[1])
-                maglow = np.zeros(mag.shape[1])
-                maghigh = np.zeros(mag.shape[1])
-                for j in range(mag.shape[1]):
-                    order = np.argsort(mag[:,j])
+                vT = funlib["vT"]["fun"](data.X[ridx_ti,tidx])
+                vTmed = np.zeros(vT.shape[1])
+                vTlow = np.zeros(vT.shape[1])
+                vThigh = np.zeros(vT.shape[1])
+                for j in range(vT.shape[1]):
+                    order = np.argsort(vT[:,j])
                     #print("rflux_ti = {}".format(rflux_ti))
                     #print("order = {}".format(order))
                     #print("rflux_ti[order[:3]] = {}".format(rflux_ti[order[:3]]))
                     cdf = np.cumsum(rflux_ti[order])
                     median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
-                    magmed[j] = mag[order[median_idx],j]
+                    vTmed[j] = vT[order[median_idx],j]
                     lower_idx = np.where(cdf/cdf[-1] > 0.05)[0][0]
                     upper_idx = np.where(cdf/cdf[-1] > 0.95)[0][0]
-                    maglow[j] = mag[order[lower_idx],j]
-                    maghigh[j] = mag[order[upper_idx],j]
-                magprof += [magmed]
-                magprof_lower += [maglow]
-                magprof_upper += [maghigh]
+                    vTlow[j] = vT[order[lower_idx],j]
+                    vThigh[j] = vT[order[upper_idx],j]
+                vTprof += [vTmed]
+                vTprof_lower += [vTlow]
+                vTprof_upper += [vThigh]
+                vTintref = funlib["vTintref"]["fun"](data.X[ridx_ti,tidx])
+                order = np.argsort(vTintref)
+                cdf = np.cumsum(vTintref[order])
+                median_idx = np.where(cdf/cdf[-1] > 0.5)[0][0]
+                lower_idx = np.where(cdf/cdf[-1] > 0.05)[0][0]
+                upper_idx = np.where(cdf/cdf[-1] > 0.95)[0][0]
+                vTintref_lower += [vTintref[order[lower_idx]]]
+                vTintref_upper += [vTintref[order[upper_idx]]]
+                vTintref_med += [vTintref[order[median_idx]]]
         tb_levels_real = np.array(tb_levels_real)
         print("len(tb_levels_real) = {}".format(len(tb_levels_real)))
         Uprof = np.array(Uprof)
         Uprof_lower = np.array(Uprof_lower)
         Uprof_upper = np.array(Uprof_upper)
-        #print("on Uprof, min bdist = {} \n on Uprof_lower, min bdist = {}\n on Uprof_upper, min bdist = {}".format(np.min(model.bdist(Uprof)),np.min(model.bdist(Uprof_lower)),np.min(model.bdist(Uprof_upper))))
-        magprof = np.array(magprof)
-        magprof_lower = np.array(magprof_lower)
-        magprof_upper = np.array(magprof_upper)
-        # ----------------- 2. Plot least-action Uref and max-flux Uref ------------------
-        fig,ax = plt.subplots(ncols=2,nrows=3,figsize=(16,18),sharey='row',sharex='col')
+        vTprof = np.array(vTprof)
+        vTprof_lower = np.array(vTprof_lower)
+        vTprof_upper = np.array(vTprof_upper)
+        vTintref_med = np.array(vTintref_med)
+        vTintref_lower = np.array(vTintref_lower)
+        vTintref_upper = np.array(vTintref_upper)
+        # Now create two figures: one for zonal wind, and one for heat flux / vTint
+        # ----------- Zonal wind --------------
+        fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex='col')
         # Least action path in upper left
         model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]],negtime=True)
         # Max-probability path in upper right
@@ -3246,12 +3263,8 @@ class TPT:
         Uzi_upper_interp = scipy.interpolate.interp1d(tb_levels_real,Uprof_upper[:,zi],kind='cubic')(levels_interp)
         ax[0,1].plot(-levels_interp,Uzi_med_interp*funlib["U"]["units"],color='black')
         ax[0,1].scatter(-tb_levels_real,Uprof[:,zi]*funlib["U"]["units"],color='black',marker='o')
-        #ax[0,1].scatter(-tb_levels_real,Uprof_lower[:,zi]*funlib["U"]["units"],color='darkorange',marker='o')
-        #ax[0,1].scatter(-tb_levels_real,Uprof_upper[:,zi]*funlib["U"]["units"],color='darkorange',marker='o')
         Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
         print("Uzi_b*units = {}".format(Uzi_b*funlib["U"]["units"]))
-        Uzi_a -= model.radius_a
-        Uzi_b += model.radius_b
         ax[0,1].fill_between(-levels_interp,Uzi_lower_interp*funlib["U"]["units"],Uzi_upper_interp*funlib["U"]["units"],color='darkorange',alpha=0.5)
         ax[0,1].axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
         ax[0,1].axhline(y=Uzi_b*funlib["U"]["units"],color='red',linewidth=3)
@@ -3259,16 +3272,13 @@ class TPT:
         print("hline y = {}".format(Uzi_b*funlib["U"]["units"]))
 
         # Least action profiles in bottom two left
-        func_key_list = ["U","mag"]
+        func_key_list = ["U"] #,"vT"]
         _,_,ims_lap = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0],negtime=True)
         # U profile in middle right
         clim_u = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
         _,_,imu = model.plot_profile_evolution(Uprof,-tb_levels_real,"U",fig=fig,ax=ax[1,1],clim=clim_u)
+        ax[1,1].set_title(r"Max-probability %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
         fig.colorbar(imu,ax=ax[1,1])
-        # mag profile in bottom right
-        clim_mag = np.array([ims_lap[1].levels[0],ims_lap[1].levels[-1]])
-        _,_,immag = model.plot_profile_evolution(magprof,-tb_levels_real,"mag",fig=fig,ax=ax[2,1],clim=clim_mag)
-        fig.colorbar(immag,ax=ax[2,1])
         # Set x labels to False
         for i in range(ax.shape[0]-1):
             ax[i,0].xaxis.set_visible(False)
@@ -3285,7 +3295,52 @@ class TPT:
         ## Fix horizontal ranges
         #for i in range(3):
         #    ax[i,1].set_xlim(ax[i,0].get_xlim())
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles"),bbox_inches="tight",pad_inches=0.2)
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_U"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # ---------- Heat flux --------------
+        fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex='col')
+        # Least action path in upper left
+        model.plot_least_action_scalars(self.physical_param_folder,obs_names=["vTintref"],fig=fig,ax=[ax[0,0]],negtime=True)
+        # Max-probability path in upper right
+        #ax[0,1].set_xlim(ax[0,0].get_xlim())
+        zi = model.q['zi']
+        levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
+        vTintref_med_interp = scipy.interpolate.interp1d(tb_levels_real,vTintref_med,kind='cubic')(levels_interp)
+        vTintref_lower_interp = scipy.interpolate.interp1d(tb_levels_real,vTintref_lower,kind='cubic')(levels_interp)
+        vTintref_upper_interp = scipy.interpolate.interp1d(tb_levels_real,vTintref_upper,kind='cubic')(levels_interp)
+        ax[0,1].plot(-levels_interp,vTintref_med_interp*funlib["vTintref"]["units"],color='black')
+        ax[0,1].scatter(-tb_levels_real,vTintref_med*funlib["vTintref"]["units"],color='black',marker='o')
+        vTintref_a,vTintref_b = funlib["vTintref"]["fun"](model.tpt_obs_xst)
+        ax[0,1].fill_between(-levels_interp,vTintref_lower_interp*funlib["vTintref"]["units"],vTintref_upper_interp*funlib["vTintref"]["units"],color='darkorange',alpha=0.5)
+        ax[0,1].axhline(y=vTintref_a*funlib["vTintref"]["units"],color='skyblue',linewidth=3)
+        ax[0,1].axhline(y=vTintref_b*funlib["vTintref"]["units"],color='red',linewidth=3)
+        ax[0,1].set_title(r"Max-probability path ($A\to B$)",fontdict=font)
+
+        # Least action profiles in bottom two left
+        func_key_list = ["vT"] #,"mag"]
+        _,_,ims_lap = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0],negtime=True,logscale=True)
+        # vT profile in middle right
+        clim_vT = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
+        _,_,imvT = model.plot_profile_evolution(vTprof,-tb_levels_real,"vT",fig=fig,ax=ax[1,1],clim=clim_vT,logscale=True)
+        ax[1,1].set_title(r"Max-probability %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
+        fig.colorbar(imvT,ax=ax[1,1])
+        # Set x labels to False
+        for i in range(ax.shape[0]-1):
+            ax[i,0].xaxis.set_visible(False)
+            ax[i,1].xaxis.set_visible(False)
+        for i in range(ax.shape[0]):
+            ax[i,1].yaxis.set_visible(False)
+        # Correct position of top row
+        pos00 = ax[0,0].get_position()
+        pos10 = ax[1,0].get_position()
+        ax[0,0].set_position([pos10.x0,pos00.y0,pos10.width,pos00.height])
+        pos01 = ax[0,1].get_position()
+        pos11 = ax[1,1].get_position()
+        ax[0,1].set_position([pos11.x0,pos01.y0,pos11.width,pos01.height])
+        ## Fix horizontal ranges
+        #for i in range(3):
+        #    ax[i,1].set_xlim(ax[i,0].get_xlim())
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_vT"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
     def plot_transition_states_all(self,model,data,collect_flag=True):
