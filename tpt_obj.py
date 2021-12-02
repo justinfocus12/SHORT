@@ -16,6 +16,7 @@ matplotlib.rcParams['font.family'] = 'serif'
 #matplotlib.rcParams['savefig.bbox'] = 'tight'
 #matplotlib.rcParams['savefig.pad_inches'] = 0
 smallfont = {'family': 'serif', 'size': 8}
+medfont = {'family': 'serif', 'size': 13}
 font = {'family': 'serif', 'size': 18}
 ffont = {'family': 'serif', 'size': 25}
 bigfont = {'family': 'serif', 'size': 30}
@@ -1483,8 +1484,9 @@ class TPT:
                 # Draw in lines for reactive flux densities
                 nnidx = np.where(np.isnan(field) == 0)[0]
                 th1_min,th1_max = thmin[1],thmax[1]
+                dramp = (th1_max - th1_min)/horz_lines
                 print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min,th1_max,horz_lines+2)[1:-1]
+                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
                 for i_th in range(len(th_levels)):
                     ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
             fig.savefig(join(self.savefolder,"piaaj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
@@ -1510,8 +1512,9 @@ class TPT:
                 # Draw in lines for reactive flux densities
                 nnidx = np.where(np.isnan(field) == 0)[0]
                 th1_min,th1_max = thmin[1],thmax[1]
+                dramp = (th1_max - th1_min)/horz_lines
                 print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min,th1_max,horz_lines+2)[1:-1]
+                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
                 for i_th in range(len(th_levels)):
                     ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
             fig.savefig(join(self.savefolder,"pibbj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
@@ -1544,8 +1547,9 @@ class TPT:
                 # Draw in lines for reactive flux densities
                 nnidx = np.where(np.isnan(field) == 0)[0]
                 th1_min,th1_max = thmin[1],thmax[1]
+                dramp = (th1_max - th1_min)/horz_lines
                 print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min,th1_max,horz_lines+2)[1:-1]
+                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
                 for i_th in range(len(th_levels)):
                     ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
             fig.savefig(join(self.savefolder,"piabj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
@@ -1577,8 +1581,9 @@ class TPT:
                 # Draw in lines for reactive flux densities
                 nnidx = np.where(np.isnan(field) == 0)[0]
                 th1_min,th1_max = thmin[1],thmax[1]
+                dramp = (th1_max - th1_min)/horz_lines
                 print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min,th1_max,horz_lines+2)[1:-1]
+                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
                 for i_th in range(len(th_levels)):
                     ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
             fig.savefig(join(self.savefolder,"pibaj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
@@ -3597,7 +3602,7 @@ class TPT:
         max_num_states = None
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
         comm_bwd = self.dam_moments['one']['ax'][0,:,:]
-        eps = 0.001
+        eps = 1e-6
         interior_idx = np.where((comm_fwd > eps)*(comm_fwd < 1-eps))
         ramp_min = np.nanmin(ramp[interior_idx])
         ramp_max = np.nanmax(ramp[interior_idx])
@@ -3606,62 +3611,71 @@ class TPT:
         print("ramp_min = {}, ramp_max = {}".format(ramp_min,ramp_max))
         ramp_comm_corr = np.nanmean((ramp - np.nanmean(ramp))*(comm_fwd - np.nanmean(comm_fwd)))
         print("ramp_comm_corr = {}".format(ramp_comm_corr))
-        ramp_levels = np.linspace(ramp_min,ramp_max,num_levels+2)[1:-1]
+        dramp = (ramp_max - ramp_min)/num_levels
+        ramp_levels = np.linspace(ramp_min+0.5*dramp,ramp_max-0.5*dramp,num_levels)
         if ramp_comm_corr < 0:
             ramp_levels = ramp_levels[::-1]
-        ramp_tol = np.min(np.abs(np.diff(ramp_levels)))/5
+        ramp_tol = np.min(np.abs(np.diff(ramp_levels)))/4
         print("ramp_levels = {}".format(ramp_levels))
         weight = self.chom
         Nx,Nt,xdim = data.X.shape
         if fig is None or ax is None:
-            fig,ax = plt.subplots(nrows=4,ncols=num_levels,figsize=(4*num_levels,16),sharey="row",sharex=True)
+            fig,ax = plt.subplots(nrows=num_levels,ncols=4,figsize=(16,4*num_levels),sharey="col",sharex=True)
+        num_bins = 15
         for ri in range(len(ramp_levels)):
+            ax[ri,0].set_ylabel("%s = %.2f %s"%(ramp_name,ramp_levels[ri]*ramp_units,ramp_unit_symbol),fontdict=medfont)
             # A -> A
-            ax[0,ri].axhline(0,color='black')
+            ax[ri,0].axhline(0,color='black')
             ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,1-comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
             tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=15)
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=num_bins)
             rate_aa = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
             normalizer = 1.0 #np.max(np.abs(hist))
             bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
-            h, = ax[0,ri].plot(bin_centers*func_units,hist/normalizer,color='deepskyblue',marker='o',label=r"$A\to A$",linestyle='-')
-            ax[0,ri].legend(handles=[h])
-            ax[0,ri].set_title("%s = %.2f %s"%(ramp_name,ramp_levels[ri]*ramp_units,ramp_unit_symbol))
-            if ri == 0: ax[0,ri].set_ylabel("Flux density")
+            h, = ax[ri,0].plot(bin_centers*func_units,hist/normalizer,color='deepskyblue',marker='o',label=r"$A\to A$",linestyle='-')
+            #ax[ri,0].legend(handles=[h])
+            ax[0,0].set_title(r"$A\to A$",fontdict=font)
+            #if ri == 0: ax[ri,0].set_ylabel("Flux density")
             # A -> B
-            ax[1,ri].axhline(0,color='black')
+            ax[ri,1].axhline(0,color='black')
             ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
             tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max))
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=num_bins)
             rate_ab = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
             bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
             normalizer = 1.0 #np.max(np.abs(hist))
-            h, = ax[1,ri].plot(bin_centers*func_units,hist/normalizer,color='darkorange',marker='o',label=r"$A\to B$",linestyle='-')
-            ax[1,ri].legend(handles=[h])
-            if ri == 0: ax[1,ri].set_ylabel("Flux density")
+            h, = ax[ri,1].plot(bin_centers*func_units,hist/normalizer,color='darkorange',marker='o',label=r"$A\to B$",linestyle='-')
+            #ax[ri,1].legend(handles=[h])
+            ax[0,1].set_title(r"$A\to B$", fontdict=font)
+            #if ri == 0: ax[ri,1].set_ylabel("Flux density")
             # B -> B
-            ax[2,ri].axhline(0,color='black')
+            ax[ri,2].axhline(0,color='black')
             ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),1-comm_bwd,comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
             tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=15)
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=num_bins)
             rate_aa = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
             normalizer = 1.0 #np.max(np.abs(hist))
             bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
-            h, = ax[2,ri].plot(bin_centers*func_units,hist/normalizer,color='red',marker='o',label=r"$B\to B$",linestyle='-')
-            ax[2,ri].legend(handles=[h])
-            if ri == 0: ax[2,ri].set_ylabel("Flux density")
+            h, = ax[ri,2].plot(bin_centers*func_units,hist/normalizer,color='red',marker='o',label=r"$B\to B$",linestyle='-')
+            #ax[ri,2].legend(handles=[h])
+            ax[0,2].set_title(r"$B\to B$", fontdict=font)
+            #if ri == 0: ax[ri,2].set_ylabel("Flux density")
             # B -> A
-            ax[3,ri].axhline(0,color='black')
+            ax[ri,3].axhline(0,color='black')
             ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),1-comm_bwd,1-comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
             tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
-            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max))
+            hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=num_bins)
             rate_ba = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
             bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
             normalizer = 1.0 #np.max(np.abs(hist))
-            h, = ax[3,ri].plot(bin_centers*func_units,hist/normalizer,color='mediumspringgreen',marker='o',label=r"$B\to A$",linestyle='-')
-            ax[3,ri].legend(handles=[h])
-            if ri == 0: ax[3,ri].set_ylabel("Flux density")
-            ax[3,ri].set_xlabel("%s [%s]"%(func_name,func_unit_symbol))
+            h, = ax[ri,3].plot(bin_centers*func_units,hist/normalizer,color='mediumspringgreen',marker='o',label=r"$B\to A$",linestyle='-')
+            #ax[ri,3].legend(handles=[h])
+            ax[0,3].set_title(r"$B\to A$",fontdict=font)
+            #if ri == 0: ax[ri,3].set_ylabel("Flux density")
+            for j in range(4):
+                ax[ri,j].yaxis.set_ticklabels([])
+                if ri == len(ramp_levels) - 1: 
+                    ax[ri,j].set_xlabel("%s [%s]"%(func_name,func_unit_symbol), fontdict=medfont)
         return fig,ax
     def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="U",func_key_ref="Uref",fig=None,ax=None,clim=None):
         # Plot the mean profile evolving over time (not committor)

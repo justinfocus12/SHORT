@@ -51,7 +51,7 @@ def get_physical_params():
     time = 86500.0 
     abdefdim =               1
     radius_a =               0.0
-    radius_b =               0*10.0/(length/time)
+    radius_b =               1*10.0/(length/time)
     ref_alt =                30.0 # 21.5 or 26.9 or 29.6
     dt_sim = 0.005
     physical_params = dict({
