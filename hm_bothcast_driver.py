@@ -45,7 +45,7 @@ asymb = r"$\mathbf{a}$"
 bsymb = r"$\mathbf{b}$"
 
 # ---------- Decide what to do ----------
-least_action_flag =     0
+least_action_flag =     1
 run_long_flag =         0
 run_short_flag =        0
 compute_tpt_flag =      1
@@ -142,52 +142,6 @@ print("Loaded TPT")
 funlib = model.observable_function_library()
 # -----------------------------------------------------
 
-# ---------- Regress forward committor --------
-if regression_flag:
-    lasso_fun = lambda x: model.regression_features(x)
-    num_regression_features = 6
-    tpt.beta_allz_qp,tpt.intercept_allz_qp,tpt.score_allz_qp,tpt.recon_allz_qp = tpt.regress_committor_modular(model,data,lasso_fun,method='LASSO')
-    model.plot_sparse_regression_allz(tpt.beta_allz_qp,tpt.score_allz_qp,tpt.savefolder,suffix="_qp")
-    # Regression restricted to one level at a time
-    z = q['z_d'][1:-1]/1000
-    tpt.beta_onez = np.zeros((len(z),num_regression_features))
-    tpt.intercept_onez = np.zeros(len(z))
-    tpt.score_onez = np.zeros(len(z))
-    lasso_x = lasso_fun(data.X[:,0])
-    for i in range(len(z)):
-        lasso_fun_z = lambda x: model.regression_features(x)[:,[j*(q['Nz']-1)+i for j in range(num_regression_features)]]
-        tpt.beta_onez[i],tpt.intercept_onez[i],tpt.score_onez[i],_ = tpt.regress_committor_modular(model,data,lasso_fun_z,method='LASSO')
-    model.plot_sparse_regression_zslices(tpt.beta_onez,tpt.score_onez,tpt.savefolder,suffix="_qp")
-    # Plot the family of 1-dimensional committor proxies parameterized by z (altitude)
-    tpt.plot_zfam_committor(model,data)
-# -------------------------------------------------------
-
-# ---------- Plot 1d committor proxies in an array ------
-if proj_1d_flag:
-    theta1d_list = ['Uref','vTintref']
-    tpt.plot_projections_1d_array(model,data,theta1d_list)
-# -------------------------------------------------------
-
-# ---------- Demonstrate committor is better with 2 observables ------
-if demo_flag:
-    abblist = ["vTintref","Uref"]
-    def theta2d_fun(x):
-        th = np.zeros((len(x),2))
-        for i in range(2):
-            th[:,i] = funlib[abblist[i]]["fun"](x).flatten()
-        return th
-    theta2d_names = [funlib[abb]["name"] for abb in abblist]
-    theta2d_units = [funlib[abb]["units"] for abb in abblist]
-    theta2d_unit_symbols = [funlib[abb]["unit_symbol"] for abb in abblist]
-    tpt.demonstrate_committor_mfpt(model,data,theta2d_fun,theta2d_names,theta2d_units,theta2d_unit_symbols)
-# -----------------------------------------------------------------
-
-# ---------- Forecast probability and lead time as independent variables -------------------
-if qp_tb_coords_flag:
-    tpt.plot_prediction_curves_colored(model,data)
-# -----------------------------------------------------------------
-
-
 # ------------- Plot long trajectory in 2D -----------
 if plot_long_2d_flag:
     field_abbs = ["magref","Uref"]
@@ -252,6 +206,51 @@ if flux_dist_flag:
     print("Entering plot_flux_distributions_1d_driver")
     tpt.plot_flux_distributions_1d_driver(model,data)
 # -------------------------------------------------
+
+# ---------- Regress forward committor --------
+if regression_flag:
+    lasso_fun = lambda x: model.regression_features(x)
+    num_regression_features = 6
+    tpt.beta_allz_qp,tpt.intercept_allz_qp,tpt.score_allz_qp,tpt.recon_allz_qp = tpt.regress_committor_modular(model,data,lasso_fun,method='LASSO')
+    model.plot_sparse_regression_allz(tpt.beta_allz_qp,tpt.score_allz_qp,tpt.savefolder,suffix="_qp")
+    # Regression restricted to one level at a time
+    z = q['z_d'][1:-1]/1000
+    tpt.beta_onez = np.zeros((len(z),num_regression_features))
+    tpt.intercept_onez = np.zeros(len(z))
+    tpt.score_onez = np.zeros(len(z))
+    lasso_x = lasso_fun(data.X[:,0])
+    for i in range(len(z)):
+        lasso_fun_z = lambda x: model.regression_features(x)[:,[j*(q['Nz']-1)+i for j in range(num_regression_features)]]
+        tpt.beta_onez[i],tpt.intercept_onez[i],tpt.score_onez[i],_ = tpt.regress_committor_modular(model,data,lasso_fun_z,method='LASSO')
+    model.plot_sparse_regression_zslices(tpt.beta_onez,tpt.score_onez,tpt.savefolder,suffix="_qp")
+    # Plot the family of 1-dimensional committor proxies parameterized by z (altitude)
+    tpt.plot_zfam_committor(model,data)
+# -------------------------------------------------------
+
+# ---------- Plot 1d committor proxies in an array ------
+if proj_1d_flag:
+    theta1d_list = ['Uref','vTintref']
+    tpt.plot_projections_1d_array(model,data,theta1d_list)
+# -------------------------------------------------------
+
+# ---------- Demonstrate committor is better with 2 observables ------
+if demo_flag:
+    abblist = ["vTintref","Uref"]
+    def theta2d_fun(x):
+        th = np.zeros((len(x),2))
+        for i in range(2):
+            th[:,i] = funlib[abblist[i]]["fun"](x).flatten()
+        return th
+    theta2d_names = [funlib[abb]["name"] for abb in abblist]
+    theta2d_units = [funlib[abb]["units"] for abb in abblist]
+    theta2d_unit_symbols = [funlib[abb]["unit_symbol"] for abb in abblist]
+    tpt.demonstrate_committor_mfpt(model,data,theta2d_fun,theta2d_names,theta2d_units,theta2d_unit_symbols)
+# -----------------------------------------------------------------
+
+# ---------- Forecast probability and lead time as independent variables -------------------
+if qp_tb_coords_flag:
+    tpt.plot_prediction_curves_colored(model,data)
+# -----------------------------------------------------------------
 
 # ------------------- Validation -----------------------
 if validation_flag:

@@ -237,11 +237,16 @@ class HoltonMassModel(Model):
     def bdist(self,cvx):
         cvb = self.tpt_observables(self.xst[1])
         radius_b = self.radius_b # 30.0 
+        n = self.q['Nz']-1
+        zi = self.q['zi']
         if self.abdefdim == 75:
             db = np.sqrt(np.sum((cvx - cvb)**2, 1))
+        elif self.abdefdim == 2: # Defined in (U, IHF) space
+            u_x,u_b = cvx[:,2*n+zi],cvb[2*n+zi]
+            ihf_x = self.integrated_meridional_heat_flux(cvx)[:,zi]
+            ihf_b = self.integrated_meridional_heat_flux(np.array([cvb]))[0,zi]
+            db = np.sqrt((u_x-u_b)**2 + (ihf_x-ihf_b)**2)
         else:
-            n = self.q['Nz']-1
-            zi = self.q['zi']
             db = cvx[:,2*n+zi] - cvb[2*n+zi]
         return np.maximum(0, db-radius_b)
     def set_param_folder(self):
@@ -278,8 +283,8 @@ class HoltonMassModel(Model):
         uref_xst = funlib["Uref"]["fun"](self.tpt_obs_xst)
         #uref_xst[0] -= self.radius_a
         #uref_xst[1] += self.radius_b
-        ulb_idx = np.where(funlib["Uref"]["fun"](self.tpt_observables(xmin)) < uref_xst[1] + self.radius_b)[0][0]
-        print("ulb_idx = {}, tmin[ulb_idx] = {}".format(ulb_idx,tmin[ulb_idx]))
+        #ulb_idx = np.where(funlib["Uref"]["fun"](self.tpt_observables(xmin)) < uref_xst[1] + self.radius_b)[0][0]
+        #print("ulb_idx = {}, tmin[ulb_idx] = {}".format(ulb_idx,tmin[ulb_idx]))
         for i in range(len(obs_names)):
             #axi = ax if len(obs_names)==1 else ax[i]
             # Top row: U(30 km) 
@@ -288,8 +293,8 @@ class HoltonMassModel(Model):
             units = funlib[obs_names[i]]["units"]
             unit_symbol = funlib[obs_names[i]]["unit_symbol"]
             ax[i].plot(tmin,units*obs,color='black')
-            ax[i].plot(tmin[[0,-1]],units*(obs_xst[0]-self.radius_a)*np.ones(2),color='skyblue',linewidth=3)
-            ax[i].plot(tmin[[0,-1]],units*(obs_xst[1]+self.radius_b)*np.ones(2),color='red',linewidth=3)
+            ax[i].plot(tmin[[0,-1]],units*(obs_xst[0]-0*self.radius_a)*np.ones(2),color='skyblue',linewidth=3)
+            ax[i].plot(tmin[[0,-1]],units*(obs_xst[1]+0*self.radius_b)*np.ones(2),color='red',linewidth=3)
             #ax[i].plot(np.mean(tmin[ulb_idx:ulb_idx+2])*np.ones(2),units*np.array([np.min(obs),np.max(obs)]),color='black',linestyle='--')
             #ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
             ax[i].set_ylabel("%s [%s]"%(funlib[obs_names[i]]["name"],funlib[obs_names[i]]["unit_symbol"]),fontdict=font)
@@ -321,7 +326,7 @@ class HoltonMassModel(Model):
         if negtime: tmin -= tmin[-1]
         tz,zt = np.meshgrid(tmin,z,indexing='ij')
         uref_xst = funlib["Uref"]["fun"](self.tpt_obs_xst)
-        ulb_idx = np.where(funlib["Uref"]["fun"](self.tpt_observables(xmin)) < uref_xst[1])[0][0]
+        #ulb_idx = np.where(funlib["Uref"]["fun"](self.tpt_observables(xmin)) < uref_xst[1])[0][0]
         #dU = (sig.dot(wmin.T)).T[:,2*n:3*n] # This part is specific to U
         if fig is None or ax is None: # Must be a (n+1)x1 array of ax, where n=len(prof_names)
             fig,ax = plt.subplots(nrows=len(prof_names),ncols=1,figsize=(6,18),sharex=True)
