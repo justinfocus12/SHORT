@@ -550,7 +550,7 @@ class TPT:
         # ------------ Next: plot only some transitions on their own plot --------------
         if any_trans:
             fig,ax = plt.subplots(ncols=2,figsize=(12,6),sharey=True)
-            num_trans = min(5,len(ab_starts))
+            num_trans = min(15,len(ab_starts))
             max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
             print("max_duration = {}".format(max_duration))
             field_trans_composite_0 = np.zeros(max_duration)
@@ -1475,10 +1475,9 @@ class TPT:
             theta_fw = theta_2d_fun(xfw)
             # Committor
             fieldname = r"$A\to A$"  #r"$\pi_{AB},J_{AB}$"
-            field = comm_bwd*comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
-            #field *= (comm_fwd > 0)*(comm_fwd < 1)
+            field = comm_bwd*comm_fwd 
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,current_bdy_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1489,7 +1488,7 @@ class TPT:
                 th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
                 for i_th in range(len(th_levels)):
                     ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
-            fig.savefig(join(self.savefolder,"piaaj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            fig.savefig(join(self.savefolder,"jaa_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # -----------------------------
             # B->B
@@ -1501,12 +1500,11 @@ class TPT:
             theta_fw = theta_2d_fun(xfw)
             # Committor
             fieldname = r"$B\to B$"  #r"$\pi_{AB},J_{AB}$"
-            field = comm_bwd*comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
-            #field[(comm_fwd > eps)*(comm_fwd < 1-eps) == 0] = np.nan
+            field = comm_bwd*comm_fwd 
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
             #field *= (comm_fwd > 0)*(comm_fwd < 1)
             #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,current_bdy_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1517,7 +1515,7 @@ class TPT:
                 th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
                 for i_th in range(len(th_levels)):
                     ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
-            fig.savefig(join(self.savefolder,"pibbj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            fig.savefig(join(self.savefolder,"jbb_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # -----------------------------
             # A->B
@@ -1527,21 +1525,13 @@ class TPT:
             #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
             xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=1)
             theta_fw = theta_2d_fun(xfw)
-            # Reactive density
-            fieldname = r"$A\to B$ density, current"  #r"$\pi_{AB},J_{AB}$"
-            field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['ab'][0] # just (q-)*(q+)
-            #field[(comm_fwd > eps)*(comm_fwd < 1-eps) == 0] = np.nan
-            field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"piabj_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
             # Committor
             fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
             field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
             #field *= (comm_fwd > 0)*(comm_fwd < 1)
             #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,current_bdy_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1552,30 +1542,22 @@ class TPT:
                 th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
                 for i_th in range(len(th_levels)):
                     ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
-            fig.savefig(join(self.savefolder,"piabj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            fig.savefig(join(self.savefolder,"jab_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # ---------------------------------
             # B->A
             fieldname = r"$B\to A$ density, current" #r"$\pi_{BA},J_{BA}$"
-            field = self.dam_moments[keys[k]]['ba'][0] # just (q-)*(q+)
             comm_bwd = self.dam_moments[keys[k]]['bx'][0]
             comm_fwd = self.dam_moments[keys[k]]['xa'][0]
             weight = self.chom
             #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
             xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=-1)
             theta_fw = theta_2d_fun(xfw)
-            # Add current
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"pibaj_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
             # Committor
             fieldname = r"$B\to A$"  #r"$\pi_{AB},J_{AB}$"
             field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
-            #field[(comm_fwd > eps)*(comm_fwd < 1-eps) == 0] = np.nan
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            #field *= (comm_fwd > 0)*(comm_fwd < 1)
-            #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,current_bdy_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.coolwarm,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1586,7 +1568,7 @@ class TPT:
                 th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
                 for i_th in range(len(th_levels)):
                     ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
-            fig.savefig(join(self.savefolder,"pibaj_qmqp_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            fig.savefig(join(self.savefolder,"jba_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
         return
     def display_casts_abba(self,model,data,theta_2d_abbs):
@@ -1625,7 +1607,7 @@ class TPT:
                 print("\tStarting damage function %s"%(keys[k]))
                 field_units = model.dam_dict[keys[k]]['units']
                 # Determine vmin and vmax
-                if keys[k] == 'heatlux':
+                if keys[k] == 'heatflux':
                     vmin,vmax = -10,200
                 elif keys[k] == 'one':
                     vmin,vmax = 0,250
@@ -1716,7 +1698,10 @@ class TPT:
                     else:
                         prob = comm_bwd*comm_fwd
                         if j == 1: 
-                            fieldname = r"$E_x[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                            if keys[k] == 'one':
+                                fieldname = r"$\eta^+_B(x)$"
+                            else:
+                                fieldname = r"$E_x[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
                             field = field_units**j*self.dam_moments[keys[k]]['xb'][j]
                         elif j == 2:
                             fieldname = r"$Var_x[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
@@ -1737,7 +1722,7 @@ class TPT:
                     comm_fwd = self.dam_moments[keys[k]]['xa'][0]
                     comm_bwd = 1.0
                     if j == 0: 
-                        fieldname = r"$q_A^-(x)$" #r"$P_x\{x\to A\}$"
+                        fieldname = r"$q_A^+(x)$" #r"$P_x\{x\to A\}$"
                         field = field_units**j*self.dam_moments[keys[k]]['xa'][j] 
                     else:
                         prob = comm_bwd*comm_fwd
@@ -1769,7 +1754,10 @@ class TPT:
                     else:
                         prob = comm_bwd*comm_fwd
                         if j == 1: 
-                            fieldname = r"$E_x[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
+                            if keys[k] == 'one':
+                                fieldname = r"$\eta_B^-$"
+                            else:
+                                fieldname = r"$E_x[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
                             field = field_units**j*self.dam_moments[keys[k]]['bx'][j]
                         elif j == 2:
                             fieldname = r"$Var_x[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
@@ -1795,7 +1783,10 @@ class TPT:
                     else:
                         prob = comm_bwd*comm_fwd
                         if j == 1: 
-                            fieldname = r"$E_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
+                            if keys[k] == 'one':
+                                fieldname = r"$-\eta_A^-$"
+                            else:
+                                fieldname = r"$E_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
                             field = field_units**j*self.dam_moments[keys[k]]['ax'][j]
                         elif j == 2:
                             fieldname = r"$Var_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
@@ -2482,7 +2473,7 @@ class TPT:
         comm_fwd = np.ones((Nx,Nt))
         comm_bwd = np.ones((Nx,Nt))
         field = np.ones((Nx,Nt))
-        fieldname = "Steady-state density"
+        fieldname = "Steady-state"
         weight = self.chom
         fig,ax = self.plot_field_2d(model,data,field,weight,theta_2d_short,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,cmap=plt.cm.YlOrBr)
         #fig.set_tight_layout(True)
@@ -2647,8 +2638,8 @@ class TPT:
             Jmag = np.sqrt(J0**2 + J1**2)
             print("Jmag range = ({},{})".format(np.nanmin(Jmag),np.nanmax(Jmag)))
             print("J0.shape = {}".format(J0.shape))
-            dsmin,dsmax = np.max(current_shp)/40,np.max(current_shp)/20 # lengths if arrows in grid box units
-            coeff1 = 20.0/maxmag
+            dsmin,dsmax = 0*np.max(current_shp)/40,np.max(current_shp)/20 # lengths if arrows in grid box units
+            coeff1 = 10.0/maxmag
             coeff0 = dsmax / (np.exp(-coeff1 * maxmag) - 1)
             ds = coeff0 * (np.exp(-coeff1 * Jmag) - 1)
             #ds = dsmin + (dsmax - dsmin)*(Jmag - minmag)/(maxmag - minmag)
@@ -3219,9 +3210,11 @@ class TPT:
         vTprof_quants = np.array(vTprof_quants)
         vTintref_quants = np.array(vTintref_quants)
         # ----------- Zonal wind --------------
-        fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex='col')
+        fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex=True)
         # Least action path in upper left
         model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]],negtime=True)
+        for i in range(2):
+            ax[i,1].set_xlim(ax[0,0].get_xlim())
         # Max-probability path in upper right
         zi = model.q['zi']
         levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
@@ -3237,7 +3230,7 @@ class TPT:
         print("Uzi_b*units = {}".format(Uzi_b*funlib["U"]["units"]))
         ax[0,1].axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
         ax[0,1].axhline(y=Uzi_b*funlib["U"]["units"],color='red',linewidth=3)
-        ax[0,1].set_title(r"Max-probability path ($A\to B$)",fontdict=font)
+        ax[0,1].set_title(r"Path distribution $U$ ($A\to B$)",fontdict=font)
         print("hline y = {}".format(Uzi_b*funlib["U"]["units"]))
 
         # Least action profiles in bottom two left
@@ -3246,7 +3239,7 @@ class TPT:
         # U profile in middle right
         clim_u = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
         _,_,imu = model.plot_profile_evolution(Uprof_quants[:,med_qi,:],-tb_levels_real,"U",fig=fig,ax=ax[1,1],clim=clim_u)
-        ax[1,1].set_title(r"Max-probability %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
+        ax[1,1].set_title(r"Median %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
         fig.colorbar(imu,ax=ax[1,1])
         # Set x labels to False
         for i in range(ax.shape[0]-1):
@@ -3270,6 +3263,8 @@ class TPT:
         fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex='col')
         # Least action path in upper left
         model.plot_least_action_scalars(self.physical_param_folder,obs_names=["vTintref"],fig=fig,ax=[ax[0,0]],negtime=True)
+        for i in range(2):
+            ax[i,1].set_xlim(ax[0,0].get_xlim())
         # Max-probability path in upper right
         #ax[0,1].set_xlim(ax[0,0].get_xlim())
         zi = model.q['zi']
@@ -3285,7 +3280,7 @@ class TPT:
         vTintref_a,vTintref_b = funlib["vTintref"]["fun"](model.tpt_obs_xst)
         ax[0,1].axhline(y=vTintref_a*funlib["vTintref"]["units"],color='skyblue',linewidth=3)
         ax[0,1].axhline(y=vTintref_b*funlib["vTintref"]["units"],color='red',linewidth=3)
-        ax[0,1].set_title(r"Max-probability path ($A\to B$)",fontdict=font)
+        ax[0,1].set_title(r"Path distribution IHF ($A\to B$)",fontdict=font)
 
         # Least action profiles in bottom two left
         func_key_list = ["vT"] #,"mag"]
@@ -3293,7 +3288,7 @@ class TPT:
         # vT profile in middle right
         clim_vT = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
         _,_,imvT = model.plot_profile_evolution(vTprof_quants[:,med_qi,:],-tb_levels_real,"vT",fig=fig,ax=ax[1,1],clim=clim_vT,logscale=True)
-        ax[1,1].set_title(r"Max-probability %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
+        ax[1,1].set_title(r"Median %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
         fig.colorbar(imvT,ax=ax[1,1])
         # Set x labels to False
         for i in range(ax.shape[0]-1):

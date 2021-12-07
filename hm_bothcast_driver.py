@@ -45,22 +45,22 @@ asymb = r"$\mathbf{a}$"
 bsymb = r"$\mathbf{b}$"
 
 # ---------- Decide what to do ----------
-least_action_flag =     1
+least_action_flag =     0
 run_long_flag =         0
 run_short_flag =        0
-compute_tpt_flag =      1
-regression_flag =       1
-proj_1d_flag =          1
-demo_flag =             1
-qp_tb_coords_flag =     1
-trans_state_flag =      1
-flux_dist_flag =        1
-plot_long_2d_flag =     1
-lifecycle_flag =        1
+compute_tpt_flag =      0
+regression_flag =       0
+proj_1d_flag =          0
+demo_flag =             0
+qp_tb_coords_flag =     0
+trans_state_flag =      0
+flux_dist_flag =        0
+plot_long_2d_flag =     0
+lifecycle_flag =        0
 display_cast_flag =     1
-display_current_flag =  1
-gen_rates_flag =        1
-plot_long_1d_flag =     1
+display_current_flag =  0
+gen_rates_flag =        0
+plot_long_1d_flag =     0
 validation_flag =       0
 # ---------------------------------------
 
@@ -160,7 +160,7 @@ if plot_long_2d_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["vTintref","Uref"]] #,["magref","Uref"]]
+    theta_2d_abbs = [["vTintref","Uref"],["vTint21p5","U21p5"]] #,["magref","Uref"]]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:

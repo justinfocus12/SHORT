@@ -299,7 +299,7 @@ class HoltonMassModel(Model):
             #ax[i].axvline(x=np.mean(tmin[ulb_idx:ulb_idx+2]),color='black',linestyle='--')
             ax[i].set_ylabel("%s [%s]"%(funlib[obs_names[i]]["name"],funlib[obs_names[i]]["unit_symbol"]),fontdict=font)
             ax[i].set_xlabel(r"Time to $B$ [days]",fontdict=font)
-            ax[i].set_title(r"Least action path ($A\to B$)",fontdict=font)
+            ax[i].set_title(r"Minimum-action path ($A\to B$)",fontdict=font)
         return fig,ax
     def plot_least_action_profiles(self,physical_param_folder,prof_names=["U","mag"],fig=None,ax=None,negtime=False,logscale=False):
         funlib = self.observable_function_library()
@@ -345,7 +345,7 @@ class HoltonMassModel(Model):
             ims += [im]
             fig.colorbar(im,ax=ax[i])
             ax[i].set_ylabel(r"$z$ [km]",fontdict=font)
-            ax[i].set_title(r"Least action %s$(z)$ profile [%s]"%(name,unit_symbol),fontdict=font)
+            ax[i].set_title(r"Minimum-action %s$(z)$ profile [%s]"%(name,unit_symbol),fontdict=font)
             ax[i].set_xlabel(r"$-\eta_B^+$ [days]",fontdict=font)
         # Save
         #fig.savefig(join(savefolder,"fw_ab_plot"))
@@ -1117,7 +1117,7 @@ class HoltonMassModel(Model):
         def funz(x):
             return np.mean(fun(x),1).reshape((len(x),1))
         return funz
-    def plot_state_distribution(self,X,rflux,rflux_idx,qlevels,qsymbol,colors=None,key="U",labels=None):
+    def plot_state_distribution(self,X,rflux,rflux_idx,qlevels,qsymbol,colors=None,key="U",labels=None,quantiles=[0.25,0.75]):
         # Given a sequence of states (X) plot their mean and std on the same graph. For the Holton-Mass model, this means different zonal wind profiles.
         #key = "U"
         num_levels = len(qlevels)
@@ -1150,8 +1150,8 @@ class HoltonMassModel(Model):
                     Uzi = U[order,zi]
                     cdf = np.cumsum(rfzi)
                     cdf *= 1.0/cdf[-1]
-                    Ulower[zi] = Uzi[np.where(cdf > 0.2)[0][0]]
-                    Uupper[zi] = Uzi[np.where(cdf > 0.8)[0][0]]
+                    Ulower[zi] = Uzi[np.where(cdf > quantiles[0])[0][0]]
+                    Uupper[zi] = Uzi[np.where(cdf > quantiles[1])[0][0]]
                     Umean[zi] = np.sum(Uzi*rfzi)/np.sum(rfzi)
                     Umedian[zi] = Uzi[np.where(cdf > 0.5)[0][0]]
                 #Umean = np.mean(U,axis=0)
