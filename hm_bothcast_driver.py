@@ -35,7 +35,7 @@ simfolder = join(datafolder,"runs")
 if not exists(simfolder): mkdir(simfolder)
 resultfolder = join(datafolder,"results")
 if not exists(resultfolder): mkdir(resultfolder)
-dayfolder = join(resultfolder,"2021-11-13")
+dayfolder = join(resultfolder,"2021-12-07")
 if not exists(dayfolder): mkdir(dayfolder)
 expfolder = join(dayfolder,"0")
 if not exists(expfolder): mkdir(expfolder)
@@ -45,22 +45,22 @@ asymb = r"$\mathbf{a}$"
 bsymb = r"$\mathbf{b}$"
 
 # ---------- Decide what to do ----------
-least_action_flag =     0
+least_action_flag =     1
 run_long_flag =         0
 run_short_flag =        0
-compute_tpt_flag =      0
-regression_flag =       0
-proj_1d_flag =          0
-demo_flag =             0
-qp_tb_coords_flag =     0
-trans_state_flag =      0
-flux_dist_flag =        0
-plot_long_2d_flag =     0
-lifecycle_flag =        0
+compute_tpt_flag =      1
+regression_flag =       1
+proj_1d_flag =          1
+demo_flag =             1
+qp_tb_coords_flag =     1
+trans_state_flag =      1
+flux_dist_flag =        1
+plot_long_2d_flag =     1
+lifecycle_flag =        1
 display_cast_flag =     1
-display_current_flag =  0
-gen_rates_flag =        0
-plot_long_1d_flag =     0
+display_current_flag =  1
+gen_rates_flag =        1
+plot_long_1d_flag =     1
 validation_flag =       0
 # ---------------------------------------
 
