@@ -550,13 +550,15 @@ class TPT:
         # ------------ Next: plot only some transitions on their own plot --------------
         quantiles = np.array([.05,.25,.50])
         if any_trans:
-            fig0,ax0 = plt.subplots()
-            fig1,ax1 = plt.subplots()
-            num_trans = min(100,len(ab_starts))
+            fig,ax = plt.subplots(ncols=1,nrows=2,figsize=(6,12),sharex=True,sharey=True)
+            num_trans = min(30,len(ab_starts))
+            trans_colors = ['red','cyan','black']
+            num_colored_trans = len(trans_colors)
+            np.random.seed(1)
+            colored_idx = np.random.choice(np.arange(num_trans),num_colored_trans,replace=False)
             max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
             print("max_duration = {}".format(max_duration))
-            field_trans_composite_0 = np.zeros((num_trans,max_duration))
-            field_trans_composite_1 = np.zeros((num_trans,max_duration))
+            field_trans_composite = np.zeros((num_trans,max_duration))
             for i in range(num_trans):
                 k0,k1 = ab_starts[i],ab_ends[i]
                 pad = max_duration - (k1-k0)
@@ -566,43 +568,35 @@ class TPT:
                 else:
                     field_trans = field_fun(x_long[k0-pad:k1+pad]).flatten()
                 print("field_trans.shape = {}".format(field_trans.shape))
-                ax0.plot(t_long[k0:k1+pad]-t_long[k0],field_trans[pad:]*units,color='skyblue',alpha=0.5) 
-                ax1.plot(t_long[k0-pad:k1]-t_long[k1],field_trans[:(k1-k0+pad)]*units,color='skyblue',alpha=0.5)
-                field_trans_composite_0[i] = field_trans[pad:]
-                field_trans_composite_1[i] = field_trans[:(k1-k0+pad)]
+                ax[0].plot(t_long[k0-pad:k1]-t_long[k1],field_trans[:k1-k0+pad]*units,color='gray',alpha=0.25,linewidth=1,zorder=-1)
+                if i in colored_idx:
+                    color = trans_colors[np.where(colored_idx==i)[0][0]]
+                    alpha = 1.0
+                    linewidth = 2
+                    ax[0].plot(t_long[k0:k1]-t_long[k1],field_trans[pad:k1-k0+pad]*units,color=color,alpha=1.0,linewidth=2,zorder=1)
+                field_trans_composite[i] = field_trans[:k1-k0+pad]
             # Plot the quantiles
             for qi in range(len(quantiles)):
-                lower = np.quantile(field_trans_composite_0, quantiles[qi], axis=0)
+                lower = np.quantile(field_trans_composite, quantiles[qi], axis=0)
                 if qi < len(quantiles)-1:
-                    upper = np.quantile(field_trans_composite_0, 1-quantiles[qi], axis=0)
-                    ax0.fill_between(t_long[:max_duration],lower*units,upper*units,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
+                    upper = np.quantile(field_trans_composite, 1-quantiles[qi], axis=0)
+                    ax[1].fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
                 else:
-                    ax0.plot(t_long[:max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
-                lower = np.quantile(field_trans_composite_1, quantiles[qi], axis=0)
-                if qi < len(quantiles)-1:
-                    upper = np.quantile(field_trans_composite_1, 1-quantiles[qi], axis=0)
-                    ax1.fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
-                else:
-                    ax1.plot(t_long[:max_duration]-t_long[max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
-            #ax0.plot(t_long[:max_duration],field_trans_composite_0*units,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
-            #ax1.plot(t_long[:max_duration]-t_long[max_duration],field_trans_composite_1*units,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
-            xlab_list = [r"Time$-\tau_A^-$",r"Time$-\tau_B^+$"]
-            ax = [ax0,ax1]
-            fig = [fig0,fig1]
+                    ax[1].plot(t_long[:max_duration]-t_long[max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
+            xlab = r"Time$-\tau_B^+$"
+            ylab = fieldname
+            if field_unit_symbol is not None: ylab += " [{}]".format(field_unit_symbol)
             for i in range(2):
                 ax[i].axhline(ab_long[0]*units,color='skyblue',zorder=-1)
                 ax[i].axhline(ab_long[1]*units,color='red',zorder=-1)
-                xlab = xlab_list[i]
-                if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
-                ax[i].set_xlabel(xlab,fontdict=font)
-                ylab = fieldname
-                if field_unit_symbol is not None: ylab += " [{}]".format(field_unit_symbol)
                 ax[i].set_ylabel(ylab,fontdict=font)
                 ylim = ax[i].get_ylim()
                 fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
                 ax[i].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
-                fig[i].savefig(join(self.savefolder,"transitory_{}_{}".format(field_abb,i)),bbox_inches="tight",pad_inches=0.2)
-                plt.close(fig[i])
+            if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
+            ax[1].set_xlabel(xlab,fontdict=font)
+            fig.savefig(join(self.savefolder,"transitory_{}".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
         del x_long
         return
     def plot_field_long_2d(self,model,data,fieldnames,field_funs,field_abbs,units=[1.0,1.0],tmax=70,field_unit_symbols=["",""],orientation=None):
