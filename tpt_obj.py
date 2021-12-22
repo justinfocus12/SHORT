@@ -548,33 +548,52 @@ class TPT:
         plt.close(fig)
         print("Done plotting field long")
         # ------------ Next: plot only some transitions on their own plot --------------
-        quantiles = np.array([.05,.25,.50])
+        quantiles = np.array([0.05,0.25,0.4,0.5])
         if any_trans:
             fig,ax = plt.subplots(ncols=1,nrows=2,figsize=(6,12),sharex=True,sharey=True)
-            num_trans = min(30,len(ab_starts))
+            num_trans = min(100,len(ab_starts))
             trans_colors = ['red','cyan','black']
             num_colored_trans = len(trans_colors)
-            np.random.seed(1)
-            colored_idx = np.random.choice(np.arange(num_trans),num_colored_trans,replace=False)
-            max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
+            # Select them from across the distribution of transit times
+            transit_quantiles = np.linspace(0,1,num_colored_trans+2)[1:-1]
+            colored_idx = np.zeros(num_colored_trans, dtype=int)
+            transit_distribution = np.array([ab_ends[i] - ab_starts[i] for i in range(num_trans)])
+            for i in range(num_colored_trans):
+                transit_time_quantile = np.quantile(transit_distribution,transit_quantiles[i])
+                colored_idx[i] = np.argmin(np.abs(transit_distribution - transit_time_quantile))
+            #max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
+            max_duration = max([ab_ends[i]-ab_starts[i] for i in colored_idx])
             print("max_duration = {}".format(max_duration))
             field_trans_composite = np.zeros((num_trans,max_duration))
             for i in range(num_trans):
                 k0,k1 = ab_starts[i],ab_ends[i]
-                pad = max_duration - (k1-k0)
-                print("pad = ", pad)
+                k0_gray = k1 - max_duration # Get all the beginnings lined up
                 if field_fun is None:
-                    field_trans = self.out_of_sample_extension(field,data,x_long[k0-pad:k1+pad])
+                    field_trans = self.out_of_sample_extension(field,data,x_long[k0_gray:k1])
                 else:
-                    field_trans = field_fun(x_long[k0-pad:k1+pad]).flatten()
+                    field_trans = field_fun(x_long[k0_gray:k1]).flatten()
                 print("field_trans.shape = {}".format(field_trans.shape))
-                ax[0].plot(t_long[k0-pad:k1]-t_long[k1],field_trans[:k1-k0+pad]*units,color='gray',alpha=0.25,linewidth=1,zorder=-1)
+                ax[0].plot(t_long[k0_gray:k1]-t_long[k1],field_trans*units,color='gray',alpha=0.25,linewidth=1,zorder=-1)
                 if i in colored_idx:
                     color = trans_colors[np.where(colored_idx==i)[0][0]]
                     alpha = 1.0
                     linewidth = 2
-                    ax[0].plot(t_long[k0:k1]-t_long[k1],field_trans[pad:k1-k0+pad]*units,color=color,alpha=1.0,linewidth=2,zorder=1)
-                field_trans_composite[i] = field_trans[:k1-k0+pad]
+                    ax[0].plot(t_long[k0:k1]-t_long[k1],field_trans[-(k1-k0):]*units,color=color,alpha=1.0,linewidth=2,zorder=1)
+                field_trans_composite[i] = field_trans
+                #pad = max_duration - (k1-k0)
+                #print("pad = ", pad)
+                #if field_fun is None:
+                #    field_trans = self.out_of_sample_extension(field,data,x_long[k0-pad:k1+pad])
+                #else:
+                #    field_trans = field_fun(x_long[k0-pad:k1+pad]).flatten()
+                #print("field_trans.shape = {}".format(field_trans.shape))
+                #ax[0].plot(t_long[k0-pad:k1]-t_long[k1],field_trans[:k1-k0+pad]*units,color='gray',alpha=0.25,linewidth=1,zorder=-1)
+                #if i in colored_idx:
+                #    color = trans_colors[np.where(colored_idx==i)[0][0]]
+                #    alpha = 1.0
+                #    linewidth = 2
+                #    ax[0].plot(t_long[k0:k1]-t_long[k1],field_trans[pad:k1-k0+pad]*units,color=color,alpha=1.0,linewidth=2,zorder=1)
+                #field_trans_composite[i] = field_trans[:k1-k0+pad]
             # Plot the quantiles
             for qi in range(len(quantiles)):
                 lower = np.quantile(field_trans_composite, quantiles[qi], axis=0)
@@ -597,6 +616,9 @@ class TPT:
             ax[1].set_xlabel(xlab,fontdict=font)
             fig.savefig(join(self.savefolder,"transitory_{}".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
+            # Save the composite in order to use later for comparison with the TPT composite
+            np.save(join(self.savefolder,"composite_{}".format(field_abb)),np.quantile(field_trans_composite,0.5,axis=0))
+            np.save(join(self.savefolder,"composite_time"),t_long[:max_duration]-t_long[max_duration])
         del x_long
         return
     def plot_field_long_2d(self,model,data,fieldnames,field_funs,field_abbs,units=[1.0,1.0],tmax=70,field_unit_symbols=["",""],orientation=None):
@@ -3090,6 +3112,7 @@ class TPT:
         rflux = Jdn[idx] + Jup[idx] #np.abs(Jdn[idx] + Jup[idx])
         rflux_max_idx = np.where(np.abs(rflux) > frac_of_max*np.max(np.abs(rflux)))[0]
         print(" and len(rflux_max_idx) = {}".format(len(rflux_max_idx)))
+        print("rflux = {}".format(rflux))
         #num = min(max_num_states,len(idx))
         #if num < len(idx):
         #    rflux_max_idx = np.argpartition(-rflux,num)[:num]
@@ -3158,19 +3181,23 @@ class TPT:
             fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
         # ------------ 2. Plot the evolution of the least action path alongside max-flux path --------
-        quantiles = 0.01*np.array([5.0,25.0,50.0,75.0,95.0])
+        # Possibility: divide the pathway by committor level, but plot lead time on the horizontal axis. 
+        quantiles = 0.01*np.array([5.0,25.0,40.0,50.0,60.0,75.0,95.0])
         funlib = model.observable_function_library()
         eps = 0.01
         tb = self.dam_moments['one']['xb'][1,:,:]
         tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
         tb[comm_fwd <= eps] == np.nan
         tb_min,tb_max = 0*np.nanmin(tb),np.nanmax(tb)
+        num_levels = 17
         tb_levels = np.linspace(tb_min,tb_max,17)[1:-1]
+        qp_levels = np.linspace(0,1,17)[1:-1]
         tb_qp_corr = np.nanmean((tb - np.nanmean(tb))*(comm_fwd - np.nanmean(comm_fwd)))
         if tb_qp_corr < 0:
             tb_levels = tb_levels[::-1]
         print("tb_levels = {}".format(tb_levels))
         tb_tol = np.abs(tb_levels[1]-tb_levels[0])/2.0
+        qp_tol = np.abs(qp_levels[1] - qp_levels[0])/2.0
         print("tb_qp_corr = ", tb_qp_corr)
         rflux = []
         rflux_idx = []
@@ -3178,16 +3205,19 @@ class TPT:
         vTprof_quants = []
         vTintref_quants = []
         tb_levels_real = []
-        ramp = tb.reshape((Nx,Nt,1)) * np.sign(tb_qp_corr)
+        ramp = tb.reshape((Nx,Nt,1))*np.sign(tb_qp_corr)
+        #ramp = comm_fwd.reshape((Nx,Nt,1)) #* np.sign(tb_qp_corr)
         for ti in range(len(tb_levels)):
             print("tb_levels[ti] * np.sign(tb_qp_corr) = {}".format(tb_levels[ti]*np.sign(tb_qp_corr)))
             ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,tb_levels[ti]*np.sign(tb_qp_corr),tb_tol,None,0.0)
+            #ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[ti],qp_tol,None,0.0)
             if len(ridx_ti) > 0:
-                tb_levels_real += [tb_levels[ti]]
                 ridx_ti = np.array(ridx_ti)
                 rflux_ti = np.array(rflux_ti)
                 rflux += [rflux_ti]
                 rflux_idx += [ridx_ti]
+                tb_levels_real += [tb_levels[ti]]
+                #tb_levels_real += [np.mean(tb[ridx_ti,tidx])] ##[np.sum(tb[ridx_ti,tidx]*rflux_ti)/np.sum(rflux_ti*(rflux_ti>0))] #[ti]]
                 # Determine height-by-height median
                 U = funlib["U"]["fun"](data.X[ridx_ti,tidx])
                 Uq = np.zeros((len(quantiles),U.shape[1]))
@@ -3238,6 +3268,11 @@ class TPT:
             ax[0,1].fill_between(-levels_interp,Uzi_quant_interp[qi]*funlib["U"]["units"],Uzi_quant_interp[len(quantiles)-1-qi]*funlib["U"]["units"],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
         ax[0,1].plot(-levels_interp,Uzi_quant_interp[med_qi]*funlib["U"]["units"],color='black',zorder=med_qi)
         ax[0,1].scatter(-tb_levels_real,Uprof_quants[:,med_qi,zi]*funlib["U"]["units"],color='black',marker='o',zorder=med_qi)
+        # Add composite 
+        composite_time = np.load(join(self.savefolder,"composite_time.npy"))
+        composite_Uzi = np.load(join(self.savefolder,"composite_Uref.npy"))
+        ax[0,1].plot(composite_time,composite_Uzi*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
+        ax[0,0].plot(composite_time,composite_Uzi*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
         Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
         print("Uzi_b*units = {}".format(Uzi_b*funlib["U"]["units"]))
         ax[0,1].axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
