@@ -548,13 +548,15 @@ class TPT:
         plt.close(fig)
         print("Done plotting field long")
         # ------------ Next: plot only some transitions on their own plot --------------
+        quantiles = np.array([.05,.25,.50])
         if any_trans:
-            fig,ax = plt.subplots(ncols=2,figsize=(12,6),sharey=True)
-            num_trans = min(15,len(ab_starts))
+            fig0,ax0 = plt.subplots()
+            fig1,ax1 = plt.subplots()
+            num_trans = min(100,len(ab_starts))
             max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
             print("max_duration = {}".format(max_duration))
-            field_trans_composite_0 = np.zeros(max_duration)
-            field_trans_composite_1 = np.zeros(max_duration)
+            field_trans_composite_0 = np.zeros((num_trans,max_duration))
+            field_trans_composite_1 = np.zeros((num_trans,max_duration))
             for i in range(num_trans):
                 k0,k1 = ab_starts[i],ab_ends[i]
                 pad = max_duration - (k1-k0)
@@ -564,13 +566,29 @@ class TPT:
                 else:
                     field_trans = field_fun(x_long[k0-pad:k1+pad]).flatten()
                 print("field_trans.shape = {}".format(field_trans.shape))
-                ax[0].plot(t_long[k0:k1+pad]-t_long[k0],field_trans[pad:]*units) 
-                ax[1].plot(t_long[k0-pad:k1]-t_long[k1],field_trans[:(k1-k0+pad)]*units)
-                field_trans_composite_0 += field_trans[pad:]/num_trans
-                field_trans_composite_1 += field_trans[:(k1-k0+pad)]/num_trans
-            ax[0].plot(t_long[:max_duration],field_trans_composite_0*units,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
-            ax[1].plot(t_long[:max_duration]-t_long[max_duration],field_trans_composite_1*units,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
+                ax0.plot(t_long[k0:k1+pad]-t_long[k0],field_trans[pad:]*units,color='skyblue',alpha=0.5) 
+                ax1.plot(t_long[k0-pad:k1]-t_long[k1],field_trans[:(k1-k0+pad)]*units,color='skyblue',alpha=0.5)
+                field_trans_composite_0[i] = field_trans[pad:]
+                field_trans_composite_1[i] = field_trans[:(k1-k0+pad)]
+            # Plot the quantiles
+            for qi in range(len(quantiles)):
+                lower = np.quantile(field_trans_composite_0, quantiles[qi], axis=0)
+                if qi < len(quantiles)-1:
+                    upper = np.quantile(field_trans_composite_0, 1-quantiles[qi], axis=0)
+                    ax0.fill_between(t_long[:max_duration],lower*units,upper*units,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
+                else:
+                    ax0.plot(t_long[:max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
+                lower = np.quantile(field_trans_composite_1, quantiles[qi], axis=0)
+                if qi < len(quantiles)-1:
+                    upper = np.quantile(field_trans_composite_1, 1-quantiles[qi], axis=0)
+                    ax1.fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
+                else:
+                    ax1.plot(t_long[:max_duration]-t_long[max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
+            #ax0.plot(t_long[:max_duration],field_trans_composite_0*units,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
+            #ax1.plot(t_long[:max_duration]-t_long[max_duration],field_trans_composite_1*units,color='black',zorder=num_trans+10,linestyle='--',linewidth=3)
             xlab_list = [r"Time$-\tau_A^-$",r"Time$-\tau_B^+$"]
+            ax = [ax0,ax1]
+            fig = [fig0,fig1]
             for i in range(2):
                 ax[i].axhline(ab_long[0]*units,color='skyblue',zorder=-1)
                 ax[i].axhline(ab_long[1]*units,color='red',zorder=-1)
@@ -579,12 +597,12 @@ class TPT:
                 ax[i].set_xlabel(xlab,fontdict=font)
                 ylab = fieldname
                 if field_unit_symbol is not None: ylab += " [{}]".format(field_unit_symbol)
-                if i == 0: ax[i].set_ylabel(ylab,fontdict=font)
+                ax[i].set_ylabel(ylab,fontdict=font)
                 ylim = ax[i].get_ylim()
                 fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
                 ax[i].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
-            fig.savefig(join(self.savefolder,"transitory_{}".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
+                fig[i].savefig(join(self.savefolder,"transitory_{}_{}".format(field_abb,i)),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig[i])
         del x_long
         return
     def plot_field_long_2d(self,model,data,fieldnames,field_funs,field_abbs,units=[1.0,1.0],tmax=70,field_unit_symbols=["",""],orientation=None):
@@ -1592,15 +1610,15 @@ class TPT:
             theta_2d_unit_symbols = [fun0["unit_symbol"],fun1["unit_symbol"]]
             weight = self.chom
             theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
-            # Plot unconditional MFPT
-            fig,ax = self.plot_field_2d(model,data,self.mfpt_b,weight,theta_x,shp=[20,20],fieldname=r"$E_x[\tau_B^+]$",fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
-            fsuff = 'mfpt_xb_th0%s_th1%s'%(theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-            fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            fig,ax = self.plot_field_2d(model,data,self.mfpt_a,weight,theta_x,shp=[20,20],fieldname=r"$E_x[\tau_A^+]$",fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
-            fsuff = 'mfpt_xa_th0%s_th1%s'%(theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-            fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
+            ## Plot unconditional MFPT
+            #fig,ax = self.plot_field_2d(model,data,self.mfpt_b,weight,theta_x,shp=[20,20],fieldname=r"$E_x[\tau_B^+]$",fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+            #fsuff = 'mfpt_xb_th0%s_th1%s'%(theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+            #fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
+            #plt.close(fig)
+            #fig,ax = self.plot_field_2d(model,data,self.mfpt_a,weight,theta_x,shp=[20,20],fieldname=r"$E_x[\tau_A^+]$",fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+            #fsuff = 'mfpt_xa_th0%s_th1%s'%(theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+            #fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
+            #plt.close(fig)
 
 
             for k in range(len(keys)):

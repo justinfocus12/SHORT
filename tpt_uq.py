@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use('AGG')
 import matplotlib.pyplot as plt
-matplotlib.rcParams['font.size'] = 25
+matplotlib.rcParams['font.size'] = 40
 matplotlib.rcParams['font.family'] = 'serif'
 matplotlib.rcParams['savefig.bbox'] = 'tight'
 matplotlib.rcParams['savefig.pad_inches'] = 0.2
@@ -76,13 +76,12 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
     num_rxn = np.sum(np.diff(ab_reactive_flag)==1)
     num_rxn = min(num_rxn,np.sum(np.diff(ba_reactive_flag)==1))
     num_rxn -= 1 # For the periods
-    print("num_rxn = {}".format(num_rxn))
-    # ------------------- Summary statistics for DNS ---------------------
     Nt = len(t_long)
     dt = t_long[1] - t_long[0]
-    # 1. ----- Time ------
+    print("num_rxn = {}".format(num_rxn))
+    # ------------------- Generalized rates ---------------------
     # Look at time from one ab_start to the next, and treat that as the IID random variables. Do a bootstrap estimate
-    Nboot = 100
+    Nboot = 500
     Nab = num_rxn #len(ab_starts)
     Nba = num_rxn #len(ba_starts)
     ret = {'ab': np.diff(ab_starts)*dt, 'ba': np.diff(ba_starts)*dt} # Time of each one. The fundamental unit. 
@@ -90,6 +89,7 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
     for key in keys:
         genrate_dns[key] = {}
         for dirn in ['ab','ba']:
+            np.random.seed(1)
             genrate_dns[key][dirn] = {"mean": np.array([np.sum(dam_dns[key][dirn]**k)/np.sum(ret[dirn]) for k in range(Nmom+1)])}
             genrate_bootstrap = np.zeros((Nboot,Nmom+1))
             for i in range(Nboot):
@@ -102,35 +102,46 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
         for dirn in ['ab','ba']:
             genrate_dga[key][dirn] = {"mean": np.mean(rates_dga[key][dirn], axis=0)}
             genrate_dga[key][dirn]["rmse"] = np.std(rates_dga[key][dirn], axis=0)
+            genrate_dga[key][dirn]["min"] = np.min(rates_dga[key][dirn], axis=0)
+            genrate_dga[key][dirn]["max"] = np.max(rates_dga[key][dirn], axis=0)
     dirns = ['ab','ba']
     # Initial figure for rates
     fig,ax = plt.subplots()
-    index = ['ab','ba']
     names = [r"$A\to B$",r"$B\to A$"]
+    index = ['ab','ba']
+    yerr = np.zeros((2, 2, 2)) # (dns,dga) x (lo,hi) x (ab,ba) 
+    yerr[0,:,:] = np.outer(np.ones(2), [2*genrate_dns[keys[0]][dirn]["rmse"][0] for dirn in index])
+    yerr[1,0,:] = [genrate_dga[keys[0]][dirn]["mean"][0]-genrate_dga[keys[0]][dirn]["min"][0] for dirn in index]
+    yerr[1,1,:] = [genrate_dga[keys[0]][dirn]["max"][0]-genrate_dga[keys[0]][dirn]["mean"][0] for dirn in index]
+    print("yerr = \n{}".format(yerr))
     df = pd.DataFrame(index=index,data=dict({
         "Phase": names,
         "DGA": [genrate_dga[keys[0]][dirn]["mean"][0] for dirn in index],
         "DNS": [genrate_dns[keys[0]][dirn]["mean"][0] for dirn in index],
-        "DGA_unc": [4*genrate_dga[keys[0]][dirn]["rmse"][0] for dirn in index],
-        "DNS_unc": [4*genrate_dns[keys[0]][dirn]["rmse"][0] for dirn in index],
         }))
-    df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=df[['DNS_unc','DGA_unc']].to_numpy().T,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
-    ax.set_title("Rates")
-    fig.savefig(join(savefolder,"rates_bar"))
+    df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=yerr,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
+    ax.set_title("Rate")
+    ax.set_ylabel(r"Rate [days$^{-1}$]")
+    ax.set_xlabel("")
+    fig.savefig(join(savefolder,"rates_bar"),bbox_inches="tight",pad_inches=0.2)
     plt.close(fig)
     for key in keys:
         for i_mom in range(1,Nmom+1):
             fig,ax = plt.subplots()
+            yerr = np.zeros((2, 2, 2)) # (dns,dga) x (lo,hi) x (ab,ba) 
+            yerr[0,:,:] = np.outer(np.ones(2), [2*genrate_dns[key][dirn]["rmse"][i_mom] for dirn in index])
+            yerr[1,0,:] = [genrate_dga[key][dirn]["mean"][i_mom]-genrate_dga[key][dirn]["min"][i_mom] for dirn in index]
+            yerr[1,1,:] = [genrate_dga[key][dirn]["max"][i_mom]-genrate_dga[key][dirn]["mean"][i_mom] for dirn in index]
             df = pd.DataFrame(index=index,data=dict({
                 "Phase": names,
                 "DGA": [genrate_dga[key][dirn]["mean"][i_mom] for dirn in index],
                 "DNS": [genrate_dns[key][dirn]["mean"][i_mom] for dirn in index],
-                "DGA_unc": [4*genrate_dga[key][dirn]["rmse"][i_mom] for dirn in index],
-                "DNS_unc": [4*genrate_dns[key][dirn]["rmse"][i_mom] for dirn in index],
                 }))
-            df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=df[['DNS_unc','DGA_unc']].to_numpy().T,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
-            ax.set_title("Generalized rate: {}, moment {}".format(key,i_mom))
-            fig.savefig(join(savefolder,"genrate_{}_{}".format(key,i_mom)))
+            df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=yerr,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
+            ax.set_title("Generalized rate: {}, moment {}".format(model.dam_dict[key]['name'],i_mom))
+            ax.set_ylabel(r"$(%s)^{%i}/\mathrm{time}$ $[(%s)^{%i}/\mathrm{day}]$"%(model.dam_dict[key]['name_full'],i_mom,model.dam_dict[key]['unit_symbol_t'],i_mom))
+            ax.set_xlabel("")
+            fig.savefig(join(savefolder,"genrate_{}_{}".format(key,i_mom)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
         for i_dirn in range(len(dirns)):
             dirn = dirns[i_dirn]
@@ -141,33 +152,66 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
             print("\tgenrate_dns: \n\tmean={}\n\trmse={}".format(genrate_dns[key][dirn]['mean'],genrate_dns[key][dirn]['rmse']))
         fig.savefig(join(savefolder,"rate_line_{}".format(key)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
-    #ret_dns_bootstrap = np.zeros(Nboot)
-    #for i in range(Nboot):
-    #    ret_dns_resampled = np.random.choice(ret_dns, size=len(ret_dns), replace=True)
-    #    ret_dns_bootstrap[i] = np.mean(ret_dns_resampled)
-    #ret_dns_mean = np.mean(ret_dns)
-    #ret_dns_rmse = np.sqrt(np.mean((ret_dns_bootstrap - ret_dns_mean)**2))
-    ## Collect the return time from DGA
-    #ret_dga_ab = 1.0 / rates_dga[keys[0]]['ab'][:,0]
-    #ret_dga_ba = 1.0 / rates_dga[keys[0]]['ba'][:,0]
-    #ret_dga_ab_mid = (ret_dga_ab.min() + ret_dga_ab.max())/2 
-    #ret_dga_ba_mid = (ret_dga_ba.min() + ret_dga_ba.max())/2
-    #ret_dga_ab_unc = (ret_dga_ab.max() - ret_dga_ab.min()) 
-    #ret_dga_ba_unc = (ret_dga_ba.max() - ret_dga_ba.min())
-    ## Do a bar plot. First DNS, then DGA AB, then DGA BA
-    #fig,ax = plt.subplots()
-    #index = ['dns','dgaab','dgaba']
-    #names = ['DNS',r'DGA $(A\to B)$',r'DGA $(B->A)$']
-    #df = pd.DataFrame(index=index,data=dict({
-    #    "Method": names,
-    #    "Return period": [ret_dns_mean,ret_dga_ab_mid,ret_dga_ba_mid],
-    #    "ret_unc": [4*ret_dns_rmse,ret_dga_ab_unc,ret_dga_ba_unc],
-    #    }))
-    #print(df)
-    #df.plot(kind="bar",x="Method",y=["Return period"],yerr=df[["ret_unc"]].to_numpy().T,ax=ax,color=['cyan'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
-    #ax.set_title("Rates")
-    #fig.savefig(join(savefolder,"rate_bar"),bbox_inches="tight",pad_inches=0.2)
-    #plt.close(fig)
+    # ------------------- Time fractions ---------------------------------
+    Nboot = 500
+    Nab = num_rxn #len(ab_starts)
+    Nba = num_rxn #len(ba_starts)
+    ret = {'ab': np.diff(ab_starts)*dt, 'ba': np.diff(ba_starts)*dt} # Time of each one. The fundamental unit. 
+    timefrac_dns = {}
+    timefrac_dga = {}
+    phase_list = ['ab','ba','aa','bb']
+    phase_list_names = [r"$A\to B$",r"$B\to A$",r"$A\to A$",r"$B\to B$"]
+    from_list = [-1,1,-1,1]
+    to_list = [1,-1,-1,1]
+    bwd_key = ['ax','bx','ax','bx']
+    fwd_key = ['xb','xa','xa','xb']
+    # DNS
+    for i_ph in range(len(phase_list)):
+        phase = phase_list[i_ph]
+        from_label = from_list[i_ph]
+        to_label = to_list[i_ph]
+        np.random.seed(1)
+        timefrac_dns[phase] = {"mean": np.mean((long_from_label==from_label)*(long_to_label==to_label))}
+        timefrac_bootstrap = np.zeros(Nboot)
+        for i in range(Nboot):
+            idx = np.random.choice(np.arange(Nab),size=Nab,replace=True)
+            phase_time_total = 0.0
+            time_total = 0.0
+            for j in idx:
+                ti0,ti1 = ab_starts[j],ab_starts[j+1]
+                phase_time_total += np.sum((long_from_label[ti0:ti1]==from_label)*(long_to_label[ti0:ti1]==to_label))*dt
+                time_total += (ti1-ti0)*dt
+            timefrac_bootstrap[i] = phase_time_total/time_total
+        timefrac_dns[phase]["rmse"] = np.sqrt(np.mean((timefrac_bootstrap - timefrac_dns[phase]["mean"])**2, axis=0))
+    # DGA
+    timefrac_dga = {}
+    for phase in phase_list:
+        timefrac_dga[phase] = np.zeros(Ntpt)
+    for i in range(Ntpt):
+        tpt = pickle.load(open(tpt_file_list[i],"rb"))
+        for i_ph in range(len(phase_list)):
+            phase = phase_list[i_ph]
+            print("Phase {}".format(phase))
+            comm_bwd = tpt.dam_moments['one'][bwd_key[i_ph]][0,:,0]
+            comm_fwd = tpt.dam_moments['one'][fwd_key[i_ph]][0,:,0]
+            timefrac_dga[phase][i] = np.sum(tpt.chom * comm_bwd * comm_fwd)
+            print("comm_bwd: min={}, max={}. comm_fwd: min={}, max={}. chom: min={}, max={}, sum={}. time_frac_dga = {} ".format(comm_bwd.min(),comm_bwd.max(),comm_fwd.min(),comm_fwd.max(),tpt.chom.min(),tpt.chom.max(),tpt.chom.sum(),timefrac_dga[phase][i]))
+    df = pd.DataFrame(index=phase_list,data=dict({
+        "Phase": phase_list_names,
+        "DNS": [timefrac_dns[phase]["mean"] for phase in phase_list],
+        "DGA": [timefrac_dga[phase].mean() for phase in phase_list],
+        }))
+    yerr = np.zeros((2,2,len(phase_list))) # (dns,dga) x (lo,hi) x (aa,ab,bb,ba)
+    yerr[0,:,:] = np.outer(np.ones(2),[2*timefrac_dns[phase]["rmse"] for phase in phase_list])
+    yerr[1,0,:] = [timefrac_dga[phase].mean()-timefrac_dga[phase].min() for phase in phase_list]
+    yerr[1,1,:] = [timefrac_dga[phase].max()-timefrac_dga[phase].mean() for phase in phase_list]
+    fig,ax = plt.subplots()
+    df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=yerr,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
+    ax.set_title("Phase durations")
+    ax.set_ylabel(r"Time fraction")
+    ax.set_xlabel("")
+    fig.savefig(join(savefolder,"lifecycle_bar"),bbox_inches="tight",pad_inches=0.2)
+    plt.close(fig)
     return
 
 if __name__ == "__main__":
@@ -176,7 +220,9 @@ if __name__ == "__main__":
     if not exists(savefolder): mkdir(savefolder)
     # Make the list of savefolders
     tpt_file_list = []
-    for istart in [0,3,6]:
+    istart_list = [0,3,6]
+    #istart_list = [0,1,2,3,5,6,7,8,9]
+    for istart in istart_list: #[0,3,6]:
         tpt_file_list += [join(physical_param_folder,algo_param_string,"tpt").replace("istart0","istart%i"%(istart))]
     if run_model:
         model = HoltonMassModel(physical_params)

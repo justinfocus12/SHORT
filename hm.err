@@ -1,32 +1,300 @@
-/home/jf4241/SHORT/tpt_obj.py:1660: RuntimeWarning: invalid value encountered in greater
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in greater
   field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1661: RuntimeWarning: invalid value encountered in less
+/home/jf4241/SHORT/tpt_obj.py:1643: RuntimeWarning: invalid value encountered in less
   field[np.where(field < vmin**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1695: RuntimeWarning: invalid value encountered in greater
+/home/jf4241/SHORT/tpt_obj.py:1677: RuntimeWarning: invalid value encountered in greater
   field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1696: RuntimeWarning: invalid value encountered in less
+/home/jf4241/SHORT/tpt_obj.py:1678: RuntimeWarning: invalid value encountered in less
   field[np.where(field < vmin**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1728: RuntimeWarning: invalid value encountered in greater
+/home/jf4241/SHORT/tpt_obj.py:1713: RuntimeWarning: invalid value encountered in greater
   field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1729: RuntimeWarning: invalid value encountered in less
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
   field[np.where(field < vmin**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1755: RuntimeWarning: invalid value encountered in greater
+/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
   field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1756: RuntimeWarning: invalid value encountered in less
+/home/jf4241/SHORT/tpt_obj.py:1741: RuntimeWarning: invalid value encountered in less
   field[np.where(field < vmin**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1781: RuntimeWarning: invalid value encountered in greater
+/home/jf4241/SHORT/tpt_obj.py:1769: RuntimeWarning: invalid value encountered in greater
   field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1782: RuntimeWarning: invalid value encountered in less
+/home/jf4241/SHORT/tpt_obj.py:1770: RuntimeWarning: invalid value encountered in less
   field[np.where(field < vmin**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1808: RuntimeWarning: invalid value encountered in greater
+/home/jf4241/SHORT/tpt_obj.py:1799: RuntimeWarning: invalid value encountered in greater
   field[np.where(field > vmax**j)[0]] = np.nan
-/home/jf4241/SHORT/tpt_obj.py:1809: RuntimeWarning: invalid value encountered in less
+/home/jf4241/SHORT/tpt_obj.py:1800: RuntimeWarning: invalid value encountered in less
   field[np.where(field < vmin**j)[0]] = np.nan
-/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 25.867123545711365, tolerance: 5.51288079869248
+/home/jf4241/SHORT/tpt_obj.py:1644: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/home/jf4241/SHORT/helper.py:173: RuntimeWarning: All-NaN slice encountered
+  field_std_Linf = np.nanmax(field_std)*np.prod(dth)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1483: UserWarning: Warning: converting a masked element to nan.
+  self.zmax = float(z.max())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1484: UserWarning: Warning: converting a masked element to nan.
+  self.zmin = float(z.min())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1132: RuntimeWarning: invalid value encountered in less
+  under = np.nonzero(lev < self.zmin)[0]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1134: RuntimeWarning: invalid value encountered in greater
+  over = np.nonzero(lev > self.zmax)[0]
+/home/jf4241/SHORT/helper.py:251: RuntimeWarning: All-NaN slice encountered
+  cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean),20)
+/home/jf4241/SHORT/helper.py:263: RuntimeWarning: All-NaN slice encountered
+  cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, orientation=cbar_orientation, format=ticker.FuncFormatter(cbar_fmt), ticks=np.linspace(np.nanmin(field_mean),np.nanmax(field_mean),4))
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in less_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in greater_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/home/jf4241/SHORT/tpt_obj.py:1679: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1643: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1677: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1678: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1713: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1741: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1769: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1770: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1799: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1800: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1644: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/home/jf4241/SHORT/helper.py:173: RuntimeWarning: All-NaN slice encountered
+  field_std_Linf = np.nanmax(field_std)*np.prod(dth)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1483: UserWarning: Warning: converting a masked element to nan.
+  self.zmax = float(z.max())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1484: UserWarning: Warning: converting a masked element to nan.
+  self.zmin = float(z.min())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1132: RuntimeWarning: invalid value encountered in less
+  under = np.nonzero(lev < self.zmin)[0]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1134: RuntimeWarning: invalid value encountered in greater
+  over = np.nonzero(lev > self.zmax)[0]
+/home/jf4241/SHORT/helper.py:251: RuntimeWarning: All-NaN slice encountered
+  cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean),20)
+/home/jf4241/SHORT/helper.py:263: RuntimeWarning: All-NaN slice encountered
+  cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, orientation=cbar_orientation, format=ticker.FuncFormatter(cbar_fmt), ticks=np.linspace(np.nanmin(field_mean),np.nanmax(field_mean),4))
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in less_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in greater_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/home/jf4241/SHORT/tpt_obj.py:1679: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 4.819693041512437, tolerance: 4.497035850479774
   model = cd_fast.enet_coordinate_descent(
-/home/jf4241/SHORT/tpt_obj.py:1881: RuntimeWarning: invalid value encountered in greater
+/home/jf4241/SHORT/tpt_obj.py:1872: RuntimeWarning: invalid value encountered in greater
   if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
-/home/jf4241/SHORT/tpt_obj.py:1881: RuntimeWarning: invalid value encountered in less
+/home/jf4241/SHORT/tpt_obj.py:1872: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+ This problem is unconstrained.
+ This problem is unconstrained.
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1643: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1677: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1678: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1713: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1741: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1769: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1770: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1799: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1800: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1644: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/home/jf4241/SHORT/helper.py:173: RuntimeWarning: All-NaN slice encountered
+  field_std_Linf = np.nanmax(field_std)*np.prod(dth)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1483: UserWarning: Warning: converting a masked element to nan.
+  self.zmax = float(z.max())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1484: UserWarning: Warning: converting a masked element to nan.
+  self.zmin = float(z.min())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1132: RuntimeWarning: invalid value encountered in less
+  under = np.nonzero(lev < self.zmin)[0]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1134: RuntimeWarning: invalid value encountered in greater
+  over = np.nonzero(lev > self.zmax)[0]
+/home/jf4241/SHORT/helper.py:251: RuntimeWarning: All-NaN slice encountered
+  cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean),20)
+/home/jf4241/SHORT/helper.py:263: RuntimeWarning: All-NaN slice encountered
+  cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, orientation=cbar_orientation, format=ticker.FuncFormatter(cbar_fmt), ticks=np.linspace(np.nanmin(field_mean),np.nanmax(field_mean),4))
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in less_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in greater_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/home/jf4241/SHORT/tpt_obj.py:1679: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1643: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1677: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1678: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1713: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1741: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1769: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1770: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1799: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1800: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1644: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/home/jf4241/SHORT/helper.py:173: RuntimeWarning: All-NaN slice encountered
+  field_std_Linf = np.nanmax(field_std)*np.prod(dth)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1483: UserWarning: Warning: converting a masked element to nan.
+  self.zmax = float(z.max())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1484: UserWarning: Warning: converting a masked element to nan.
+  self.zmin = float(z.min())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1132: RuntimeWarning: invalid value encountered in less
+  under = np.nonzero(lev < self.zmin)[0]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1134: RuntimeWarning: invalid value encountered in greater
+  over = np.nonzero(lev > self.zmax)[0]
+/home/jf4241/SHORT/helper.py:251: RuntimeWarning: All-NaN slice encountered
+  cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean),20)
+/home/jf4241/SHORT/helper.py:263: RuntimeWarning: All-NaN slice encountered
+  cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, orientation=cbar_orientation, format=ticker.FuncFormatter(cbar_fmt), ticks=np.linspace(np.nanmin(field_mean),np.nanmax(field_mean),4))
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in less_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in greater_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/home/jf4241/SHORT/tpt_obj.py:1679: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1643: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1677: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1678: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1713: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1741: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1769: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1770: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1799: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1800: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1644: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/home/jf4241/SHORT/helper.py:173: RuntimeWarning: All-NaN slice encountered
+  field_std_Linf = np.nanmax(field_std)*np.prod(dth)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1483: UserWarning: Warning: converting a masked element to nan.
+  self.zmax = float(z.max())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1484: UserWarning: Warning: converting a masked element to nan.
+  self.zmin = float(z.min())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1132: RuntimeWarning: invalid value encountered in less
+  under = np.nonzero(lev < self.zmin)[0]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1134: RuntimeWarning: invalid value encountered in greater
+  over = np.nonzero(lev > self.zmax)[0]
+/home/jf4241/SHORT/helper.py:251: RuntimeWarning: All-NaN slice encountered
+  cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean),20)
+/home/jf4241/SHORT/helper.py:263: RuntimeWarning: All-NaN slice encountered
+  cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, orientation=cbar_orientation, format=ticker.FuncFormatter(cbar_fmt), ticks=np.linspace(np.nanmin(field_mean),np.nanmax(field_mean),4))
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in less_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in greater_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/home/jf4241/SHORT/tpt_obj.py:1679: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/home/jf4241/SHORT/tpt_obj.py:1642: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1643: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1677: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1678: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1713: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1714: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1740: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1741: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1769: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1770: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1799: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1800: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1644: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/home/jf4241/SHORT/helper.py:173: RuntimeWarning: All-NaN slice encountered
+  field_std_Linf = np.nanmax(field_std)*np.prod(dth)
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1483: UserWarning: Warning: converting a masked element to nan.
+  self.zmax = float(z.max())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1484: UserWarning: Warning: converting a masked element to nan.
+  self.zmin = float(z.min())
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1132: RuntimeWarning: invalid value encountered in less
+  under = np.nonzero(lev < self.zmin)[0]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/contour.py:1134: RuntimeWarning: invalid value encountered in greater
+  over = np.nonzero(lev > self.zmax)[0]
+/home/jf4241/SHORT/helper.py:251: RuntimeWarning: All-NaN slice encountered
+  cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean),20)
+/home/jf4241/SHORT/helper.py:263: RuntimeWarning: All-NaN slice encountered
+  cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, orientation=cbar_orientation, format=ticker.FuncFormatter(cbar_fmt), ticks=np.linspace(np.nanmin(field_mean),np.nanmax(field_mean),4))
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in less_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/matplotlib/colorbar.py:898: RuntimeWarning: invalid value encountered in greater_equal
+  b = b[(b <= intv[1] + eps) & (b >= intv[0] - eps)]
+/home/jf4241/SHORT/tpt_obj.py:1679: RuntimeWarning: All-NaN slice encountered
+  print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 25.86712354620795, tolerance: 5.51288079869248
+  model = cd_fast.enet_coordinate_descent(
+/share/apps/anaconda3/2020.07/lib/python3.8/site-packages/sklearn/linear_model/_coordinate_descent.py:529: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations. Duality gap: 5.2056759942097415, tolerance: 4.7789296324304305
+  model = cd_fast.enet_coordinate_descent(
+/home/jf4241/SHORT/tpt_obj.py:1872: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1872: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+ This problem is unconstrained.
+ This problem is unconstrained.
+/home/jf4241/SHORT/tpt_obj.py:1872: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:1872: RuntimeWarning: invalid value encountered in less
   if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
  This problem is unconstrained.
  This problem is unconstrained.
