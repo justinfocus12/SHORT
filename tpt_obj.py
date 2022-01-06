@@ -3165,14 +3165,20 @@ class TPT:
         # ---------------------
         ramp = comm_fwd.reshape((Nx,Nt,1))
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        qp_levels = np.array([0.2,0.5,0.8])
-        colors = np.array([plt.cm.coolwarm(qp_levels[0]),'orange',plt.cm.coolwarm(qp_levels[2])])
-        labels = [r"$q^+=%.1f$"%(qp_levels[i]) for i in range(len(qp_levels))]
-        qp_tol = 0.1
+        qp_levels = np.array([0.00,0.2,0.5,0.8,1.0])
+        #colors = np.array([plt.cm.coolwarm(qp_levels[0]),'orange',plt.cm.coolwarm(qp_levels[2])])
+        colors = np.array([plt.cm.coolwarm(qpl) for qpl in qp_levels])
+        colors[np.abs(qp_levels - 0.5) < 0.01] = matplotlib.colors.to_rgba('orange')
+        qp_tol_list = 0.1*np.ones(len(qp_levels))
+        labels = [r"$q^+=%.1f-%.1f$"%(
+            min(1, max(0, qp_levels[i]-qp_tol_list[i])),
+            min(1, max(0, qp_levels[i]+qp_tol_list[i])))
+            for i in range(len(qp_levels))]
         prof_key_list = ["U","vT","wvT"]
         rflux = []
         rflux_idx = []
         for qi in range(len(qp_levels)):
+            qp_tol = qp_tol_list[qi]
             ridx_qi,rflux_qi,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[qi],qp_tol,None,0.0)
             rflux += [rflux_qi]
             rflux_idx += [ridx_qi]
