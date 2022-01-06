@@ -617,7 +617,7 @@ class TPT:
             fig.savefig(join(self.savefolder,"transitory_{}".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Save the composite in order to use later for comparison with the TPT composite
-            np.save(join(self.savefolder,"composite_{}".format(field_abb)),np.quantile(field_trans_composite,0.5,axis=0))
+            np.save(join(self.savefolder,"composite_{}".format(field_abb)),field_trans_composite)
             np.save(join(self.savefolder,"composite_time"),t_long[:max_duration]-t_long[max_duration])
         del x_long
         return
@@ -2585,7 +2585,8 @@ class TPT:
         Nx,Nt,thdim = theta_x.shape
         Jtheta = np.zeros((Nx,thdim))
         bdy_dist = lambda x: np.minimum(model.adist(x),model.bdist(x))
-        data.insert_boundaries(bdy_dist,lag_time_max=self.lag_time_current)
+        #data.insert_boundaries(bdy_dist,lag_time_max=self.lag_time_current)
+        data.insert_boundaries(bdy_dist,lag_time_max=self.lag_time_current_display)
         Jtheta_up = ((self.chom*comm_bwd[:,0]*comm_fwd[np.arange(Nx),data.first_exit_idx]/data.t_x[data.first_exit_idx])*(theta_x[np.arange(Nx),data.first_exit_idx] - theta_x[:,0]).T).T
         Jtheta_dn = ((self.chom*comm_fwd[np.arange(Nx),data.last_idx]*comm_bwd[np.arange(Nx),data.last_entry_idx]/(data.t_x[data.last_idx] - data.t_x[data.last_entry_idx]))*(theta_x[np.arange(Nx),data.last_idx] - theta_x[np.arange(Nx),data.last_entry_idx]).T).T
         return Jtheta_up,Jtheta_dn
@@ -3100,7 +3101,7 @@ class TPT:
         print("theta_level = {}".format(theta_level))
         Jup = Jup.flatten()
         Jdn = Jdn.flatten()
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         nnidx = np.where(np.isnan(theta_x[:,tidx,0]) + np.isnan(Jup) + np.isnan(Jdn) == 0)[0]
         theta_discrepancy = np.sqrt(np.sum((theta_x[nnidx,tidx] - theta_level)**2, 1))
         idx = nnidx[np.where(theta_discrepancy < theta_tol)[0]]
@@ -3163,7 +3164,7 @@ class TPT:
         print("nb = {}, nsmallu = {}, numbad = {}".format(nb,nsmallu,numbad))
         # ---------------------
         ramp = comm_fwd.reshape((Nx,Nt,1))
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         qp_levels = np.array([0.2,0.5,0.8])
         colors = np.array([plt.cm.coolwarm(qp_levels[0]),'orange',plt.cm.coolwarm(qp_levels[2])])
         labels = [r"$q^+=%.1f$"%(qp_levels[i]) for i in range(len(qp_levels))]
@@ -3189,8 +3190,8 @@ class TPT:
         tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
         tb[comm_fwd <= eps] == np.nan
         tb_min,tb_max = 0*np.nanmin(tb),np.nanmax(tb)
-        num_levels = 17
-        tb_levels = np.linspace(tb_min,tb_max,17)[1:-1]
+        num_levels = 25 # 17 is the default
+        tb_levels = np.linspace(tb_min,tb_max,num_levels)[1:-1]
         qp_levels = np.linspace(0,1,17)[1:-1]
         tb_qp_corr = np.nanmean((tb - np.nanmean(tb))*(comm_fwd - np.nanmean(comm_fwd)))
         if tb_qp_corr < 0:
@@ -3271,8 +3272,10 @@ class TPT:
         # Add composite 
         composite_time = np.load(join(self.savefolder,"composite_time.npy"))
         composite_Uzi = np.load(join(self.savefolder,"composite_Uref.npy"))
-        ax[0,1].plot(composite_time,composite_Uzi*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
-        ax[0,0].plot(composite_time,composite_Uzi*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
+        #ax[0,1].plot(composite_time,np.mean(composite_Uzi,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
+        ax[0,1].plot(composite_time,np.quantile(composite_Uzi,0.5,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
+        #ax[0,0].plot(composite_time,np.mean(composite_Uzi,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
+        ax[0,0].plot(composite_time,np.quantile(composite_Uzi,0.5,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
         Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
         print("Uzi_b*units = {}".format(Uzi_b*funlib["U"]["units"]))
         ax[0,1].axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
@@ -3669,7 +3672,7 @@ class TPT:
             # A -> A
             ax[ri,0].axhline(0,color='black')
             ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,1-comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
-            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
             hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=num_bins)
             rate_aa = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
             normalizer = 1.0 #np.max(np.abs(hist))
@@ -3681,7 +3684,7 @@ class TPT:
             # A -> B
             ax[ri,1].axhline(0,color='black')
             ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
-            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
             hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=num_bins)
             rate_ab = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
             bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
@@ -3693,7 +3696,7 @@ class TPT:
             # B -> B
             ax[ri,2].axhline(0,color='black')
             ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),1-comm_bwd,comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
-            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
             hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=num_bins)
             rate_aa = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
             normalizer = 1.0 #np.max(np.abs(hist))
@@ -3705,7 +3708,7 @@ class TPT:
             # B -> A
             ax[ri,3].axhline(0,color='black')
             ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),1-comm_bwd,1-comm_fwd,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
-            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+            tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
             hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=num_bins)
             rate_ba = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
             bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
@@ -3726,7 +3729,7 @@ class TPT:
         rflux_idx = flux_dict["idx"]
         rflux = flux_dict["rflux"]
         levels = flux_dict["levels"]
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
         fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
         fxrefa,fxrefb = funlib[func_key_ref]["fun"](model.tpt_obs_xst)
@@ -3776,7 +3779,7 @@ class TPT:
         rflux_idx = flux_dict["idx"]
         rflux = flux_dict["rflux"]
         levels = flux_dict["levels"]
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
         fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
         # Instead of a scatter plot, make a mean-std plot
@@ -3844,7 +3847,7 @@ class TPT:
         rflux_idx = flux_dict["idx"]
         rflux = flux_dict["rflux"]
         levels = flux_dict["levels"]
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
         fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
         # Instead of a scatter plot, make a mean-std plot
@@ -3918,7 +3921,7 @@ class TPT:
             raise Exception("DOH: len(rflux_idx) = {}, len(rflux) = {}".format(len(rflux_idx),len(rflux)))
         minlevel,maxlevel = flux_dict["minlevel"],flux_dict["maxlevel"]
         cmap = plt.cm.coolwarm if dirn=='ab' else plt.cm.coolwarm_r
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         # Get the colors in order
         num_total_states = 0
         colorlist = []
@@ -3992,7 +3995,7 @@ class TPT:
             #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
         # save the reac dens idx
         np.save(join(self.savefolder,"reac_dens_idx_ab_committor"),reac_dens_idx)
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_qlevels.flatten(),r"q^+",colorlist=colorlist,zorderlist=zorderlist)
         ax.set_title(r"$A\to B$ transition states",fontdict=font)
         fig.savefig(join(self.savefolder,"trans_states_ab"),bbox_inches="tight",pad_inches=0.2)
@@ -4025,7 +4028,7 @@ class TPT:
             colorlist += [color for j in range(num_per_level)]
             #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
         np.save(join(self.savefolder,"reac_dens_idx_ba_committor"),reac_dens_idx)
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_qlevels.flatten(),r"q^+",colorlist=colorlist,zorderlist=zorderlist)
         ax.set_title(r"$B\to A$ transition states",fontdict=font)
         fig.savefig(join(self.savefolder,"trans_states_ba"),bbox_inches="tight",pad_inches=0.2)
@@ -4078,7 +4081,7 @@ class TPT:
             colorlist += [color for j in range(num_per_level)]
             #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
         np.save(join(self.savefolder,"reac_dens_idx_ab_time"),reac_dens_idx)
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_tb_levels.flatten(),r"\eta^+",colorlist=colorlist,zorderlist=zorderlist)
         ax.set_title(r"$A\to B$ transition states",fontdict=font)
         fig.savefig(join(self.savefolder,"trans_states_ab_leadtime"),bbox_inches="tight",pad_inches=0.2)
@@ -4118,7 +4121,7 @@ class TPT:
             colorlist += [color for j in range(num_per_level)]
             #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
         np.save(join(self.savefolder,"reac_dens_idx_ba_time"),reac_dens_idx)
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current/2))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_tb_levels.flatten(),r"\eta^+",colorlist=colorlist,zorderlist=zorderlist)
         ax.set_title(r"$B\to A$ transition states",fontdict=font)
         fig.savefig(join(self.savefolder,"trans_states_ba_leadtime"),bbox_inches="tight",pad_inches=0.2)

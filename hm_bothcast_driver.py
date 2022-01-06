@@ -53,14 +53,14 @@ regression_flag =       0
 proj_1d_flag =          0
 demo_flag =             0
 qp_tb_coords_flag =     0
-trans_state_flag =      1
+trans_state_flag =      0
 flux_dist_flag =        0
 plot_long_2d_flag =     0
 lifecycle_flag =        0
 display_cast_flag =     0
 display_current_flag =  0
 gen_rates_flag =        0
-plot_long_1d_flag =     1
+plot_long_1d_flag =     0
 validation_flag =       0
 # ---------------------------------------
 
@@ -117,6 +117,8 @@ short_simfolder = model.generate_data_short_multithreaded(x_long,simfolder,algo_
 
 # ---------- Initialize TPT ----------
 tpt = TPT(algo_params,physical_param_folder,long_simfolder,short_simfolder,savefolder)
+# Fix the lag_time_current
+tpt.lag_time_current = algo_params['lag_time_current']
 # Initialize data
 data = tpt.compile_data(model,istart=algo_params["istart"])
 # Initialize function approximator as MSM basis
