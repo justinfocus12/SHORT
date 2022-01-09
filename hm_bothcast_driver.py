@@ -162,7 +162,7 @@ if plot_long_2d_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["vTintref","Uref"],["vTint21p5","U21p5"]] #,["magref","Uref"]]
+    theta_2d_abbs = [["vTintref","Uref"]] #,["vTint21p5","U21p5"]] #,["magref","Uref"]]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:

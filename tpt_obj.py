@@ -1563,8 +1563,39 @@ class TPT:
             fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
             field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            #field *= (comm_fwd > 0)*(comm_fwd < 1)
-            #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
+            # First no current
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=False,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            fig.savefig(join(self.savefolder,"jab_rdens_nocurrent_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # Now with current, but without samples or least-action path
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            if horz_lines > 0:
+                print("---------------Drawing in some horizontal lines for flux distributions")
+                # Draw in lines for reactive flux densities
+                nnidx = np.where(np.isnan(field) == 0)[0]
+                th1_min,th1_max = thmin[1],thmax[1]
+                dramp = (th1_max - th1_min)/horz_lines
+                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
+                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
+                for i_th in range(len(th_levels)):
+                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
+            fig.savefig(join(self.savefolder,"jab_rdens_noobs_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # Now with current, and samples, but no least-action path
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            if horz_lines > 0:
+                print("---------------Drawing in some horizontal lines for flux distributions")
+                # Draw in lines for reactive flux densities
+                nnidx = np.where(np.isnan(field) == 0)[0]
+                th1_min,th1_max = thmin[1],thmax[1]
+                dramp = (th1_max - th1_min)/horz_lines
+                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
+                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
+                for i_th in range(len(th_levels)):
+                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
+            fig.savefig(join(self.savefolder,"jab_rdens_nofw_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # Now with current and least-action path
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
@@ -1610,6 +1641,7 @@ class TPT:
         Nx,Nt,xdim = data.X.shape
         keys = list(model.dam_dict.keys())
         num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
+        phase_flags = {'ab': False, 'ba': False, 'xa': False, 'xb': True, 'ax': False, 'bx': False}
         for i in range(len(theta_2d_abbs)):
             print("Starting view (%s,%s)"%(theta_2d_abbs[i][0],theta_2d_abbs[i][1]))
             fun0 = funlib[theta_2d_abbs[i][0]]
@@ -1656,187 +1688,193 @@ class TPT:
                 plt.close(fig)
                 for j in range(min(3,self.num_moments)):
                     # A->B
-                    comm_bwd = self.dam_moments[keys[k]]['ax'][0]
-                    comm_fwd = self.dam_moments[keys[k]]['xb'][0]
-                    if j == 0: 
-                        fieldname = r"$q_A^-(x)q_B^+(x)$" #r"$P_x\{A\to B\}$"
-                        field = field_units**j*self.dam_moments[keys[k]]['ab'][j] 
-                    else:
-                        prob = comm_bwd*comm_fwd
-                        if j == 1: 
-                            fieldname = r"$E_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full']) 
-                            field = field_units**j*self.dam_moments[keys[k]]['ab'][j]
-                        elif j == 2:
-                            fieldname = r"$Var_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full']) 
-                            field = field_units**j*(self.dam_moments[keys[k]]['ab'][j] - self.dam_moments[keys[k]]['ab'][1]**2)
-                        field[np.where(prob==0)[0]] = np.nan
-                        field *= 1.0/(prob + 1*(prob == 0))
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        # Correct now
-                        field[np.where(field > vmax**j)[0]] = np.nan
-                        field[np.where(field < vmin**j)[0]] = np.nan
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                    fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
-                    fsuff = 'cast_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                    fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
-                    plt.close(fig)
-                    # Now plot divided by time
-                    if j == 1 and keys[k] != 'one':
-                        fieldname = r"$E_x[%s|A\to B]/E_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
-                        field = field/(self.dam_moments['one']['ab'][1])
+                    if phase_flags['ab']:
+                        comm_bwd = self.dam_moments[keys[k]]['ax'][0]
+                        comm_fwd = self.dam_moments[keys[k]]['xb'][0]
+                        if j == 0: 
+                            fieldname = r"$q_A^-(x)q_B^+(x)$" #r"$P_x\{A\to B\}$"
+                            field = field_units**j*self.dam_moments[keys[k]]['ab'][j] 
+                        else:
+                            prob = comm_bwd*comm_fwd
+                            if j == 1: 
+                                fieldname = r"$E_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full']) 
+                                field = field_units**j*self.dam_moments[keys[k]]['ab'][j]
+                            elif j == 2:
+                                fieldname = r"$Var_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full']) 
+                                field = field_units**j*(self.dam_moments[keys[k]]['ab'][j] - self.dam_moments[keys[k]]['ab'][1]**2)
+                            field[np.where(prob==0)[0]] = np.nan
+                            field *= 1.0/(prob + 1*(prob == 0))
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                            # Correct now
+                            field[np.where(field > vmax**j)[0]] = np.nan
+                            field[np.where(field < vmin**j)[0]] = np.nan
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
-                        fsuff = 'castpertime_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                        fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
+                        fsuff = 'cast_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+                        fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
+                        # Now plot divided by time
+                        if j == 1 and keys[k] != 'one':
+                            fieldname = r"$E_x[%s|A\to B]/E_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
+                            field = field/(self.dam_moments['one']['ab'][1])
+                            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                            fsuff = 'castpertime_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+                            fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
+                            plt.close(fig)
                     # ---------------------------------
                     # B->A
-                    comm_bwd = self.dam_moments[keys[k]]['bx'][0]
-                    comm_fwd = self.dam_moments[keys[k]]['xa'][0]
-                    if j == 0: 
-                        fieldname = r"$P_x\{B\to A\}$"
-                        field = field_units**j*self.dam_moments[keys[k]]['ba'][j] 
-                    else:
-                        prob = comm_bwd*comm_fwd
-                        if j == 1: 
-                            fieldname = r"$E_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full']) 
-                            field = field_units**j*self.dam_moments[keys[k]]['ba'][j]
-                        elif j == 2:
-                            fieldname = r"$Var_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full']) 
-                            field = field_units**j*(self.dam_moments[keys[k]]['ba'][j] - self.dam_moments[keys[k]]['ba'][1]**2)
-                        field[np.where(prob==0)[0]] = np.nan
-                        field *= 1.0/(prob + 1*(prob == 0))
-                        # Bring within range only if j>=1
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        # Correct now
-                        field[np.where(field > vmax**j)[0]] = np.nan
-                        field[np.where(field < vmin**j)[0]] = np.nan
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                    fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
-                    fsuff = 'cast_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                    fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
-                    plt.close(fig)
-                    # Now plot divided by time
-                    if j == 1 and keys[k] != 'one':
-                        fieldname = r"$E_x[%s|B\to A]/E_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
-                        field = field/(self.dam_moments['one']['ba'][1])
+                    if phase_flags['ba']:
+                        comm_bwd = self.dam_moments[keys[k]]['bx'][0]
+                        comm_fwd = self.dam_moments[keys[k]]['xa'][0]
+                        if j == 0: 
+                            fieldname = r"$P_x\{B\to A\}$"
+                            field = field_units**j*self.dam_moments[keys[k]]['ba'][j] 
+                        else:
+                            prob = comm_bwd*comm_fwd
+                            if j == 1: 
+                                fieldname = r"$E_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full']) 
+                                field = field_units**j*self.dam_moments[keys[k]]['ba'][j]
+                            elif j == 2:
+                                fieldname = r"$Var_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full']) 
+                                field = field_units**j*(self.dam_moments[keys[k]]['ba'][j] - self.dam_moments[keys[k]]['ba'][1]**2)
+                            field[np.where(prob==0)[0]] = np.nan
+                            field *= 1.0/(prob + 1*(prob == 0))
+                            # Bring within range only if j>=1
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                            # Correct now
+                            field[np.where(field > vmax**j)[0]] = np.nan
+                            field[np.where(field < vmin**j)[0]] = np.nan
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
-                        fsuff = 'castpertime_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                        fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
+                        fsuff = 'cast_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+                        fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
+                        # Now plot divided by time
+                        if j == 1 and keys[k] != 'one':
+                            fieldname = r"$E_x[%s|B\to A]/E_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
+                            field = field/(self.dam_moments['one']['ba'][1])
+                            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                            fsuff = 'castpertime_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+                            fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
+                            plt.close(fig)
                     # x->B
-                    comm_fwd = self.dam_moments[keys[k]]['xb'][0]
-                    comm_bwd = 1.0
-                    if j == 0: 
-                        fieldname = r"$q_B^+(x)$" #r"$P_x\{x\to B\}$"
-                        field = field_units**j*self.dam_moments[keys[k]]['xb'][j] 
-                    else:
-                        prob = comm_bwd*comm_fwd
-                        if j == 1: 
-                            if keys[k] == 'one':
-                                fieldname = r"$\eta^+_B(x)$"
-                            else:
-                                fieldname = r"$E_x[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
-                            field = field_units**j*self.dam_moments[keys[k]]['xb'][j]
-                        elif j == 2:
-                            fieldname = r"$Var_x[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
-                            field = field_units**j*(self.dam_moments[keys[k]]['xb'][j] - self.dam_moments[keys[k]]['xb'][1]**2)
-                        field[np.where(prob==0)[0]] = np.nan
-                        field *= 1.0/(prob + 1*(prob == 0))
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        # Correct now
-                        field[np.where(field > vmax**j)[0]] = np.nan
-                        field[np.where(field < vmin**j)[0]] = np.nan
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                    fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
-                    fsuff = 'cast_%s%d_xb_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                    fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
-                    plt.close(fig)
+                    if phase_flags['xb']:
+                        comm_fwd = self.dam_moments[keys[k]]['xb'][0]
+                        comm_bwd = self.dam_moments[keys[k]]['ax'][0]
+                        if j == 0: 
+                            fieldname = r"$q_B^+(x)$" #r"$P_x\{x\to B\}$"
+                            field = field_units**j*self.dam_moments[keys[k]]['xb'][j] 
+                        else:
+                            prob = comm_fwd
+                            if j == 1: 
+                                if keys[k] == 'one':
+                                    fieldname = r"$\eta^+_B(x)$"
+                                else:
+                                    fieldname = r"$E_x[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                                field = field_units**j*self.dam_moments[keys[k]]['xb'][j]
+                            elif j == 2:
+                                fieldname = r"$Var_x[%s|x\to B]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                                field = field_units**j*(self.dam_moments[keys[k]]['xb'][j] - self.dam_moments[keys[k]]['xb'][1]**2)
+                            field[np.where(prob==0)[0]] = np.nan
+                            field *= 1.0/(prob + 1*(prob == 0))
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                            # Correct now
+                            field[np.where(field > vmax**j)[0]] = np.nan
+                            field[np.where(field < vmin**j)[0]] = np.nan
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fsuff = 'cast_%s%d_xb_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+                        fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
+                        plt.close(fig)
                     # ---------------------------------
                     # x->A
-                    comm_fwd = self.dam_moments[keys[k]]['xa'][0]
-                    comm_bwd = 1.0
-                    if j == 0: 
-                        fieldname = r"$q_A^+(x)$" #r"$P_x\{x\to A\}$"
-                        field = field_units**j*self.dam_moments[keys[k]]['xa'][j] 
-                    else:
-                        prob = comm_bwd*comm_fwd
-                        if j == 1: 
-                            fieldname = r"$E_x[%s|x\to A]$"%(model.dam_dict[keys[k]]['name_fwd']) 
-                            field = field_units**j*self.dam_moments[keys[k]]['xa'][j]
-                        elif j == 2:
-                            fieldname = r"$Var_x[%s|x\to A]$"%(model.dam_dict[keys[k]]['name_fwd']) 
-                            field = field_units**j*(self.dam_moments[keys[k]]['xa'][j] - self.dam_moments[keys[k]]['xa'][1]**2)
-                        field[np.where(prob==0)[0]] = np.nan
-                        field *= 1.0/(prob + 1*(prob == 0))
-                        # Bring within range only if j>=1
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        # Correct now
-                        field[np.where(field > vmax**j)[0]] = np.nan
-                        field[np.where(field < vmin**j)[0]] = np.nan
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                    fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
-                    fsuff = 'cast_%s%d_xa_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                    fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
-                    plt.close(fig)
+                    if phase_flags['xa']:
+                        comm_fwd = self.dam_moments[keys[k]]['xa'][0]
+                        comm_bwd = self.dam_moments[keys[k]]['bx'][0]
+                        if j == 0: 
+                            fieldname = r"$q_A^+(x)$" #r"$P_x\{x\to A\}$"
+                            field = field_units**j*self.dam_moments[keys[k]]['xa'][j] 
+                        else:
+                            prob = comm_fwd
+                            if j == 1: 
+                                fieldname = r"$E_x[%s|x\to A]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                                field = field_units**j*self.dam_moments[keys[k]]['xa'][j]
+                            elif j == 2:
+                                fieldname = r"$Var_x[%s|x\to A]$"%(model.dam_dict[keys[k]]['name_fwd']) 
+                                field = field_units**j*(self.dam_moments[keys[k]]['xa'][j] - self.dam_moments[keys[k]]['xa'][1]**2)
+                            field[np.where(prob==0)[0]] = np.nan
+                            field *= 1.0/(prob + 1*(prob == 0))
+                            # Bring within range only if j>=1
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                            # Correct now
+                            field[np.where(field > vmax**j)[0]] = np.nan
+                            field[np.where(field < vmin**j)[0]] = np.nan
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fsuff = 'cast_%s%d_xa_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+                        fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
+                        plt.close(fig)
                     # --------------------------
                     # B->x
-                    comm_fwd = self.dam_moments[keys[k]]['bx'][0]
-                    comm_bwd = 1.0
-                    if j == 0: 
-                        fieldname = r"$q_B^-(x)$" #r"$P_x\{B\to x\}$"
-                        field = field_units**j*self.dam_moments[keys[k]]['bx'][j] 
-                    else:
-                        prob = comm_bwd*comm_fwd
-                        if j == 1: 
-                            if keys[k] == 'one':
-                                fieldname = r"$\eta_B^-$"
-                            else:
-                                fieldname = r"$E_x[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
-                            field = field_units**j*self.dam_moments[keys[k]]['bx'][j]
-                        elif j == 2:
-                            fieldname = r"$Var_x[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
-                            field = field_units**j*(self.dam_moments[keys[k]]['bx'][j] - self.dam_moments[keys[k]]['bx'][1]**2)
-                        field[np.where(prob==0)[0]] = np.nan
-                        field *= 1.0/(prob + 1*(prob == 0))
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        # Correct now
-                        field[np.where(field > vmax**j)[0]] = np.nan
-                        field[np.where(field < vmin**j)[0]] = np.nan
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                    fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
-                    fsuff = 'cast_%s%d_bx_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                    fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
-                    plt.close(fig)
+                    if phase_flags['bx']:
+                        comm_bwd = self.dam_moments[keys[k]]['bx'][0]
+                        comm_fwd = self.dam_moments[keys[k]]['xa'][0]
+                        if j == 0: 
+                            fieldname = r"$q_B^-(x)$" #r"$P_x\{B\to x\}$"
+                            field = field_units**j*self.dam_moments[keys[k]]['bx'][j] 
+                        else:
+                            prob = comm_bwd
+                            if j == 1: 
+                                if keys[k] == 'one':
+                                    fieldname = r"$\eta_B^-$"
+                                else:
+                                    fieldname = r"$E_x[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
+                                field = field_units**j*self.dam_moments[keys[k]]['bx'][j]
+                            elif j == 2:
+                                fieldname = r"$Var_x[%s|B\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
+                                field = field_units**j*(self.dam_moments[keys[k]]['bx'][j] - self.dam_moments[keys[k]]['bx'][1]**2)
+                            field[np.where(prob==0)[0]] = np.nan
+                            field *= 1.0/(prob + 1*(prob == 0))
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                            # Correct now
+                            field[np.where(field > vmax**j)[0]] = np.nan
+                            field[np.where(field < vmin**j)[0]] = np.nan
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fsuff = 'cast_%s%d_bx_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+                        fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
+                        plt.close(fig)
                     # ---------------------------------
                     # A->x
-                    comm_fwd = self.dam_moments[keys[k]]['ax'][0]
-                    comm_bwd = 1.0
-                    if j == 0: 
-                        fieldname = r"$q_A^-(x)$" #r"$P_x\{A\to x\}$"
-                        field = field_units**j*self.dam_moments[keys[k]]['ax'][j] 
-                    else:
-                        prob = comm_bwd*comm_fwd
-                        if j == 1: 
-                            if keys[k] == 'one':
-                                fieldname = r"$-\eta_A^-$"
-                            else:
-                                fieldname = r"$E_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
-                            field = field_units**j*self.dam_moments[keys[k]]['ax'][j]
-                        elif j == 2:
-                            fieldname = r"$Var_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
-                            field = field_units**j*(self.dam_moments[keys[k]]['ax'][j] - self.dam_moments[keys[k]]['ax'][1]**2)
-                        field[np.where(prob==0)[0]] = np.nan
-                        field *= 1.0/(prob + 1*(prob == 0))
-                        # Bring within range only if j>=1
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        # Correct now
-                        field[np.where(field > vmax**j)[0]] = np.nan
-                        field[np.where(field < vmin**j)[0]] = np.nan
-                        print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                    fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
-                    fsuff = 'cast_%s%d_ax_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                    fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
-                    plt.close(fig)
+                    if phase_flags['ax']:
+                        comm_bwd = self.dam_moments[keys[k]]['ax'][0]
+                        comm_fwd = self.dam_moments[keys[k]]['xb'][0]
+                        if j == 0: 
+                            fieldname = r"$q_A^-(x)$" #r"$P_x\{A\to x\}$"
+                            field = field_units**j*self.dam_moments[keys[k]]['ax'][j] 
+                        else:
+                            prob = comm_bwd
+                            if j == 1: 
+                                if keys[k] == 'one':
+                                    fieldname = r"$-\eta_A^-$"
+                                else:
+                                    fieldname = r"$E_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
+                                field = field_units**j*self.dam_moments[keys[k]]['ax'][j]
+                            elif j == 2:
+                                fieldname = r"$Var_x[%s|A\to x]$"%(model.dam_dict[keys[k]]['name_bwd']) 
+                                field = field_units**j*(self.dam_moments[keys[k]]['ax'][j] - self.dam_moments[keys[k]]['ax'][1]**2)
+                            field[np.where(prob==0)[0]] = np.nan
+                            field *= 1.0/(prob + 1*(prob == 0))
+                            # Bring within range only if j>=1
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                            # Correct now
+                            field[np.where(field > vmax**j)[0]] = np.nan
+                            field[np.where(field < vmin**j)[0]] = np.nan
+                            print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fsuff = 'cast_%s%d_ax_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+                        fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
+                        plt.close(fig)
         return
     def compute_naive_time(self,model,data,theta_fun,theta_name,theta_units,theta_unit_symbol):
         # For a given coordinate, compute the total expected running time to achieve 
@@ -2496,7 +2534,7 @@ class TPT:
             theta_2d_units = np.array([fun0["units"],fun1["units"]])
             theta_2d_unit_symbols = [fun0["unit_symbol"],fun1["unit_symbol"]]
             self.display_change_of_measure_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k])
-            self.display_dam_moments_abba_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k],horz_lines=4)
+            self.display_dam_moments_abba_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k],horz_lines=0)
         return
     def display_change_of_measure_current(self,model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs):
         # Put the equilibrium current on top of the change of measure
@@ -2509,8 +2547,12 @@ class TPT:
         field = np.ones((Nx,Nt))
         fieldname = "Steady-state"
         weight = self.chom
+        # No current 
+        fig,ax = self.plot_field_2d(model,data,field,weight,theta_2d_short,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=False,current_bdy_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,cmap=plt.cm.YlOrBr)
+        fig.savefig(join(self.savefolder,"pij_nocurrent_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # With current
         fig,ax = self.plot_field_2d(model,data,field,weight,theta_2d_short,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,cmap=plt.cm.YlOrBr)
-        #fig.set_tight_layout(True)
         fig.savefig(join(self.savefolder,"pij_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
     def display_change_of_measure_validation(self,model,data,theta_1d_fun,theta_2d_fun,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units):
@@ -3137,6 +3179,7 @@ class TPT:
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
     def plot_transition_states_new(self,model,data):
         # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
+        composite_flag = False
         # ------------------------------ 1. For three committor levels, plot the profile of zonal wind and heat flux. ----------------------------------
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
@@ -3190,14 +3233,15 @@ class TPT:
         # ------------ 2. Plot the evolution of the least action path alongside max-flux path --------
         # Possibility: divide the pathway by committor level, but plot lead time on the horizontal axis. 
         quantiles = 0.01*np.array([5.0,25.0,40.0,50.0,60.0,75.0,95.0])
+        zi = model.q['zi']
         funlib = model.observable_function_library()
-        eps = 0.01
+        eps = 1e-10
         tb = self.dam_moments['one']['xb'][1,:,:]
         tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
         tb[comm_fwd <= eps] == np.nan
-        tb_min,tb_max = 0*np.nanmin(tb),np.nanmax(tb)
+        tb_min,tb_max = np.nanmin(tb)+4.0,np.nanmax(tb)-4.0
         num_levels = 25 # 17 is the default
-        tb_levels = np.linspace(tb_min,tb_max,num_levels)[1:-1]
+        tb_levels = np.linspace(tb_min,tb_max,num_levels) #[1:-1]
         qp_levels = np.linspace(0,1,17)[1:-1]
         tb_qp_corr = np.nanmean((tb - np.nanmean(tb))*(comm_fwd - np.nanmean(comm_fwd)))
         if tb_qp_corr < 0:
@@ -3227,6 +3271,7 @@ class TPT:
                 #tb_levels_real += [np.mean(tb[ridx_ti,tidx])] ##[np.sum(tb[ridx_ti,tidx]*rflux_ti)/np.sum(rflux_ti*(rflux_ti>0))] #[ti]]
                 # Determine height-by-height median
                 U = funlib["U"]["fun"](data.X[ridx_ti,tidx])
+                print(f"Uzi: min={U[:,zi].min()}, max={U[:,zi].max()}")
                 Uq = np.zeros((len(quantiles),U.shape[1]))
                 for j in range(U.shape[1]):
                     order = np.argsort(U[:,j])
@@ -3275,13 +3320,14 @@ class TPT:
             ax[0,1].fill_between(-levels_interp,Uzi_quant_interp[qi]*funlib["U"]["units"],Uzi_quant_interp[len(quantiles)-1-qi]*funlib["U"]["units"],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
         ax[0,1].plot(-levels_interp,Uzi_quant_interp[med_qi]*funlib["U"]["units"],color='black',zorder=med_qi)
         ax[0,1].scatter(-tb_levels_real,Uprof_quants[:,med_qi,zi]*funlib["U"]["units"],color='black',marker='o',zorder=med_qi)
-        # Add composite 
-        composite_time = np.load(join(self.savefolder,"composite_time.npy"))
-        composite_Uzi = np.load(join(self.savefolder,"composite_Uref.npy"))
-        #ax[0,1].plot(composite_time,np.mean(composite_Uzi,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
-        ax[0,1].plot(composite_time,np.quantile(composite_Uzi,0.5,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
-        #ax[0,0].plot(composite_time,np.mean(composite_Uzi,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
-        ax[0,0].plot(composite_time,np.quantile(composite_Uzi,0.5,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
+        if composite_flag:
+            # Add composite 
+            composite_time = np.load(join(self.savefolder,"composite_time.npy"))
+            composite_Uzi = np.load(join(self.savefolder,"composite_Uref.npy"))
+            #ax[0,1].plot(composite_time,np.mean(composite_Uzi,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
+            ax[0,1].plot(composite_time,np.quantile(composite_Uzi,0.5,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
+            #ax[0,0].plot(composite_time,np.mean(composite_Uzi,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
+            ax[0,0].plot(composite_time,np.quantile(composite_Uzi,0.5,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
         Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
         print("Uzi_b*units = {}".format(Uzi_b*funlib["U"]["units"]))
         ax[0,1].axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
