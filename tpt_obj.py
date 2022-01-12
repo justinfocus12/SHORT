@@ -1569,33 +1569,17 @@ class TPT:
             plt.close(fig)
             # Now with current, but without samples or least-action path
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            if horz_lines > 0:
-                print("---------------Drawing in some horizontal lines for flux distributions")
-                # Draw in lines for reactive flux densities
-                nnidx = np.where(np.isnan(field) == 0)[0]
-                th1_min,th1_max = thmin[1],thmax[1]
-                dramp = (th1_max - th1_min)/horz_lines
-                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
-                for i_th in range(len(th_levels)):
-                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
             fig.savefig(join(self.savefolder,"jab_rdens_noobs_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Now with current, and samples, but no least-action path
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            if horz_lines > 0:
-                print("---------------Drawing in some horizontal lines for flux distributions")
-                # Draw in lines for reactive flux densities
-                nnidx = np.where(np.isnan(field) == 0)[0]
-                th1_min,th1_max = thmin[1],thmax[1]
-                dramp = (th1_max - th1_min)/horz_lines
-                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
-                for i_th in range(len(th_levels)):
-                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
             fig.savefig(join(self.savefolder,"jab_rdens_nofw_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Now with current and least-action path
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            fig.savefig(join(self.savefolder,"jab_rdens_nohorz_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # Now with current and least-action path and horizontal lines
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
@@ -2534,7 +2518,7 @@ class TPT:
             theta_2d_units = np.array([fun0["units"],fun1["units"]])
             theta_2d_unit_symbols = [fun0["unit_symbol"],fun1["unit_symbol"]]
             self.display_change_of_measure_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k])
-            self.display_dam_moments_abba_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k],horz_lines=0)
+            self.display_dam_moments_abba_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k],horz_lines=4)
         return
     def display_change_of_measure_current(self,model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs):
         # Put the equilibrium current on top of the change of measure
@@ -3561,7 +3545,7 @@ class TPT:
             func_name = funlib[func_abbrv]["name"]
             func_units = funlib[func_abbrv]["units"]
             func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-            fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
+            fig,ax = self.plot_flux_distributions_1d_compact(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
             fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
             print("Just saved a flux dist fig")
             plt.close(fig)
@@ -3691,6 +3675,63 @@ class TPT:
         #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
         #plt.close(fig)
         return
+    def plot_flux_distributions_1d_compact(self,model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=5,frac_of_max=0.0,fig=None,ax=None,clim=None):
+        # At each level set of ramp, plot a distribution of flux density across the other variable func. (Will later extend to 2d). 
+        # The observable should be correlated with the committor...
+        # Add a second curve, dotted, for A->A phase
+
+        max_num_states = None
+        comm_fwd = self.dam_moments['one']['xb'][0,:,:]
+        comm_bwd = self.dam_moments['one']['ax'][0,:,:]
+        eps = 1e-6
+        interior_idx = np.where((comm_fwd > eps)*(comm_fwd < 1-eps))
+        ramp_min = np.nanmin(ramp[interior_idx])
+        ramp_max = np.nanmax(ramp[interior_idx])
+        func_min = np.nanmin(func[interior_idx])
+        func_max = np.nanmax(func[interior_idx])
+        print("ramp_min = {}, ramp_max = {}".format(ramp_min,ramp_max))
+        ramp_comm_corr = np.nanmean((ramp - np.nanmean(ramp))*(comm_fwd - np.nanmean(comm_fwd)))
+        print("ramp_comm_corr = {}".format(ramp_comm_corr))
+        dramp = (ramp_max - ramp_min)/num_levels
+        ramp_levels = np.linspace(ramp_min+0.5*dramp,ramp_max-0.5*dramp,num_levels)
+        if ramp_comm_corr < 0:
+            ramp_levels = ramp_levels[::-1]
+        ramp_tol = np.min(np.abs(np.diff(ramp_levels)))/4
+        print("ramp_levels = {}".format(ramp_levels))
+        weight = self.chom
+        Nx,Nt,xdim = data.X.shape
+        if fig is None or ax is None:
+            fig,ax = plt.subplots(nrows=2,figsize=(6,12),sharey=False,sharex=True)
+        num_bins = 15
+        ax[0].set_title(r"$A\to B$",fontdict=font)
+        ax[1].set_title(r"$B\to A$",fontdict=font)
+        #ax[2].set_title(r"$A\to A$",fontdict=font)
+        #ax[3].set_title(r"$B\to B$",fontdict=font)
+        dirn_list = ['ab','ba','aa','bb'][:2]
+        # Make a list with the signs and offsets
+        # Normalize by rate
+        rate = self.dam_moments['one']['rate_avg'][0]
+        print(f"rate = {rate}")
+        for di in range(2): #ab,ba,aa,bb
+            handles = []
+            ax[di].axhline(0,color='black')
+            ax[di].set_ylabel(r"Flux density [(%s)$^{-1}\cdot$days$^{-1}$]"%(func_unit_symbol))
+            for ri in range(len(ramp_levels)):
+                comm_fwd_di = comm_fwd*(dirn_list[di].endswith('b')) + (1-comm_fwd)*(dirn_list[di].endswith('a'))
+                comm_bwd_di = comm_bwd*(dirn_list[di].startswith('a')) + (1-comm_bwd)*(dirn_list[di].startswith('b'))
+                ridx,rflux,_ = self.maximize_rflux_on_surface(model,data,ramp.reshape((Nx,Nt,1)),comm_bwd_di,comm_fwd_di,weight,ramp_levels[ri],ramp_tol,max_num_states,frac_of_max)
+                tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
+                hist,bin_edges = np.histogram(func[ridx,tidx],weights=rflux,density=False, range=(func_min,func_max), bins=num_bins)
+                rate_di = np.nansum(hist*np.diff(bin_edges)) * np.sign(ramp_comm_corr)
+                normalizer = np.abs(rate/rate_di)
+                bin_centers = (bin_edges[1:] + bin_edges[:-1])/2
+                color_frac=(ramp_levels[ri]-ramp_min)/(ramp_max-ramp_min)
+                if ramp_comm_corr < 0: color_frac = 1-color_frac
+                h, = ax[di].plot(bin_centers*func_units,hist*normalizer,color=plt.cm.coolwarm(color_frac),marker='o',label=r"%s$=$%.1f %s"%(ramp_name,ramp_levels[ri],ramp_unit_symbol),linestyle='-',linewidth=2.5)
+                handles += [h]
+        ax[0].legend(handles=handles,loc='lower right')
+        ax[-1].set_xlabel("%s [%s]"%(func_name,func_unit_symbol), fontdict=medfont)
+        return fig,ax
     def plot_flux_distributions_1d(self,model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=5,frac_of_max=0.0,fig=None,ax=None,clim=None):
         # At each level set of ramp, plot a distribution of flux density across the other variable func. (Will later extend to 2d). 
         # The observable should be correlated with the committor...
