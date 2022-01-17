@@ -481,10 +481,10 @@ class TPT:
         #ax[1].tick_params(axis='y',labelsize=40)
         #fig.savefig(join(self.savefolder,"{}_ensemble_ab".format(field_abb)))
         return fig,ax
-    def plot_field_long(self,model,data,field,fieldname,field_abb,field_fun=None,units=1.0,tmax=70,field_unit_symbol=None,time_unit_symbol=None,phases=['aa','ab','ba','bb']):
+    def plot_field_long(self,model,data,field,fieldname,field_abb,field_fun=None,units=1.0,tmax=70,field_unit_symbol=None,time_unit_symbol=None,phases=['aa','ab','ba','bb'],density_1d_flag=True):
         print("Beginning plot field long")
         t_long,x_long = model.load_long_traj(self.long_simfolder)
-        self.display_1d_densities_emp(model,data,[field_abb],'vertial',phases=phases,save_flag=True)
+        #self.display_1d_densities_emp(model,data,[field_abb],'vertial',phases=phases,save_flag=True)
         tmax = min(tmax,t_long[-1])
         ab_reactive_flag = 1.0*(self.long_from_label==-1)*(self.long_to_label==1)
         ba_reactive_flag = 1.0*(self.long_from_label==1)*(self.long_to_label==-1)
@@ -508,7 +508,10 @@ class TPT:
         tsubset = np.linspace(0,timax-1,min(timax,5000)).astype(int)
         if field_fun is None:
             field_long = self.out_of_sample_extension(field,data,x_long[tsubset])
-            ab_long = self.out_of_sample_extension(field,data,model.tpt_obs_xst)
+            if field_abb == 'qp':
+                ab_long = np.array([0,1])
+            else:
+                ab_long = self.out_of_sample_extension(field,data,model.tpt_obs_xst)
         else:
             field_long = field_fun(x_long[tsubset]).flatten()
             ab_long = field_fun(model.tpt_obs_xst).flatten()
@@ -540,10 +543,11 @@ class TPT:
         ax[0].tick_params(axis='both',labelsize=25)
         #ax.yaxis.set_major_locator(ticker.NullLocator())
         # Now plot the densities in y
-        self.display_1d_densities(model,data,[field_abb],'vertical',fig=fig,ax=ax[1],phases=phases)
-        ax[1].yaxis.set_visible(False)
-        ax[1].set_xlabel("Probability density",fontdict=bigfont)
-        ax[1].tick_params(axis='both',labelsize=25)
+        if density_1d_flag:
+            self.display_1d_densities(model,data,[field_abb],'vertical',fig=fig,ax=ax[1],phases=phases)
+            ax[1].yaxis.set_visible(False)
+            ax[1].set_xlabel("Probability density",fontdict=bigfont)
+            ax[1].tick_params(axis='both',labelsize=25)
         fig.savefig(join(self.savefolder,"{}_long".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         print("Done plotting field long")
@@ -1563,22 +1567,22 @@ class TPT:
             fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
             field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            # First no current
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=False,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"jab_rdens_nocurrent_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # Now with current, but without samples or least-action path
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"jab_rdens_noobs_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # Now with current, and samples, but no least-action path
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"jab_rdens_nofw_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # Now with current and least-action path
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            fig.savefig(join(self.savefolder,"jab_rdens_nohorz_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
+            ## First no current
+            #fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=False,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            #fig.savefig(join(self.savefolder,"jab_rdens_nocurrent_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            #plt.close(fig)
+            ## Now with current, but without samples or least-action path
+            #fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            #fig.savefig(join(self.savefolder,"jab_rdens_noobs_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            #plt.close(fig)
+            ## Now with current, and samples, but no least-action path
+            #fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            #fig.savefig(join(self.savefolder,"jab_rdens_nofw_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            #plt.close(fig)
+            ## Now with current and least-action path
+            #fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            #fig.savefig(join(self.savefolder,"jab_rdens_nohorz_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+            #plt.close(fig)
             # Now with current and least-action path and horizontal lines
             fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
             if horz_lines > 0:
@@ -2518,7 +2522,7 @@ class TPT:
             theta_2d_units = np.array([fun0["units"],fun1["units"]])
             theta_2d_unit_symbols = [fun0["unit_symbol"],fun1["unit_symbol"]]
             self.display_change_of_measure_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k])
-            self.display_dam_moments_abba_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k],horz_lines=4)
+            self.display_dam_moments_abba_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs[k],horz_lines=0)
         return
     def display_change_of_measure_current(self,model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs):
         # Put the equilibrium current on top of the change of measure
@@ -2921,13 +2925,13 @@ class TPT:
         xwy = (X.T*weights[idx]).dot(x1[idx])
         coeffs = np.linalg.solve(xwx,xwy)
         return coeffs
-    def out_of_sample_extension(self,field,data,xnew):
+    def out_of_sample_extension(self,field,data,xnew,ss_size=100000):
         # For a new sample (such as a long trajectory), extend the field to the new ones just by nearest-neighbor averaging
         k = 15
         np.random.seed(0)
         good_idx = np.where(np.isnan(field)==0)[0]
         #ss = np.random.choice(np.arange(self.nshort),size=min(self.nshort,100000),replace=False)
-        ss = np.random.choice(good_idx,size=min(len(good_idx),100000),replace=False)
+        ss = np.random.choice(good_idx,size=min(len(good_idx),ss_size),replace=False)
         Xsq = np.sum(data.X[ss,0]**2,1)
         dsq = np.add.outer(Xsq,np.sum(xnew**2,1)) - 2*data.X[ss,0].dot(xnew.T)
         knn = np.argpartition(dsq,k+1,axis=0)
@@ -3163,7 +3167,7 @@ class TPT:
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
     def plot_transition_states_new(self,model,data):
         # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
-        composite_flag = False
+        composite_flag = True 
         # ------------------------------ 1. For three committor levels, plot the profile of zonal wind and heat flux. ----------------------------------
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
@@ -3201,7 +3205,7 @@ class TPT:
             min(1, max(0, qp_levels[i]-qp_tol_list[i])),
             min(1, max(0, qp_levels[i]+qp_tol_list[i])))
             for i in range(len(qp_levels))]
-        prof_key_list = ["U","vT","wvT"]
+        prof_key_list = ["U","vT","dqdy","q2"]
         rflux = []
         rflux_idx = []
         for qi in range(len(qp_levels)):
@@ -3223,15 +3227,23 @@ class TPT:
         tb = self.dam_moments['one']['xb'][1,:,:]
         tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
         tb[comm_fwd <= eps] == np.nan
-        tb_min,tb_max = np.nanmin(tb)+4.0,np.nanmax(tb)-4.0
+        tb_min,tb_max = np.nanmin(tb),np.nanmax(tb)
         num_levels = 25 # 17 is the default
-        tb_levels = np.linspace(tb_min,tb_max,num_levels) #[1:-1]
+        tbflat = tb.flatten()
+        tbflat = tbflat[np.isnan(tbflat)==0]
+        tbflat = tbflat[(tbflat>tb_min)*(tbflat<tb_max)]
+        tb_edges = np.nanquantile(tbflat, np.linspace(0,1,num_levels+1))
+        tb_levels = (tb_edges[:-1] + tb_edges[1:])/2
+        tb_tol_list = (tb_edges[1:] - tb_edges[:-1])/1.0
+        #tb_tol_list[0] = min(tb_tol_list[0], 0.99*(tb_levels[0] - tb_min))
+        #tb_tol_list[-1] = min(tb_tol_list[-1], 0.99*(tb_max - tb_levels[-1]))
+        #tb_levels = np.linspace(tb_min,tb_max,num_levels) #[1:-1]
         qp_levels = np.linspace(0,1,17)[1:-1]
         tb_qp_corr = np.nanmean((tb - np.nanmean(tb))*(comm_fwd - np.nanmean(comm_fwd)))
         if tb_qp_corr < 0:
             tb_levels = tb_levels[::-1]
         print("tb_levels = {}".format(tb_levels))
-        tb_tol = np.abs(tb_levels[1]-tb_levels[0])/2.0
+        #tb_tol = np.abs(tb_levels[1]-tb_levels[0])/2.0
         qp_tol = np.abs(qp_levels[1] - qp_levels[0])/2.0
         print("tb_qp_corr = ", tb_qp_corr)
         rflux = []
@@ -3239,10 +3251,12 @@ class TPT:
         Uprof_quants = []
         vTprof_quants = []
         vTintref_quants = []
+        qp_quants = [] # Plot the committor as a function of lead time here
         tb_levels_real = []
         ramp = tb.reshape((Nx,Nt,1))*np.sign(tb_qp_corr)
         #ramp = comm_fwd.reshape((Nx,Nt,1)) #* np.sign(tb_qp_corr)
         for ti in range(len(tb_levels)):
+            tb_tol = tb_tol_list[ti]
             print("tb_levels[ti] * np.sign(tb_qp_corr) = {}".format(tb_levels[ti]*np.sign(tb_qp_corr)))
             ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,tb_levels[ti]*np.sign(tb_qp_corr),tb_tol,None,0.0)
             #ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[ti],qp_tol,None,0.0)
@@ -3281,12 +3295,22 @@ class TPT:
                     quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
                     vTirq[qi] = vTintref[order[quant_idx]]
                 vTintref_quants += [vTirq]
+                qp_ti = comm_fwd[ridx_ti,tidx]
+                qp_ti_q = np.zeros(len(quantiles))
+                order = np.argsort(qp_ti)
+                cdf = np.cumsum(qp_ti[order])
+                for qi in range(len(quantiles)):
+                    quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
+                    qp_ti_q[qi] = qp_ti[order[quant_idx]]
+                qp_quants += [qp_ti_q]
         tb_levels_real = np.array(tb_levels_real)
         print("len(tb_levels_real) = {}".format(len(tb_levels_real)))
+        print(f"tb_levels_real = {tb_levels_real}")
         # Now create two figures: one for zonal wind, and one for heat flux / vTint
         Uprof_quants = np.array(Uprof_quants)
         vTprof_quants = np.array(vTprof_quants)
         vTintref_quants = np.array(vTintref_quants)
+        qp_quants = np.array(qp_quants)
         # ----------- Zonal wind --------------
         fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex=True)
         # Least action path in upper left
@@ -3304,6 +3328,7 @@ class TPT:
             ax[0,1].fill_between(-levels_interp,Uzi_quant_interp[qi]*funlib["U"]["units"],Uzi_quant_interp[len(quantiles)-1-qi]*funlib["U"]["units"],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
         ax[0,1].plot(-levels_interp,Uzi_quant_interp[med_qi]*funlib["U"]["units"],color='black',zorder=med_qi)
         ax[0,1].scatter(-tb_levels_real,Uprof_quants[:,med_qi,zi]*funlib["U"]["units"],color='black',marker='o',zorder=med_qi)
+        print(f"black dots: {Uprof_quants[:,med_qi,zi]}")
         if composite_flag:
             # Add composite 
             composite_time = np.load(join(self.savefolder,"composite_time.npy"))
@@ -3393,6 +3418,57 @@ class TPT:
         #for i in range(3):
         #    ax[i,1].set_xlim(ax[i,0].get_xlim())
         fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_vT"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # ----------- Committor --------------
+        fig,ax = plt.subplots(ncols=2,figsize=(16,6),sharey='row',sharex=True)
+        xlap = load(join(self.physical_param_folder,"xmin_dirn1.npy"))
+        tlap = load(join(self.physical_param_folder,"tmin_dirn1.npy"))
+        adist_lap = model.adist(xlap)
+        bdist_lap = model.bdist(xlap)
+        tlap_idx0 = np.where((adist_lap>0)*(bdist_lap>0))[0][0]
+        if np.min(bdist_lap) <= 0:
+            tlap_idx1 = np.where(bdist_lap<=0)[0][0]
+        else:
+            tlap_idx1 = np.where((adist_lap>0)*(bdist_lap>0))[0][-1]
+        print(f"tlap_idx0 = {tlap_idx0}, tlap_idx1 = {tlap_idx1}")
+        tlap = tlap[tlap_idx0:tlap_idx1+1]
+        xlap = xlap[tlap_idx0:tlap_idx1+1]
+        tlap -= tlap[-1]
+        # Least action path in upper left
+        comm_fwd_lap = self.out_of_sample_extension(comm_fwd[:,0],data,xlap,ss_size=1000)
+        print(f"comm_fwd_lap: first={comm_fwd_lap[0]}, last={comm_fwd_lap[-1]}. . tlap: first={tlap[0]}, last={tlap[-1]}")
+        ax[0].plot(tlap,comm_fwd_lap,color='black',linewidth=2)
+        ax[0].set_xlabel(r"$-\eta_B^+$",fontdict=ffont)
+        ax[0].set_ylabel(r"$q_B^+$",fontdict=ffont)
+        ax[0].set_title(r"Minimum-action path ($A\to B$)",fontdict=ffont)
+        ax[1].set_xlim(ax[0].get_xlim())
+        # Max-probability path in right
+        levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
+        qp_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
+        for qi in range(len(quantiles)):
+            qp_quant_interp[qi] = scipy.interpolate.interp1d(tb_levels_real,qp_quants[:,qi],kind='cubic')(levels_interp)
+        med_qi = len(quantiles)//2
+        for qi in range(med_qi): # Assume an odd number with the middle is 50%
+            ax[1].fill_between(-levels_interp,qp_quant_interp[qi],qp_quant_interp[len(quantiles)-1-qi],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
+        ax[1].plot(-levels_interp,qp_quant_interp[med_qi],color='black',zorder=med_qi)
+        ax[1].scatter(-tb_levels_real,qp_quants[:,med_qi],color='black',marker='o',zorder=med_qi)
+        ax[1].set_xlabel(r"$-\eta_B^+$",fontdict=ffont)
+        print(f"black dots: {qp_quants[:,med_qi]}")
+        if composite_flag:
+            # Add composite 
+            composite_time = np.load(join(self.savefolder,"composite_time.npy"))
+            composite_qp = np.load(join(self.savefolder,"composite_qp.npy"))
+            ax[1].plot(composite_time,np.quantile(composite_qp,0.5,axis=0),color='black',linewidth=2,linestyle='--')
+            ax[0].plot(composite_time,np.quantile(composite_qp,0.5,axis=0),color='black',linewidth=2,linestyle='--')
+        qp_a,qp_b = 0.0,1.0
+        ax[1].axhline(y=0,color='skyblue',linewidth=3)
+        ax[1].axhline(y=1,color='red',linewidth=3)
+        ax[0].axhline(y=0,color='skyblue',linewidth=3)
+        ax[0].axhline(y=1,color='red',linewidth=3)
+        ax[1].set_title(r"Path distribution $q_B^+$ ($A\to B$)",fontdict=ffont)
+        print("hline y = {}".format(Uzi_b*funlib["U"]["units"]))
+        ax[1].yaxis.set_visible(False)
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_qp"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         return
     def plot_transition_states_all(self,model,data,collect_flag=True):

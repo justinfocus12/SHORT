@@ -207,10 +207,16 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
     yerr[1,1,:] = [timefrac_dga[phase].max()-timefrac_dga[phase].mean() for phase in phase_list]
     fig,ax = plt.subplots()
     df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=yerr,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
+    #ax.yaxis.set_minor_locator(ticker.LogLocator(base=10.0,subs=[0.8,1.0,1.2,1.4,1.6]))
     ax.set_title("Phase durations")
     ax.set_ylabel(r"Time fraction")
     ax.set_xlabel("")
     fig.savefig(join(savefolder,"lifecycle_bar"),bbox_inches="tight",pad_inches=0.2)
+    ax.set_yscale('log')
+    ticks = [0.025,0.05,0.1,0.2,0.4]
+    ticklabels = [str(tick) for tick in ticks]
+    ax.set_yticks(ticks)
+    fig.savefig(join(savefolder,"lifecycle_bar_log"),bbox_inches="tight",pad_inches=0.2)
     plt.close(fig)
     return
 

@@ -945,7 +945,7 @@ class HoltonMassModel(Model):
                 {"fun": lambda X: self.background_pv_gradient(X)[:,q['zi']],
                  "name": r"$\partial_y\overline{q} (%.0f km)$"%self.ref_alt,
                  "units": 1.0/(q['length']*q['time']),
-                 "unit_symbol": r"$m^{-1}s^{-1}$",
+                 "unit_symbol": r"m$^{-1}$s$^{-1}$",
                  },
                 "epflux_z":
                 {"fun": lambda X: self.epflux_z(X),

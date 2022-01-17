@@ -53,8 +53,8 @@ regression_flag =       0
 proj_1d_flag =          0
 demo_flag =             0
 qp_tb_coords_flag =     0
-trans_state_flag =      0
-flux_dist_flag =        1
+trans_state_flag =      1
+flux_dist_flag =        0
 plot_long_2d_flag =     0
 lifecycle_flag =        0
 display_cast_flag =     0
@@ -162,7 +162,7 @@ if plot_long_2d_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["vTintref","Uref"]] #,["vTint21p5","U21p5"]] #,["magref","Uref"]]
+    theta_2d_abbs = [["dqdyref","Uref"],["vTintref","dqdyref"],["vTintref","Uref"],] #,["vTint21p5","U21p5"]] #,["magref","Uref"]]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:
@@ -186,14 +186,16 @@ if gen_rates_flag:
 
 # ----------- Plot long trajectory in 1d ---------------
 if plot_long_1d_flag:
-    field_fun = funlib["vTintref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"vTintref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["vTref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"vTref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["Uref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"Uref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["magref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"magref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field = tpt.dam_moments['one']['xb'][0,:,0]
+    tpt.plot_field_long(model,data,field,r"$q_B^+$","qp",field_fun=None,units=1.0,tmax=3000,time_unit_symbol="days",field_unit_symbol=None,density_1d_flag=False)
+    #field_fun = funlib["vTintref"]
+    #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"vTintref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    #field_fun = funlib["vTref"]
+    #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"vTref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    #field_fun = funlib["Uref"]
+    #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"Uref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    #field_fun = funlib["magref"]
+    #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"magref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
 # ------------------------------------------------------
 
 # ---------- Plot dominant transition states-----------
