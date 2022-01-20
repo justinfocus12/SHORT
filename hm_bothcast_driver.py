@@ -53,14 +53,14 @@ regression_flag =       0
 proj_1d_flag =          0
 demo_flag =             0
 qp_tb_coords_flag =     0
-trans_state_flag =      1
+trans_state_flag =      0
 flux_dist_flag =        0
 plot_long_2d_flag =     0
 lifecycle_flag =        0
 display_cast_flag =     0
 display_current_flag =  0
 gen_rates_flag =        0
-plot_long_1d_flag =     0
+plot_long_1d_flag =     1
 validation_flag =       0
 # ---------------------------------------
 
@@ -188,12 +188,12 @@ if gen_rates_flag:
 if plot_long_1d_flag:
     field = tpt.dam_moments['one']['xb'][0,:,0]
     tpt.plot_field_long(model,data,field,r"$q_B^+$","qp",field_fun=None,units=1.0,tmax=3000,time_unit_symbol="days",field_unit_symbol=None,density_1d_flag=False)
+    field_fun = funlib["Uref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"Uref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     #field_fun = funlib["vTintref"]
     #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"vTintref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     #field_fun = funlib["vTref"]
     #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"vTref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    #field_fun = funlib["Uref"]
-    #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"Uref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     #field_fun = funlib["magref"]
     #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"magref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
 # ------------------------------------------------------

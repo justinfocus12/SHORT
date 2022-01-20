@@ -501,6 +501,7 @@ class TPT:
             if ab_starts[-1] > ab_ends[-1]: ab_starts = ab_starts[:-1]
             if ba_starts[0] > ba_ends[0]: ba_ends = ba_ends[1:]
             if ba_starts[-1] > ba_ends[-1]: ba_starts = ba_starts[:-1]
+        print(f"num_trans = {len(ab_starts)}")
         # Plot, marking transitions
         tmax = min(t_long[-1],tmax)
         # Interpolate field
@@ -554,8 +555,10 @@ class TPT:
         # ------------ Next: plot only some transitions on their own plot --------------
         quantiles = np.array([0.05,0.25,0.4,0.5])
         if any_trans:
+            avg_prea_flag = False
             fig,ax = plt.subplots(ncols=1,nrows=2,figsize=(6,12),sharex=True,sharey=True)
             num_trans = min(100,len(ab_starts))
+            print(f"num_trans = {num_trans}")
             trans_colors = ['red','cyan','black']
             num_colored_trans = len(trans_colors)
             # Select them from across the distribution of transit times
@@ -570,14 +573,16 @@ class TPT:
             print("max_duration = {}".format(max_duration))
             field_trans_composite = np.zeros((num_trans,max_duration))
             for i in range(num_trans):
+                if i % 10 == 0: print(f"Plotting transition {i} out of {num_trans}")
                 k0,k1 = ab_starts[i],ab_ends[i]
-                k0_gray = k1 - max_duration # Get all the beginnings lined up
+                k0_padded = k1 - max_duration # Get all the beginnings lined up
                 if field_fun is None:
-                    field_trans = self.out_of_sample_extension(field,data,x_long[k0_gray:k1])
+                    field_trans = self.out_of_sample_extension(field,data,x_long[k0_padded:k1],k=15)
                 else:
-                    field_trans = field_fun(x_long[k0_gray:k1]).flatten()
-                print("field_trans.shape = {}".format(field_trans.shape))
-                ax[0].plot(t_long[k0_gray:k1]-t_long[k1],field_trans*units,color='gray',alpha=0.25,linewidth=1,zorder=-1)
+                    field_trans = field_fun(x_long[k0_padded:k1]).flatten()
+                if (not avg_prea_flag) and (k0 > k0_padded):
+                    field_trans[:(k0-k0_padded)] = np.nan
+                ax[0].plot(t_long[k0_padded:k1]-t_long[k1],field_trans*units,color='gray',alpha=0.25,linewidth=1,zorder=-1)
                 if i in colored_idx:
                     color = trans_colors[np.where(colored_idx==i)[0][0]]
                     alpha = 1.0
@@ -600,9 +605,9 @@ class TPT:
                 #field_trans_composite[i] = field_trans[:k1-k0+pad]
             # Plot the quantiles
             for qi in range(len(quantiles)):
-                lower = np.quantile(field_trans_composite, quantiles[qi], axis=0)
+                lower = np.nanquantile(field_trans_composite, quantiles[qi], axis=0)
                 if qi < len(quantiles)-1:
-                    upper = np.quantile(field_trans_composite, 1-quantiles[qi], axis=0)
+                    upper = np.nanquantile(field_trans_composite, 1-quantiles[qi], axis=0)
                     ax[1].fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
                 else:
                     ax[1].plot(t_long[:max_duration]-t_long[max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
@@ -618,7 +623,7 @@ class TPT:
                 ax[i].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
             if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
             ax[1].set_xlabel(xlab,fontdict=font)
-            fig.savefig(join(self.savefolder,"transitory_{}".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
+            fig.savefig(join(self.savefolder,"transitory_{}_nt{}".format(field_abb,num_trans)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Save the composite in order to use later for comparison with the TPT composite
             np.save(join(self.savefolder,"composite_{}".format(field_abb)),field_trans_composite)
@@ -2925,13 +2930,12 @@ class TPT:
         xwy = (X.T*weights[idx]).dot(x1[idx])
         coeffs = np.linalg.solve(xwx,xwy)
         return coeffs
-    def out_of_sample_extension(self,field,data,xnew,ss_size=100000):
+    def out_of_sample_extension(self,field,data,xnew,ss_size=100000,k=15):
         # For a new sample (such as a long trajectory), extend the field to the new ones just by nearest-neighbor averaging
-        k = 15
-        np.random.seed(0)
+        prng = np.random.RandomState(0)
         good_idx = np.where(np.isnan(field)==0)[0]
         #ss = np.random.choice(np.arange(self.nshort),size=min(self.nshort,100000),replace=False)
-        ss = np.random.choice(good_idx,size=min(len(good_idx),ss_size),replace=False)
+        ss = prng.choice(good_idx,size=min(len(good_idx),ss_size),replace=False)
         Xsq = np.sum(data.X[ss,0]**2,1)
         dsq = np.add.outer(Xsq,np.sum(xnew**2,1)) - 2*data.X[ss,0].dot(xnew.T)
         knn = np.argpartition(dsq,k+1,axis=0)
@@ -3229,8 +3233,8 @@ class TPT:
         xlap = xlap[tlap_idx0:tlap_idx1+1]
         tlap -= tlap[-1]
         # Subsample
-        xlap = xlap[np.linspace(0,len(xlap)-1,20).astype(int)]
-        tlap = tlap[np.linspace(0,len(tlap)-1,20).astype(int)]
+        xlap = xlap[np.linspace(0,len(xlap)-1,100).astype(int)]
+        tlap = tlap[np.linspace(0,len(tlap)-1,100).astype(int)]
         # Interpolate the field onto the least-action path
         if field_fun is None:
             f_lap = self.out_of_sample_extension(field[:,0],data,xlap)
@@ -3313,6 +3317,7 @@ class TPT:
             fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
             fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
+        # ---------------------- 2. Plot scalar path distributions ----------------
         # Now plot a few ramps
         eps = 1e-10
         tb = self.dam_moments['one']['xb'][1,:,:]
@@ -3331,39 +3336,35 @@ class TPT:
         qpramp_levels = np.linspace(qpramp_min,qpramp_max,15)
         qpramp_tol_list = np.zeros(len(qpramp_levels))
         qpramp_tol_list[:-1] = (qpramp_levels[1:] - qpramp_levels[:-1])/2
-        qpramp_tol_list[-1] = (qpramp_levels[-1] - qpramp_levels[-2])/10
+        qpramp_tol_list[-1] = (qpramp_levels[-1] - qpramp_levels[-2])/15
         #ramp_levels[-1] = (ramp_levels[-1] + ramp_levels[-2])/2
-        # Plot vs. lead time
-        fig,ax = plt.subplots(nrows=3,figsize=(8,18),sharex=True)
+        # Plot committor and lead time against each other
+        fig,ax = plt.subplots(ncols=2,figsize=(16,6))
         # committor vs. lead time
         _,_ = self.plot_median_flux_and_lap(model,data,tbramp,qpramp,field_fun=None,field_units=1.0,ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0])
         ax[0].set_ylabel(r"$q^+_B$",fontdict=ffont)
+        ax[0].set_xlabel(r"$-\eta^+_B$",fontdict=ffont)
+        # lead time vs. committor
+        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1])
+        ax[1].set_ylabel(r"$\eta_B^+$ [days]",fontdict=ffont)
+        ax[1].set_xlabel(r"$q^+_B$",fontdict=ffont)
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_qptb"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Plot vs. lead time
+        fig,ax = plt.subplots(nrows=2,ncols=2,figsize=(16,12),sharex='col',sharey='row')
         # Uref vs. lead time 
         field = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        _,_  = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1])
-        ax[1].set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
+        _,_  = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0,0])
+        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0,1])
+        ax[0,0].set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
         # vTntref vs. lead time 
         field = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        _,_ = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[2])
-        ax[2].set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
-        ax[2].set_xlabel(r"$-\eta^+_B$ [days]",fontdict=ffont)
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_all_vs_tb"),bbox_inches='tight',pad_inches=0.2)
-        plt.close(fig)
-        # Plot vs. committor
-        fig,ax = plt.subplots(nrows=3,sharex=True,figsize=(8,18))
-        # lead time vs. committor
-        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
-        ax[0].set_ylabel(r"$\eta_B^+$ [days]",fontdict=ffont)
-        # Uref vs. committor
-        field = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1])
-        ax[1].set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
-        # vTntref vs. committor
-        field = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[2])
-        ax[2].set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
-        ax[2].set_xlabel(r"$q^+_B$",fontdict=ffont)
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_all_vs_qp"),bbox_inches='tight',pad_inches=0.2)
+        _,_ = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1,0])
+        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1,1])
+        ax[1,0].set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
+        ax[1,0].set_xlabel(r"$-\eta^+_B$ [days]",fontdict=ffont)
+        ax[1,1].set_xlabel(r"$q^+_B$",fontdict=ffont)
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_all_vs_qptb"),bbox_inches='tight',pad_inches=0.2)
         plt.close(fig)
         if False:
             # U67 vs. committor
