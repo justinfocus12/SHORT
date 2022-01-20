@@ -216,6 +216,7 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
     ticks = [0.025,0.05,0.1,0.2,0.4]
     ticklabels = [str(tick) for tick in ticks]
     ax.set_yticks(ticks)
+    ax.set_yticklabels(ticklabels)
     fig.savefig(join(savefolder,"lifecycle_bar_log"),bbox_inches="tight",pad_inches=0.2)
     plt.close(fig)
     return
