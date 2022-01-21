@@ -637,24 +637,17 @@ class TPT:
         # Plot the right combinations of committor, lead time, Uref, and vTintref
         qp = self.dam_moments['one']['xb'][0,:,0]
         tb = self.dam_moments['one']['xb'][1,:,0]
-        eps = 1e-10
-        tb *= (qp >= eps)/(qp + 1.0*(qp <= eps))
+        eps = 0.2
+        tb *= (qp > eps)/(qp + 1.0*(qp <= eps))
+        tb[qp <= eps] = np.nan
+        qp[qp <= eps] = np.nan
         funlib = model.observable_function_library()
-        # qp vs tb
-        field_abbs = ["tb","qp"]
-        field_funs = [None,None]
-        fields = [-tb,qp]
-        field_units = [1.0,1.0]
-        field_names = [r"$-\eta_B^+$",r"$q_B^+$"]
-        fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
-        fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # vTintref vs tb
-        field_abbs = ["tb","vTintref"]
+        # Uref vs qp
+        field_abbs = ["qp","Uref"]
         field_funs = [None,funlib[field_abbs[1]]["fun"]]
-        fields = [-tb,None]
+        fields = [qp,None]
         field_units = [1.0,funlib[field_abbs[1]]["units"]]
-        field_names = [r"$-\eta_B^+$",funlib[field_abbs[1]]["name"]]
+        field_names = [r"$q_B^+$",funlib[field_abbs[1]]["name"]]
         fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
         fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
@@ -667,8 +660,17 @@ class TPT:
         fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
         fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
-        # Uref vs tb
-        field_abbs = ["tb","Uref"]
+        # tb vs qp
+        field_abbs = ["qp","tb"]
+        field_funs = [None,None]
+        fields = [qp,-tb]
+        field_units = [1.0,1.0]
+        field_names = [r"$q_B^+$",r"$-\eta_B^+$"]
+        fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
+        fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # vTintref vs tb
+        field_abbs = ["tb","vTintref"]
         field_funs = [None,funlib[field_abbs[1]]["fun"]]
         fields = [-tb,None]
         field_units = [1.0,funlib[field_abbs[1]]["units"]]
@@ -676,12 +678,12 @@ class TPT:
         fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
         fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
-        # Uref vs qp
-        field_abbs = ["qp","Uref"]
+        # Uref vs tb
+        field_abbs = ["tb","Uref"]
         field_funs = [None,funlib[field_abbs[1]]["fun"]]
-        fields = [qp,None]
+        fields = [-tb,None]
         field_units = [1.0,funlib[field_abbs[1]]["units"]]
-        field_names = [r"$q_B^+$",funlib[field_abbs[1]]["name"]]
+        field_names = [r"$-\eta_B^+$",funlib[field_abbs[1]]["name"]]
         fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
         fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
@@ -713,7 +715,7 @@ class TPT:
                 field_trans[:,i] = self.out_of_sample_extension(fields[i],data,transitions_concat,inverse_lengthscale=0.2,k=20)
                 abfield[:,i] = self.out_of_sample_extension(fields[i],data,model.tpt_obs_xst).flatten()
         # Now plot them in the 2D subspace
-        fig,ax = plt.subplots(nrows=2,figsize=(6,12))
+        fig,ax = plt.subplots(nrows=2,figsize=(6,12),sharex=True,sharey=True)
         trans_colors = ['red','cyan','black']
         num_colored_trans = len(trans_colors)
         colored_idx = np.zeros(num_colored_trans, dtype=int)
@@ -743,35 +745,55 @@ class TPT:
         ax[0].set_ylabel(field_names[1],fontdict=font)
         # Now plot envelopes in the bottom
         field0_range = np.linspace(np.nanmin(field_trans[:,0]),np.nanmax(field_trans[:,0]),32)[1:-1]
-        quantiles = np.array([0.25,0.5])
+        quantiles = np.array([0.05,0.1,0.25,0.4,0.5])
         distribution = np.zeros((2*len(quantiles)-1,len(field0_range)))
-        current = np.array([len(quantiles),len(horz_range)])
-        for i in range(len(horz_range)):
-            surf_locs = [] # Crossing locations across the surface
-            surf_flux = [] # Crossing flux across the surface
+        current = np.array([len(quantiles),len(field0_range)])
+        for i in range(len(field0_range)):
+            surf_locs = np.array([]) # Crossing locations across the surface
+            surf_flux = np.array([]) # Crossing flux across the surface
             for j in range(num_trans):
                 # Positive crossings
-                idx0 = np.where((field_list_0[j][:-1] < horz_range[i])*(field_list_0[j][1:] > horz_range[i]))[0]
-                surf_locs += [(field_list_1[j][idx0] + field_list_1[j][idx0+1])/2] # TODO: make this a proper convex combination
-                surf_flux += [1]
+                idx0 = np.where((field_list_0[j][:-1] < field0_range[i])*(field_list_0[j][1:] > field0_range[i]))[0]
+                if len(idx0) > 0:
+                    surf_locs = np.concatenate((surf_locs,(field_list_1[j][idx0] + field_list_1[j][idx0+1])/2)) # TODO: make this a proper convex combination
+                    surf_flux = np.concatenate((surf_flux, np.ones(len(idx0))))
                 # Negative crossings
-                idx0 = np.where((field_list_0[j][:-1] > horz_range[i])*(field_list_0[j][1:] < horz_range[i]))[0]
-                surf_locs += [(field_list_1[j][idx0] + field_list_1[j][idx0+1])/2] # TODO: make this a proper convex combination
-                surf_flux += [-1]
+                idx0 = np.where((field_list_0[j][:-1] > field0_range[i])*(field_list_0[j][1:] < field0_range[i]))[0]
+                if len(idx0) > 0:
+                    surf_locs = np.concatenate((surf_locs,(field_list_0[j][idx0] + field_list_0[j][idx0+1])/2)) # TODO: make this a proper convex combination
+                    surf_flux = np.concatenate((surf_flux, -np.ones(len(idx0))))
             # Now locate the quantiles
-            surf_locs = np.array(surf_locs)
-            surf_flux = np.array(surf_flux)
+            print(f"surf_locs = {surf_locs}")
+            print(f"surf_flux = {surf_flux}")
+            #surf_locs = np.concatenate(surf_locs)
+            #surf_flux = np.concatenate(surf_flux)
             order = np.argsort(surf_locs)
             surf_flux = surf_flux[order]
             surf_locs = surf_locs[order]
             cdf = np.cumsum(surf_flux)
+            print(f"cdf = {cdf}")
             for qi in range(len(quantiles)):
-                distribution[qi,i] = surf_locs[np.where(cdf/cdf[-1] > quantiles[qi])[0][0]]
+                idx = np.where(cdf >= cdf[-1]*quantiles[qi])[0]
+                if len(idx) > 0:
+                    distribution[qi,i] = surf_locs[idx[0]]
+                else:
+                    distribution[qi,i] = np.nan
                 if qi < len(quantiles)-1:
-                    distribution[len(quantiles)-1-qi,i] = surf_locs[np.where(cdf/cdf[-1] > 1-quantiles[qi])[0][0]]
+                    idx = np.where(cdf >= cdf[-1]*(1-quantiles[qi]))[0]
+                    if len(idx) > 0:
+                        distribution[len(quantiles)-1-qi,i] = surf_locs[idx[0]]
+                    else:
+                        distribution[qi,i] = np.nan
         # Now plot the quantile envelopes: TODO
-
-                
+        for qi in range(len(quantiles)):
+            lower = distribution[qi]
+            if qi < len(quantiles)-1:
+                upper = distribution[len(quantiles)-1-qi]
+                ax[1].fill_between(field0_range*field_units[0],lower*field_units[1],upper*field_units[1],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
+            else:
+                ax[1].plot(field0_range*field_units[0],lower*field_units[1],color='black',zorder=qi+10,linestyle='-',linewidth=2)
+        ax[1].set_xlabel(field_names[0],fontdict=font)
+        ax[1].set_ylabel(field_names[1],fontdict=font)
         return fig,ax
     def plot_field_long_2d(self,model,data,fieldnames,field_funs,field_abbs,field_data=None,units=[1.0,1.0],tmax=70,field_unit_symbols=["",""],orientation=None):
         t_long,x_long = model.load_long_traj(self.long_simfolder)
