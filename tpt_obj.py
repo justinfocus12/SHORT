@@ -556,8 +556,8 @@ class TPT:
         quantiles = np.array([0.05,0.25,0.4,0.5])
         if any_trans:
             avg_prea_flag = False
-            fig,ax = plt.subplots(ncols=1,nrows=2,figsize=(6,12),sharex=True,sharey=True)
-            num_trans = min(100,len(ab_starts))
+            fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(12,12),sharex=True,sharey=True)
+            num_trans = min(300,len(ab_starts))
             print(f"num_trans = {num_trans}")
             trans_colors = ['red','cyan','black']
             num_colored_trans = len(trans_colors)
@@ -569,7 +569,8 @@ class TPT:
                 transit_time_quantile = np.quantile(transit_distribution,transit_quantiles[i])
                 colored_idx[i] = np.argmin(np.abs(transit_distribution - transit_time_quantile))
             #max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
-            max_duration = max([ab_ends[i]-ab_starts[i] for i in colored_idx])
+            # Match the maximum duration with the later plots of flux distribution
+            max_duration = max(int(120/(t_long[1]-t_long[0])), max([ab_ends[i]-ab_starts[i] for i in colored_idx]) + 10)
             print("max_duration = {}".format(max_duration))
             field_trans_composite = np.zeros((num_trans,max_duration))
             for i in range(num_trans):
@@ -580,14 +581,14 @@ class TPT:
                     field_trans = self.out_of_sample_extension(field,data,x_long[k0_padded:k1],k=15)
                 else:
                     field_trans = field_fun(x_long[k0_padded:k1]).flatten()
-                if (not avg_prea_flag) and (k0 > k0_padded):
-                    field_trans[:(k0-k0_padded)] = np.nan
-                ax[0].plot(t_long[k0_padded:k1]-t_long[k1],field_trans*units,color='gray',alpha=0.25,linewidth=1,zorder=-1)
+                if (not avg_prea_flag) and (k0 > k0_padded+1):
+                    field_trans[:(k0-k0_padded-1)] = np.nan
+                ax[0,0].plot(t_long[k0_padded:k1]-t_long[k1],field_trans*units,color='gray',alpha=0.25,linewidth=1,zorder=-1)
                 if i in colored_idx:
                     color = trans_colors[np.where(colored_idx==i)[0][0]]
                     alpha = 1.0
                     linewidth = 2
-                    ax[0].plot(t_long[k0:k1]-t_long[k1],field_trans[-(k1-k0):]*units,color=color,alpha=1.0,linewidth=2,zorder=1)
+                    ax[0,0].plot(t_long[k0:k1]-t_long[k1],field_trans[-(k1-k0):]*units,color=color,alpha=1.0,linewidth=2,zorder=1)
                 field_trans_composite[i] = field_trans
                 #pad = max_duration - (k1-k0)
                 #print("pad = ", pad)
@@ -608,21 +609,22 @@ class TPT:
                 lower = np.nanquantile(field_trans_composite, quantiles[qi], axis=0)
                 if qi < len(quantiles)-1:
                     upper = np.nanquantile(field_trans_composite, 1-quantiles[qi], axis=0)
-                    ax[1].fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
+                    ax[1,0].fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
                 else:
-                    ax[1].plot(t_long[:max_duration]-t_long[max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
+                    ax[1,0].plot(t_long[:max_duration]-t_long[max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
             xlab = r"Time$-\tau_B^+$"
             ylab = fieldname
             if field_unit_symbol is not None: ylab += " [{}]".format(field_unit_symbol)
             for i in range(2):
-                ax[i].axhline(ab_long[0]*units,color='skyblue',zorder=-1)
-                ax[i].axhline(ab_long[1]*units,color='red',zorder=-1)
-                ax[i].set_ylabel(ylab,fontdict=font)
+                ax[i,0].axhline(ab_long[0]*units,color='skyblue',zorder=-1)
+                ax[i,0].axhline(ab_long[1]*units,color='red',zorder=-1)
+                ax[i,0].set_ylabel(ylab,fontdict=font)
                 ylim = ax[i].get_ylim()
                 fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
-                ax[i].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+                ax[i,0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
             if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
-            ax[1].set_xlabel(xlab,fontdict=font)
+            ax[1,0].set_xlabel(xlab,fontdict=font)
+            # TODO: now plot the second column the same quantity vs. lead time and vs. committor
             fig.savefig(join(self.savefolder,"transitory_{}_nt{}".format(field_abb,num_trans)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
             # Save the composite in order to use later for comparison with the TPT composite
@@ -630,7 +632,148 @@ class TPT:
             np.save(join(self.savefolder,"composite_time"),t_long[:max_duration]-t_long[max_duration])
         del x_long
         return
-    def plot_field_long_2d(self,model,data,fieldnames,field_funs,field_abbs,units=[1.0,1.0],tmax=70,field_unit_symbols=["",""],orientation=None):
+    def plot_trans_2d_driver(self,model,data):
+        num_trans = 100
+        # Plot the right combinations of committor, lead time, Uref, and vTintref
+        qp = self.dam_moments['one']['xb'][0,:,0]
+        tb = self.dam_moments['one']['xb'][1,:,0]
+        eps = 1e-10
+        tb *= (qp >= eps)/(qp + 1.0*(qp <= eps))
+        funlib = model.observable_function_library()
+        # qp vs tb
+        field_abbs = ["tb","qp"]
+        field_funs = [None,None]
+        fields = [-tb,qp]
+        field_units = [1.0,1.0]
+        field_names = [r"$-\eta_B^+$",r"$q_B^+$"]
+        fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
+        fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # vTintref vs tb
+        field_abbs = ["tb","vTintref"]
+        field_funs = [None,funlib[field_abbs[1]]["fun"]]
+        fields = [-tb,None]
+        field_units = [1.0,funlib[field_abbs[1]]["units"]]
+        field_names = [r"$-\eta_B^+$",funlib[field_abbs[1]]["name"]]
+        fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
+        fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # vTintref vs qp
+        field_abbs = ["qp","vTintref"]
+        field_funs = [None,funlib[field_abbs[1]]["fun"]]
+        fields = [qp,None]
+        field_units = [1.0,funlib[field_abbs[1]]["units"]]
+        field_names = [r"$q_B^+$",funlib[field_abbs[1]]["name"]]
+        fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
+        fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Uref vs tb
+        field_abbs = ["tb","Uref"]
+        field_funs = [None,funlib[field_abbs[1]]["fun"]]
+        fields = [-tb,None]
+        field_units = [1.0,funlib[field_abbs[1]]["units"]]
+        field_names = [r"$-\eta_B^+$",funlib[field_abbs[1]]["name"]]
+        fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
+        fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Uref vs qp
+        field_abbs = ["qp","Uref"]
+        field_funs = [None,funlib[field_abbs[1]]["fun"]]
+        fields = [qp,None]
+        field_units = [1.0,funlib[field_abbs[1]]["units"]]
+        field_names = [r"$q_B^+$",funlib[field_abbs[1]]["name"]]
+        fig,ax = self.plot_trans_2d(model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=num_trans)
+        fig.savefig(join(self.savefolder,"transitory_{}_vs_{}_nt{}".format(field_abbs[1],field_abbs[0],num_trans)),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        return
+    def plot_trans_2d(self,model,data,field_funs,fields,field_names,field_units,field_abbs,num_trans=100):
+        # For a bunch of transitions (A->B), plot them in a 2D subspace. 
+        t_long,x_long = model.load_long_traj(self.long_simfolder)
+        #self.display_1d_densities_emp(model,data,[field_abb],'vertial',phases=phases,save_flag=True)
+        ab_reactive_flag = 1.0*(self.long_from_label==-1)*(self.long_to_label==1)
+        #sys.exit("sum(ab_reactive_flag) = {}".format(np.sum(ab_reactive_flag)))
+        any_trans = (np.sum(ab_reactive_flag) > 0)
+        if any_trans:
+            # Identify the transitions
+            ab_starts = np.where(np.diff(ab_reactive_flag)==1)[0] + 1
+            ab_ends = np.where(np.diff(ab_reactive_flag)==-1)[0] + 1
+            # Get them lined up correctly
+            if ab_starts[0] > ab_ends[0]: ab_ends = ab_ends[1:]
+            if ab_starts[-1] > ab_ends[-1]: ab_starts = ab_starts[:-1]
+        num_trans = min(num_trans,len(ab_starts))
+        # Compute the field on each segment
+        transitions_concat = np.concatenate(tuple([x_long[ab_starts[i]:ab_ends[i]] for i in range(num_trans)]), axis=0)
+        field_trans = np.zeros((len(transitions_concat),2))
+        abfield = np.zeros((2,2))
+        for i in range(2):
+            if field_funs[i] is not None:
+                field_trans[:,i] = field_funs[i](transitions_concat)
+                abfield[:,i] = field_funs[i](model.tpt_obs_xst).flatten()
+            else:
+                field_trans[:,i] = self.out_of_sample_extension(fields[i],data,transitions_concat,inverse_lengthscale=0.2,k=20)
+                abfield[:,i] = self.out_of_sample_extension(fields[i],data,model.tpt_obs_xst).flatten()
+        # Now plot them in the 2D subspace
+        fig,ax = plt.subplots(nrows=2,figsize=(6,12))
+        trans_colors = ['red','cyan','black']
+        num_colored_trans = len(trans_colors)
+        colored_idx = np.zeros(num_colored_trans, dtype=int)
+        transit_distribution = np.array([ab_ends[i] - ab_starts[i] for i in range(num_trans)])
+        transit_quantiles = np.linspace(0,1,num_colored_trans+2)[1:-1]
+        for i in range(num_colored_trans):
+            transit_time_quantile = np.quantile(transit_distribution,transit_quantiles[i])
+            colored_idx[i] = np.argmin(np.abs(transit_distribution - transit_time_quantile))
+        # Store all the trajectories
+        field_list_0 = []
+        field_list_1 = []
+        k = 0
+        for i in range(num_trans):
+            if i % 10 == 0:
+                print(f"Transition number {i} out of {num_trans}")
+            idx = np.arange(k,k+ab_ends[i]-ab_starts[i])
+            field_list_0 += [field_trans[idx,0]]
+            field_list_1 += [field_trans[idx,1]]
+            ax[0].plot(field_trans[idx,0]*field_units[0],field_trans[idx,1]*field_units[1],color='gray',alpha=0.25,linewidth=1,zorder=-1)
+            if i in colored_idx:
+                color = trans_colors[np.where(colored_idx==i)[0][0]]
+                alpha = 1.0
+                linewidth=1.5
+                ax[0].plot(field_trans[idx,0]*field_units[0],field_trans[idx,1]*field_units[1],color=color,alpha=alpha,linewidth=linewidth,zorder=1)
+            k += len(idx)
+        #ax.set_xlabel(field_names[0],fontdict=font)
+        ax[0].set_ylabel(field_names[1],fontdict=font)
+        # Now plot envelopes in the bottom
+        field0_range = np.linspace(np.nanmin(field_trans[:,0]),np.nanmax(field_trans[:,0]),32)[1:-1]
+        quantiles = np.array([0.25,0.5])
+        distribution = np.zeros((2*len(quantiles)-1,len(field0_range)))
+        current = np.array([len(quantiles),len(horz_range)])
+        for i in range(len(horz_range)):
+            surf_locs = [] # Crossing locations across the surface
+            surf_flux = [] # Crossing flux across the surface
+            for j in range(num_trans):
+                # Positive crossings
+                idx0 = np.where((field_list_0[j][:-1] < horz_range[i])*(field_list_0[j][1:] > horz_range[i]))[0]
+                surf_locs += [(field_list_1[j][idx0] + field_list_1[j][idx0+1])/2] # TODO: make this a proper convex combination
+                surf_flux += [1]
+                # Negative crossings
+                idx0 = np.where((field_list_0[j][:-1] > horz_range[i])*(field_list_0[j][1:] < horz_range[i]))[0]
+                surf_locs += [(field_list_1[j][idx0] + field_list_1[j][idx0+1])/2] # TODO: make this a proper convex combination
+                surf_flux += [-1]
+            # Now locate the quantiles
+            surf_locs = np.array(surf_locs)
+            surf_flux = np.array(surf_flux)
+            order = np.argsort(surf_locs)
+            surf_flux = surf_flux[order]
+            surf_locs = surf_locs[order]
+            cdf = np.cumsum(surf_flux)
+            for qi in range(len(quantiles)):
+                distribution[qi,i] = surf_locs[np.where(cdf/cdf[-1] > quantiles[qi])[0][0]]
+                if qi < len(quantiles)-1:
+                    distribution[len(quantiles)-1-qi,i] = surf_locs[np.where(cdf/cdf[-1] > 1-quantiles[qi])[0][0]]
+        # Now plot the quantile envelopes: TODO
+
+                
+        return fig,ax
+    def plot_field_long_2d(self,model,data,fieldnames,field_funs,field_abbs,field_data=None,units=[1.0,1.0],tmax=70,field_unit_symbols=["",""],orientation=None):
         t_long,x_long = model.load_long_traj(self.long_simfolder)
         tmax = min(tmax,t_long[-1])
         ab_reactive_flag = 1*(self.long_from_label==-1)*(self.long_to_label==1)
@@ -651,10 +794,18 @@ class TPT:
         print("t_long[timax] = {}".format(t_long[timax]))
         tsubset = np.linspace(0,timax-1,min(timax,15000)).astype(int)
         # Plot the two fields vs. each other, marking transitions
-        field0 = field_funs[0](x_long[tsubset]).flatten()
-        field1 = field_funs[1](x_long[tsubset]).flatten()
-        ab0 = field_funs[0](model.tpt_obs_xst).flatten()
-        ab1 = field_funs[1](model.tpt_obs_xst).flatten()
+        if field_funs[0] is not None:
+            field0 = field_funs[0](x_long[tsubset]).flatten()
+            ab0 = field_funs[0](model.tpt_obs_xst).flatten()
+        else:
+            field0 = self.out_of_sample_extension(field_data[0],data,x_long[tsubset])
+            ab0 = self.out_of_sample_extension(field_data[0],data,model.tpt_obs_xst)
+        if field_funs[1] is not None:
+            field1 = field_funs[1](x_long[tsubset]).flatten()
+            ab1 = field_funs[1](model.tpt_obs_xst).flatten()
+        else:
+            field1 = self.out_of_sample_extension(field_data[1],data,x_long[tsubset])
+            ab1 = self.out_of_sample_extension(field_data[0],data,model.tpt_obs_xst)
         fig,ax = plt.subplots(figsize=(6,6))
         ax.plot(field0*units[0],field1*units[1],color='black',zorder=0,linewidth=1.0)
         for i in range(len(ab_starts)):
@@ -2930,7 +3081,7 @@ class TPT:
         xwy = (X.T*weights[idx]).dot(x1[idx])
         coeffs = np.linalg.solve(xwx,xwy)
         return coeffs
-    def out_of_sample_extension(self,field,data,xnew,ss_size=100000,k=15):
+    def out_of_sample_extension(self,field,data,xnew,ss_size=100000,k=15,inverse_lengthscale=1.0):
         # For a new sample (such as a long trajectory), extend the field to the new ones just by nearest-neighbor averaging
         prng = np.random.RandomState(0)
         good_idx = np.where(np.isnan(field)==0)[0]
@@ -2945,7 +3096,7 @@ class TPT:
             close_dsq[j] = dsq[knn[j],np.arange(len(xnew))]
         dsq = dsq[knn,np.arange(len(xnew))]
         close_field = field[ss[knn]]
-        weights = np.exp(-0*close_dsq)
+        weights = np.exp(-inverse_lengthscale**2*close_dsq)
         weights = weights/np.sum(weights*(np.isnan(close_field)==0),0)
         fnew = np.nansum(close_field*weights,0)
         frange = np.nanmax(field) - np.nanmin(field)
@@ -3169,7 +3320,7 @@ class TPT:
         num = min(max_num_states,len(idx))
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
-    def plot_median_flux_and_lap(self,model,data,ramp,field,field_fun=None,ramp_units=1.0,field_units=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None):
+    def plot_median_flux_and_lap(self,model,data,ramp,field,field_fun=None,ramp_units=1.0,field_units=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None,laptime_flag=False):
         # Just scalars. 
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
@@ -3245,6 +3396,8 @@ class TPT:
         if fig is None or ax is None:
             fig,ax = plt.subplots()
         ax.plot(ramp_lap*ramp_units,f_lap*field_units,color='cyan')
+        if laptime_flag:
+            ax.plot(tlap,f_lap*field_units,color='black',linestyle='--')
         levels_interp = np.linspace(ramp_levels_real[0],ramp_levels_real[-1],200)
         field_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
         for qi in range(len(quantiles)):
@@ -3340,30 +3493,34 @@ class TPT:
         #ramp_levels[-1] = (ramp_levels[-1] + ramp_levels[-2])/2
         # Plot committor and lead time against each other
         fig,ax = plt.subplots(ncols=2,figsize=(16,6))
-        # committor vs. lead time
-        _,_ = self.plot_median_flux_and_lap(model,data,tbramp,qpramp,field_fun=None,field_units=1.0,ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0])
-        ax[0].set_ylabel(r"$q^+_B$",fontdict=ffont)
-        ax[0].set_xlabel(r"$-\eta^+_B$",fontdict=ffont)
         # lead time vs. committor
-        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1])
-        ax[1].set_ylabel(r"$\eta_B^+$ [days]",fontdict=ffont)
-        ax[1].set_xlabel(r"$q^+_B$",fontdict=ffont)
+        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
+        ax[0].set_ylabel(r"$\eta_B^+$ [days]",fontdict=ffont)
+        ax[0].set_xlabel(r"$q^+_B$",fontdict=ffont)
+        # committor vs. lead time
+        _,_ = self.plot_median_flux_and_lap(model,data,tbramp,qpramp,field_fun=None,field_units=1.0,ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1],laptime_flag=True)
+        ax[1].set_ylabel(r"$q^+_B$",fontdict=ffont)
+        ax[1].set_xlabel(r"$-\eta^+_B$",fontdict=ffont)
+        for i in range(2): ax[i].tick_params(axis='both',labelsize=15)
         fig.savefig(join(self.savefolder,"lap_vs_tpt_qptb"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         # Plot vs. lead time
         fig,ax = plt.subplots(nrows=2,ncols=2,figsize=(16,12),sharex='col',sharey='row')
-        # Uref vs. lead time 
+        # Uref vs. (committor, lead time)
         field = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        _,_  = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0,0])
-        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0,1])
+        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0,0])
+        _,_  = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0,1],laptime_flag=True)
         ax[0,0].set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
-        # vTntref vs. lead time 
+        # vTntref vs. (committor, lead time)
         field = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        _,_ = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1,0])
-        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1,1])
+        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1,0])
+        _,_ = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1,1],laptime_flag=True)
         ax[1,0].set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
-        ax[1,0].set_xlabel(r"$-\eta^+_B$ [days]",fontdict=ffont)
-        ax[1,1].set_xlabel(r"$q^+_B$",fontdict=ffont)
+        ax[1,0].set_xlabel(r"$q^+_B$",fontdict=ffont)
+        ax[1,1].set_xlabel(r"$-\eta^+_B$ [days]",fontdict=ffont)
+        for i in range(2):
+            for j in range(2):
+                ax[i,j].tick_params(axis='both',labelsize=15)
         fig.savefig(join(self.savefolder,"lap_vs_tpt_all_vs_qptb"),bbox_inches='tight',pad_inches=0.2)
         plt.close(fig)
         if False:

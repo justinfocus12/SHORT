@@ -56,11 +56,12 @@ qp_tb_coords_flag =     0
 trans_state_flag =      0
 flux_dist_flag =        0
 plot_long_2d_flag =     0
+plot_trans_2d_flag =    1
 lifecycle_flag =        0
 display_cast_flag =     0
 display_current_flag =  0
 gen_rates_flag =        0
-plot_long_1d_flag =     1
+plot_long_1d_flag =     0
 validation_flag =       0
 # ---------------------------------------
 
@@ -145,7 +146,28 @@ funlib = model.observable_function_library()
 # -----------------------------------------------------
 
 # ------------- Plot long trajectory in 2D -----------
+if plot_trans_2d_flag:
+    tpt.plot_trans_2d_driver(model,data)
 if plot_long_2d_flag:
+    comm_fwd = tpt.dam_moments['one']['xb'][0,:,0] # Comittor
+    tb = tpt.dam_moments['one']['xb'][1,:,0]
+    eps = 1e-10
+    tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
+    # Now plot in (tb,qp) space.
+    field_abbs = ["qp","Uref"]
+    fieldnames = [r"$q_B^+$",funlib[field_abbs[1]]["name"]]
+    field_funs = [None,funlib[field_abbs[1]]["fun"]]
+    field_data = [comm_fwd,None]
+    field_units = [1.0,funlib[field_abbs[1]]["units"]]
+    field_unit_symbols = ["",funlib[field_abbs[1]]["unit_symbol"]]
+    tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,field_data=field_data,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
+    field_abbs = ["tb","Uref"]
+    fieldnames = [r"$\eta_B^+$",funlib[field_abbs[1]]["name"]]
+    field_funs = [None,funlib[field_abbs[1]]["fun"]]
+    field_data = [tb, None]
+    field_units = [1.0,funlib[field_abbs[1]]["units"]]
+    field_unit_symbols = ["",funlib[field_abbs[1]]["unit_symbol"]]
+    tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,field_data=field_data,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
     field_abbs = ["magref","Uref"]
     fieldnames = [funlib[f]["name"] for f in field_abbs]
     field_funs = [funlib[f]["fun"] for f in field_abbs]
