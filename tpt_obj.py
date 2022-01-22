@@ -3406,8 +3406,8 @@ class TPT:
         xlap = xlap[tlap_idx0:tlap_idx1+1]
         tlap -= tlap[-1]
         # Subsample
-        xlap = xlap[np.linspace(0,len(xlap)-1,100).astype(int)]
-        tlap = tlap[np.linspace(0,len(tlap)-1,100).astype(int)]
+        xlap = xlap[np.linspace(0,len(xlap)-1,10).astype(int)]
+        tlap = tlap[np.linspace(0,len(tlap)-1,10).astype(int)]
         # Interpolate the field onto the least-action path
         if field_fun is None:
             f_lap = self.out_of_sample_extension(field[:,0],data,xlap)
@@ -3516,8 +3516,8 @@ class TPT:
         # Plot committor and lead time against each other
         fig,ax = plt.subplots(ncols=2,figsize=(16,6))
         # lead time vs. committor
-        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
-        ax[0].set_ylabel(r"$\eta_B^+$ [days]",fontdict=ffont)
+        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,-tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
+        ax[0].set_ylabel(r"$-\eta_B^+$ [days]",fontdict=ffont)
         ax[0].set_xlabel(r"$q^+_B$",fontdict=ffont)
         # committor vs. lead time
         _,_ = self.plot_median_flux_and_lap(model,data,tbramp,qpramp,field_fun=None,field_units=1.0,ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1],laptime_flag=True)
