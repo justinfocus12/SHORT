@@ -3342,6 +3342,102 @@ class TPT:
         num = min(max_num_states,len(idx))
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
+    def plot_median_flux_and_lap_signed(self,model,data,ramp,field,field_fun=None,ramp_units=1.0,field_units=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None,laptime_flag=False):
+        # Just scalars. 
+        Nx,Nt,xdim = data.X.shape
+        comm_fwd = self.dam_moments['one']['xb'][0,:,:]
+        comm_bwd = self.dam_moments['one']['ax'][0,:,:]
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
+        funlib = model.observable_function_library()
+        rampflat = ramp.flatten()
+        rampflat = rampflat[np.isnan(rampflat)==0]
+        if ramp_levels is None or ramp_tol_list is None:
+            num_levels = 20 # 17 is the default
+            ramp_min,ramp_max = np.nanmin(rampflat),np.nanmax(rampflat)
+            rampflat = rampflat[(rampflat>ramp_min)*(rampflat<ramp_max)]
+            ramp_edges = np.linspace(ramp_min,ramp_max,num_levels+1) 
+            #print(f"ramp_edges = {ramp_edges}")
+            ramp_levels = (ramp_edges[:-1] + ramp_edges[1:])/2
+            ramp_tol_list = (ramp_edges[1:] - ramp_edges[:-1])/1.0
+        # Plot
+        if fig is None or ax is None:
+            fig,ax = plt.subplots()
+        ramp = ramp.reshape((Nx,Nt,1))
+        bin_width = (np.nanmax(field)-np.nanmin(field))/50
+        print(f"bin_width = {bin_width}")
+        for ti in range(len(ramp_levels)):
+            ramp_tol = ramp_tol_list[ti]
+            ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,ramp_levels[ti],ramp_tol,None,0.0)
+            ridx_ti = np.array(ridx_ti)
+            rflux_ti = np.array(rflux_ti)
+            #pos_idx = np.where(rflux_ti>0)[0]
+            #ridx_ti = ridx_ti[pos_idx]
+            #rflux_ti = rflux_ti[pos_idx]
+            if len(ridx_ti) > 0:
+                ridx_ti = np.array(ridx_ti)
+                rflux_ti = np.array(rflux_ti)
+                f_ti = field[ridx_ti,tidx]
+                order = np.argsort(f_ti)
+                f_ti = f_ti[order]
+                rflux_ti = rflux_ti[order]
+                sig_idx = np.where(np.abs(rflux_ti) > 0.0*np.max(np.abs(rflux_ti)))[0]
+                f_ti = f_ti[sig_idx]
+                rflux_ti = rflux_ti[sig_idx]
+                num_bins = int(round((np.max(f_ti) - np.min(f_ti))/bin_width))
+                hist,bin_edges = np.histogram(f_ti,weights=rflux_ti,density=False,bins=num_bins) #min(10,len(sig_idx)))
+                bin_centers = (bin_edges[1:]+bin_edges[:-1])/2
+                hist *= 0.5*(ramp_levels[1]-ramp_levels[0])*ramp_units/np.max(np.abs(hist))
+                # Truncate bin centers to nontrivial fluxes
+                sig_bin_idx = np.where(np.abs(hist) > 0.1*np.max(np.abs(hist)))[0]
+                bin_centers = bin_centers[sig_bin_idx]
+                hist = hist[sig_bin_idx]
+                ax.plot(ramp_levels[ti]*ramp_units*np.ones(len(bin_centers)), bin_centers*field_units,color='black',linewidth=1)
+                ax.barh(bin_centers*field_units,hist,(bin_edges[1]-bin_edges[0])*field_units,left=ramp_levels[ti]*ramp_units,color='gray',alpha=0.8)
+                #ax.plot(ramp_levels[ti]*ramp_units+hist,bin_centers*field_units,color='black',linewidth=1)
+                #ax.fill_betweenx(bin_centers*field_units,ramp_levels[ti]*ramp_units,ramp_levels[ti]*ramp_units+hist,color='gray',alpha=0.5)
+                #print(f"len(unique(f_ti)) = {len(np.unique(f_ti))}, len(unique(rflux_ti)) = {len(np.unique(rflux_ti))},") #\nf_ti = {f_ti},\nrflux_ti = {rflux_ti}")
+                #print(f"len(sig_idx) = {len(sig_idx)}, len(bin_centers) = {len(bin_centers)}")
+                #print(f"bin_centers*field_units = {bin_centers*field_units},\nhist*ramp_units = {hist*ramp_units}")
+        # Least action path 
+        xlap = load(join(self.physical_param_folder,"xmin_dirn1.npy"))
+        tlap = load(join(self.physical_param_folder,"tmin_dirn1.npy"))
+        adist_lap = model.adist(xlap)
+        bdist_lap = model.bdist(xlap)
+        tlap_idx0 = np.where((adist_lap>0)*(bdist_lap>0))[0][0]
+        if np.min(bdist_lap) <= 0:
+            tlap_idx1 = np.where(bdist_lap<=0)[0][0]
+        else:
+            tlap_idx1 = np.where((adist_lap>0)*(bdist_lap>0))[0][-1]
+        print(f"tlap_idx0 = {tlap_idx0}, tlap_idx1 = {tlap_idx1}")
+        ramp = ramp.reshape((Nx,Nt,1))
+        tlap = tlap[tlap_idx0:tlap_idx1+1]
+        xlap = xlap[tlap_idx0:tlap_idx1+1]
+        tlap -= tlap[-1]
+        # Subsample
+        xlap = xlap[np.linspace(0,len(xlap)-1,10).astype(int)]
+        tlap = tlap[np.linspace(0,len(tlap)-1,10).astype(int)]
+        # Interpolate the field onto the least-action path
+        if field_fun is None:
+            f_lap = self.out_of_sample_extension(field[:,0],data,xlap)
+        else:
+            f_lap = field_fun(xlap)
+        ramp_lap = self.out_of_sample_extension(ramp[:,0,0],data,xlap)
+        tlap_interp = np.linspace(tlap[0],tlap[-1],100)
+        ramp_lap_interp = scipy.interpolate.interp1d(tlap,ramp_lap,kind='cubic')(tlap_interp)
+        f_lap_interp = scipy.interpolate.interp1d(tlap,f_lap,kind='cubic')(tlap_interp)
+        ax.plot(ramp_lap_interp*ramp_units,f_lap_interp*field_units,color='black',linestyle='--')
+        # Smooth the least-action path
+        if laptime_flag:
+            ax.plot(tlap,f_lap*field_units,color='cyan',linestyle='-')
+        if field_fun is None:
+            field_a,field_b = self.out_of_sample_extension(field[:,0],data,model.tpt_obs_xst)
+        else:
+            field_a,field_b = field_fun(model.tpt_obs_xst)
+        ax.axhline(y=field_a*field_units,color='skyblue',linewidth=3)
+        ax.axhline(y=field_b*field_units,color='red',linewidth=3)
+        #fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_U_vs_qp"),bbox_inches="tight",pad_inches=0.2)
+        #plt.close(fig)
+        return fig,ax
     def plot_median_flux_and_lap(self,model,data,ramp,field,field_fun=None,ramp_units=1.0,field_units=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None,laptime_flag=False):
         # Just scalars. 
         Nx,Nt,xdim = data.X.shape
@@ -3357,7 +3453,7 @@ class TPT:
             ramp_min,ramp_max = np.nanmin(rampflat),np.nanmax(rampflat)
             rampflat = rampflat[(rampflat>ramp_min)*(rampflat<ramp_max)]
             ramp_edges = np.linspace(ramp_min,ramp_max,num_levels+1) 
-            print(f"ramp_edges = {ramp_edges}")
+            #print(f"ramp_edges = {ramp_edges}")
             ramp_levels = (ramp_edges[:-1] + ramp_edges[1:])/2
             ramp_tol_list = (ramp_edges[1:] - ramp_edges[:-1])/1.0
         rflux = []
@@ -3370,9 +3466,10 @@ class TPT:
             ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,ramp_levels[ti],ramp_tol,None,0.0)
             ridx_ti = np.array(ridx_ti)
             rflux_ti = np.array(rflux_ti)
-            pos_idx = np.where(rflux_ti>0)[0]
-            ridx_ti = ridx_ti[pos_idx]
-            rflux_ti = rflux_ti[pos_idx]
+            # *** Restrict to positive-flux areas if you want to avoid weirdness on boundaries of A and B *** 
+            #pos_idx = np.where(rflux_ti>0)[0]
+            #ridx_ti = ridx_ti[pos_idx]
+            #rflux_ti = rflux_ti[pos_idx]
             if len(ridx_ti) > 0:
                 ridx_ti = np.array(ridx_ti)
                 rflux_ti = np.array(rflux_ti)
@@ -3414,12 +3511,16 @@ class TPT:
         else:
             f_lap = field_fun(xlap)
         ramp_lap = self.out_of_sample_extension(ramp[:,0,0],data,xlap)
+        # Interpolate the least action path to smooth out
+        tlap_interp = np.linspace(tlap[0],tlap[-1],100)
+        ramp_lap_interp = scipy.interpolate.interp1d(tlap,ramp_lap,kind='cubic')(tlap_interp)
+        f_lap_interp = scipy.interpolate.interp1d(tlap,f_lap,kind='cubic')(tlap_interp)
         # Plot
         if fig is None or ax is None:
             fig,ax = plt.subplots()
-        ax.plot(ramp_lap*ramp_units,f_lap*field_units,color='cyan')
+        ax.plot(ramp_lap_interp*ramp_units,f_lap_interp*field_units,color='black',linestyle='--')
         if laptime_flag:
-            ax.plot(tlap,f_lap*field_units,color='black',linestyle='--')
+            ax.plot(tlap,f_lap*field_units,color='cyan',linestyle='-')
         levels_interp = np.linspace(ramp_levels_real[0],ramp_levels_real[-1],200)
         field_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
         for qi in range(len(quantiles)):
@@ -3479,19 +3580,27 @@ class TPT:
             min(1, max(0, qp_levels[i]-qp_tol_list[i])),
             min(1, max(0, qp_levels[i]+qp_tol_list[i])))
             for i in range(len(qp_levels))]
-        prof_key_list = ["U","vT","dqdy","q2"]
-        rflux = []
-        rflux_idx = []
-        for qi in range(len(qp_levels)):
-            qp_tol = qp_tol_list[qi]
-            ridx_qi,rflux_qi,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[qi],qp_tol,None,0.0)
-            rflux += [rflux_qi]
-            rflux_idx += [ridx_qi]
-        for ki in range(len(prof_key_list)):
-            prof_key = prof_key_list[ki]
-            fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
-            fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
+        if False:
+            prof_key_list = ["U","vT","dqdy","q2"]
+            rflux = []
+            rflux_idx = []
+            for qi in range(len(qp_levels)):
+                qp_tol = qp_tol_list[qi]
+                ridx_qi,rflux_qi,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[qi],qp_tol,None,0.0)
+                rflux += [rflux_qi]
+                rflux_idx += [ridx_qi]
+            # Signed 
+            for ki in range(len(prof_key_list)):
+                prof_key = prof_key_list[ki]
+                fig,ax = model.plot_state_distribution_signed(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
+                fig.savefig(join(self.savefolder,"trans_state_profile_signed_{}".format(prof_key)),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig)
+            # Unsigned 
+            for ki in range(len(prof_key_list)):
+                prof_key = prof_key_list[ki]
+                fig,ax = model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key=prof_key,colors=colors,labels=labels)
+                fig.savefig(join(self.savefolder,"trans_state_profile_{}".format(prof_key)),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig)
         # ---------------------- 2. Plot scalar path distributions ----------------
         # Now plot a few ramps
         eps = 1e-10
@@ -3513,7 +3622,41 @@ class TPT:
         qpramp_tol_list[:-1] = (qpramp_levels[1:] - qpramp_levels[:-1])/2
         qpramp_tol_list[-1] = (qpramp_levels[-1] - qpramp_levels[-2])/15
         #ramp_levels[-1] = (ramp_levels[-1] + ramp_levels[-2])/2
-        # Plot committor and lead time against each other
+        # ------ Signed: Plot committor and lead time against each other ----------
+        print(f"-------------------- Beginning signed ------------------")
+        fig,ax = plt.subplots(ncols=2,figsize=(16,6))
+        # lead time vs. committor
+        _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,-tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
+        ax[0].set_ylabel(r"$-\eta_B^+$ [days]",fontdict=ffont)
+        ax[0].set_xlabel(r"$q^+_B$",fontdict=ffont)
+        # committor vs. lead time
+        _,_ = self.plot_median_flux_and_lap_signed(model,data,tbramp,qpramp,field_fun=None,field_units=1.0,ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1],laptime_flag=True)
+        ax[1].set_ylabel(r"$q^+_B$",fontdict=ffont)
+        ax[1].set_xlabel(r"$-\eta^+_B$",fontdict=ffont)
+        for i in range(2): ax[i].tick_params(axis='both',labelsize=15)
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_qptb_signed"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # Plot vs. lead time
+        fig,ax = plt.subplots(nrows=2,ncols=2,figsize=(16,12),sharex='col',sharey='row')
+        # Uref vs. (committor, lead time)
+        field = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0,0])
+        _,_  = self.plot_median_flux_and_lap_signed(model,data,tbramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0,1],laptime_flag=True)
+        ax[0,0].set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
+        # vTntref vs. (committor, lead time)
+        field = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1,0])
+        _,_ = self.plot_median_flux_and_lap_signed(model,data,tbramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1,1],laptime_flag=True)
+        ax[1,0].set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
+        ax[1,0].set_xlabel(r"$q^+_B$",fontdict=ffont)
+        ax[1,1].set_xlabel(r"$-\eta^+_B$ [days]",fontdict=ffont)
+        for i in range(2):
+            for j in range(2):
+                ax[i,j].tick_params(axis='both',labelsize=15)
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_all_vs_qptb_signed"),bbox_inches='tight',pad_inches=0.2)
+        plt.close(fig)
+        # ------ Unsigned: Plot committor and lead time against each other ----------
+        print(f"-------------------- Beginning unsigned ------------------")
         fig,ax = plt.subplots(ncols=2,figsize=(16,6))
         # lead time vs. committor
         _,_ = self.plot_median_flux_and_lap(model,data,qpramp,-tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
@@ -3545,540 +3688,6 @@ class TPT:
                 ax[i,j].tick_params(axis='both',labelsize=15)
         fig.savefig(join(self.savefolder,"lap_vs_tpt_all_vs_qptb"),bbox_inches='tight',pad_inches=0.2)
         plt.close(fig)
-        if False:
-            # U67 vs. committor
-            field = funlib["U67"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-            fig,ax = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["U67"]["fun"],field_units=funlib["U67"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list)
-            ax.set_ylabel("%s [%s]"%(funlib["U67"]["name"],funlib["U67"]["unit_symbol"]),fontdict=font)
-            ax.set_xlabel(r"$q^+_B$",fontdict=font)
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_U67_vs_qp"),bbox_inches='tight',pad_inches=0.2)
-            plt.close(fig)
-            # U21p5 vs. committor
-            field = funlib["U21p5"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-            fig,ax = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["U21p5"]["fun"],field_units=funlib["U21p5"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list)
-            ax.set_ylabel("%s [%s]"%(funlib["U21p5"]["name"],funlib["U21p5"]["unit_symbol"]),fontdict=font)
-            ax.set_xlabel(r"$q^+_B$",fontdict=font)
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_U21p5_vs_qp"),bbox_inches='tight',pad_inches=0.2)
-            plt.close(fig)
-            # vTref vs. committor
-            field = funlib["vTref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-            fig,ax = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["vTref"]["fun"],field_units=funlib["vTref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list)
-            ax.set_ylabel("%s [%s]"%(funlib["vTref"]["name"],funlib["vTref"]["unit_symbol"]),fontdict=font)
-            ax.set_xlabel(r"$q^+_B$",fontdict=font)
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_vTref_vs_qp"),bbox_inches='tight',pad_inches=0.2)
-            plt.close(fig)
-            # vT21p5 vs. committor
-            field = funlib["vT21p5"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-            fig,ax = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["vT21p5"]["fun"],field_units=funlib["vT21p5"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list)
-            ax.set_ylabel("%s [%s]"%(funlib["vT21p5"]["name"],funlib["vT21p5"]["unit_symbol"]),fontdict=font)
-            ax.set_xlabel(r"$q^+_B$",fontdict=font)
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_vT21p5_vs_qp"),bbox_inches='tight',pad_inches=0.2)
-            plt.close(fig)
-            # vT67 vs. committor
-            field = funlib["vT67"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-            fig,ax = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["vT67"]["fun"],field_units=funlib["vT67"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list)
-            ax.set_ylabel("%s [%s]"%(funlib["vT67"]["name"],funlib["vT67"]["unit_symbol"]),fontdict=font)
-            ax.set_xlabel(r"$q^+_B$",fontdict=font)
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_vT67_vs_qp"),bbox_inches='tight',pad_inches=0.2)
-            plt.close(fig)
-        if False:
-            # ------------- 1.5. Plot the least-action path and zonal wind as a function of committor -------
-            # TODO: interpolate committor onto LAP
-            quantiles = 0.01*np.array([15.0,25.0,40.0,50.0,60.0,75.0,85.0])
-            zi = model.q['zi']
-            funlib = model.observable_function_library()
-            eps = 0*1e-10
-            qp = self.dam_moments['one']['xb'][0,:,:]
-            qp[comm_fwd <= eps] == np.nan
-            qp_min,qp_max = np.nanmin(qp),np.nanmax(qp)
-            num_levels = 20 # 17 is the default
-            qpflat = qp.flatten()
-            qpflat = qpflat[np.isnan(qpflat)==0]
-            qpflat = qpflat[(qpflat>qp_min)*(qpflat<qp_max)]
-            tb = self.dam_moments['one']['xb'][1,:,:]
-            tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
-            tb[comm_fwd <= eps] == np.nan
-            tb_min,tb_max = np.nanmin(tb),np.nanmax(tb)
-            #qp_edges = np.nanquantile(qpflat, np.linspace(0,1,num_levels+1))
-            qp_edges = np.linspace(qp_min,qp_max,num_levels+1) 
-            print(f"qp_edges = {qp_edges}")
-            qp_levels = (qp_edges[:-1] + qp_edges[1:])/2
-            qp_tol_list = (qp_edges[1:] - qp_edges[:-1])/1.0
-            #qp_tol_list[0] = min(qp_tol_list[0], 0.99*(qp_levels[0] - qp_min))
-            #qp_tol_list[-1] = min(qp_tol_list[-1], 0.99*(qp_max - qp_levels[-1]))
-            #qp_levels = np.linspace(qp_min,qp_max,num_levels) #[1:-1]
-            qp_qp_corr = np.nanmean((qp - np.nanmean(qp))*(comm_fwd - np.nanmean(comm_fwd)))
-            if qp_qp_corr < 0:
-                qp_levels = qp_levels[::-1]
-            print("qp_levels = {}".format(qp_levels))
-            rflux = []
-            rflux_idx = []
-            Uprof_quants = []
-            vTprof_quants = []
-            vTintref_quants = []
-            qp_quants = [] 
-            qp_levels_real = []
-            tb_quants = []
-            ramp = qp.reshape((Nx,Nt,1))*np.sign(qp_qp_corr)
-            for ti in range(len(qp_levels)):
-                qp_tol = qp_tol_list[ti]
-                print("qp_levels[ti] * np.sign(qp_qp_corr) = {}".format(qp_levels[ti]*np.sign(qp_qp_corr)))
-                ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[ti]*np.sign(qp_qp_corr),qp_tol,None,0.0)
-                #ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[ti],qp_tol,None,0.0)
-                if len(ridx_ti) > 0:
-                    ridx_ti = np.array(ridx_ti)
-                    rflux_ti = np.array(rflux_ti)
-                    rflux += [rflux_ti]
-                    rflux_idx += [ridx_ti]
-                    qp_levels_real += [qp_levels[ti]]
-                    #qp_levels_real += [np.mean(qp[ridx_ti,tidx])] ##[np.sum(qp[ridx_ti,tidx]*rflux_ti)/np.sum(rflux_ti*(rflux_ti>0))] #[ti]]
-                    # Determine height-by-height median
-                    U = funlib["U"]["fun"](data.X[ridx_ti,tidx])
-                    print(f"Uzi: min={U[:,zi].min()}, max={U[:,zi].max()}")
-                    Uq = np.zeros((len(quantiles),U.shape[1]))
-                    for j in range(U.shape[1]):
-                        order = np.argsort(U[:,j])
-                        cdf = np.cumsum(rflux_ti[order])
-                        for qi in range(len(quantiles)):
-                            quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
-                            Uq[qi,j] = U[order[quant_idx],j]
-                    Uprof_quants += [Uq]
-                    vT = funlib["vT"]["fun"](data.X[ridx_ti,tidx])
-                    vTq = np.zeros((len(quantiles),vT.shape[1]))
-                    for j in range(vT.shape[1]):
-                        order = np.argsort(vT[:,j])
-                        cdf = np.cumsum(rflux_ti[order])
-                        for qi in range(len(quantiles)):
-                            quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
-                            vTq[qi,j] = vT[order[quant_idx],j]
-                    vTprof_quants += [vTq]
-                    vTintref = funlib["vTintref"]["fun"](data.X[ridx_ti,tidx])
-                    vTirq = np.zeros(len(quantiles))
-                    order = np.argsort(vTintref)
-                    cdf = np.cumsum(rflux_ti[order])
-                    for qi in range(len(quantiles)):
-                        quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
-                        vTirq[qi] = vTintref[order[quant_idx]]
-                    vTintref_quants += [vTirq]
-                    tbq = np.zeros(len(quantiles))
-                    order = np.argsort(tb[ridx_ti,tidx])
-                    cdf = np.cumsum(rflux_ti[order])
-                    for qi in range(len(quantiles)):
-                        quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
-                        tbq[qi] = tb[ridx_ti[order[quant_idx]],tidx]
-                    tb_quants += [tbq]
-                    qp_ti = comm_fwd[ridx_ti,tidx]
-                    qp_ti_q = np.zeros(len(quantiles))
-                    order = np.argsort(qp_ti)
-                    cdf = np.cumsum(rflux_ti[order])
-                    for qi in range(len(quantiles)):
-                        quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
-                        qp_ti_q[qi] = qp_ti[order[quant_idx]]
-                    qp_quants += [qp_ti_q]
-            qp_levels_real = np.array(qp_levels_real)
-            print("len(qp_levels_real) = {}".format(len(qp_levels_real)))
-            print(f"qp_levels_real = {qp_levels_real}")
-            # Now create two figures: one for zonal wind, and one for heat flux / vTint
-            Uprof_quants = np.array(Uprof_quants)
-            vTprof_quants = np.array(vTprof_quants)
-            vTintref_quants = np.array(vTintref_quants)
-            qp_quants = np.array(qp_quants)
-            # Least action path 
-            xlap = load(join(self.physical_param_folder,"xmin_dirn1.npy"))
-            tlap = load(join(self.physical_param_folder,"tmin_dirn1.npy"))
-            adist_lap = model.adist(xlap)
-            bdist_lap = model.bdist(xlap)
-            tlap_idx0 = np.where((adist_lap>0)*(bdist_lap>0))[0][0]
-            if np.min(bdist_lap) <= 0:
-                tlap_idx1 = np.where(bdist_lap<=0)[0][0]
-            else:
-                tlap_idx1 = np.where((adist_lap>0)*(bdist_lap>0))[0][-1]
-            print(f"tlap_idx0 = {tlap_idx0}, tlap_idx1 = {tlap_idx1}")
-            tlap = tlap[tlap_idx0:tlap_idx1+1]
-            xlap = xlap[tlap_idx0:tlap_idx1+1]
-            tlap -= tlap[-1]
-            # Subsample
-            xlap = xlap[np.linspace(0,len(xlap)-1,50).astype(int)]
-            tlap = tlap[np.linspace(0,len(tlap)-1,50).astype(int)]
-            # ----------- Zonal wind --------------
-            fig,ax = plt.subplots(ncols=1,figsize=(8,6),sharey='row',sharex=True)
-            Ureflap = funlib["Uref"]["fun"](xlap)
-            # Least action path in upper left
-            qp_lap = self.out_of_sample_extension(comm_fwd[:,0],data,xlap)
-            ax.plot(qp_lap,Ureflap*funlib["Uref"]["units"],color='cyan')
-            #model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0]],negtime=True)
-            #ax[1].set_xlim(ax[0].get_xlim())
-            # Max-probability path in upper right
-            zi = model.q['zi']
-            levels_interp = np.linspace(qp_levels_real[0],qp_levels_real[-1],200)
-            Uzi_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
-            for qi in range(len(quantiles)):
-                Uzi_quant_interp[qi] = scipy.interpolate.interp1d(qp_levels_real,Uprof_quants[:,qi,zi],kind='cubic')(levels_interp)
-            med_qi = len(quantiles)//2
-            for qi in range(med_qi): # Assume an odd number with the middle is 50%
-                ax.fill_between(levels_interp,Uzi_quant_interp[qi]*funlib["U"]["units"],Uzi_quant_interp[len(quantiles)-1-qi]*funlib["U"]["units"],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
-            ax.plot(levels_interp,Uzi_quant_interp[med_qi]*funlib["U"]["units"],color='black',zorder=med_qi)
-            ax.scatter(qp_levels_real,Uprof_quants[:,med_qi,zi]*funlib["U"]["units"],color='black',marker='o',zorder=med_qi)
-            print(f"black dots: {Uprof_quants[:,med_qi,zi]}")
-            if composite_flag:
-                # Add composite 
-                composite_time = np.load(join(self.savefolder,"composite_time.npy"))
-                composite_qp = np.load(join(self.savefolder,"composite_qp.npy"))
-                composite_Uzi = np.load(join(self.savefolder,"composite_Uref.npy"))
-                ax.plot(np.nanquantile(composite_qp,0.5,axis=0),np.quantile(composite_Uzi,0.5,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
-            Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
-            print("Uzi_b*units = {}".format(Uzi_b*funlib["U"]["units"]))
-            ax.axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
-            ax.axhline(y=Uzi_b*funlib["U"]["units"],color='red',linewidth=3)
-            print("hline y = {}".format(Uzi_b*funlib["U"]["units"]))
-            ax.set_title(r"Path distribution $U$ ($A\to B$)",fontdict=font)
-            ax.set_xlabel(r"Forward committor $q_B^+$",fontdict=font)
-            ax.set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=font)
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_U_vs_qp"),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # ---------- Heat flux --------------
-            fig,ax = plt.subplots(ncols=1,figsize=(8,6),sharey='row',sharex=False)
-            vTintreflap = funlib["vTintref"]["fun"](xlap)
-            ## Least action path in upper left
-            #model.plot_least_action_scalars(self.physical_param_folder,obs_names=["vTintref"],fig=fig,ax=[ax[0]],negtime=True)
-            #ax[1].set_xlim(ax[0].get_xlim())
-            # Max-probability path in upper right
-            zi = model.q['zi']
-            levels_interp = np.linspace(qp_levels_real[0],qp_levels_real[-1],200)
-            vTintref_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
-            for qi in range(len(quantiles)):
-                vTintref_quant_interp[qi] = scipy.interpolate.interp1d(qp_levels_real,vTintref_quants[:,qi],kind='cubic')(levels_interp)
-            med_qi = len(quantiles)//2
-            for qi in range(med_qi): # Assume an odd number with the middle is 50%
-                ax.fill_between(levels_interp,vTintref_quant_interp[qi]*funlib["vTintref"]["units"],vTintref_quant_interp[len(quantiles)-1-qi]*funlib["vTintref"]["units"],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
-            ax.plot(levels_interp,vTintref_quant_interp[med_qi]*funlib["vTintref"]["units"],color='black',zorder=med_qi)
-            ax.scatter(qp_levels_real,vTintref_quants[:,med_qi]*funlib["vTintref"]["units"],color='black',marker='o',zorder=med_qi)
-            ax.plot(qp_lap,vTintreflap*funlib["vTintref"]["units"],color='cyan')
-            if composite_flag:
-                # Add composite 
-                composite_time = np.load(join(self.savefolder,"composite_time.npy"))
-                composite_qp = np.load(join(self.savefolder,"composite_qp.npy"))
-                composite_vTintref = np.load(join(self.savefolder,"composite_vTintref.npy"))
-                ax.plot(np.nanquantile(composite_qp,0.5,axis=0),np.quantile(composite_vTintref,0.5,axis=0)*funlib["vTintref"]["units"],color='black',linewidth=2,linestyle='--')
-            vTintref_a,vTintref_b = funlib["vTintref"]["fun"](model.tpt_obs_xst)
-            ax.axhline(y=vTintref_a*funlib["vTintref"]["units"],color='skyblue',linewidth=3)
-            ax.axhline(y=vTintref_b*funlib["vTintref"]["units"],color='red',linewidth=3)
-            ax.set_title(r"Path distribution IHF ($A\to B$)",fontdict=font)
-            ax.set_xlabel(r"Forward committor $q_B^+$",fontdict=font)
-            ax.set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=font)
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_vT_vs_qp"),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # ---------- Lead time --------------
-            fig,ax = plt.subplots(ncols=1,figsize=(8,6),sharey='row',sharex=False)
-            eps = 1e-10
-            tb_lap = self.out_of_sample_extension(tb[:,0],data,xlap)
-            ## Least action path in upper left
-            #model.plot_least_action_scalars(self.physical_param_folder,obs_names=["vTintref"],fig=fig,ax=[ax[0]],negtime=True)
-            #ax[1].set_xlim(ax[0].get_xlim())
-            # Max-probability path in upper right
-            zi = model.q['zi']
-            levels_interp = np.linspace(qp_levels_real[0],qp_levels_real[-1],200)
-            vTintref_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
-            for qi in range(len(quantiles)):
-                vTintref_quant_interp[qi] = scipy.interpolate.interp1d(qp_levels_real,vTintref_quants[:,qi],kind='cubic')(levels_interp)
-            med_qi = len(quantiles)//2
-            for qi in range(med_qi): # Assume an odd number with the middle is 50%
-                ax.fill_between(levels_interp,vTintref_quant_interp[qi]*funlib["vTintref"]["units"],vTintref_quant_interp[len(quantiles)-1-qi]*funlib["vTintref"]["units"],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
-            ax.plot(levels_interp,vTintref_quant_interp[med_qi]*funlib["vTintref"]["units"],color='black',zorder=med_qi)
-            ax.scatter(qp_levels_real,vTintref_quants[:,med_qi]*funlib["vTintref"]["units"],color='black',marker='o',zorder=med_qi)
-            ax.plot(qp_lap,vTintreflap*funlib["vTintref"]["units"],color='cyan')
-            if composite_flag:
-                # Add composite 
-                composite_time = np.load(join(self.savefolder,"composite_time.npy"))
-                composite_qp = np.load(join(self.savefolder,"composite_qp.npy"))
-                composite_vTintref = np.load(join(self.savefolder,"composite_vTintref.npy"))
-                ax.plot(np.nanquantile(composite_qp,0.5,axis=0),np.quantile(composite_vTintref,0.5,axis=0)*funlib["vTintref"]["units"],color='black',linewidth=2,linestyle='--')
-            vTintref_a,vTintref_b = funlib["vTintref"]["fun"](model.tpt_obs_xst)
-            ax.axhline(y=vTintref_a*funlib["vTintref"]["units"],color='skyblue',linewidth=3)
-            ax.axhline(y=vTintref_b*funlib["vTintref"]["units"],color='red',linewidth=3)
-            ax.set_title(r"Path distribution IHF ($A\to B$)",fontdict=font)
-            ax.set_xlabel(r"Forward committor $q_B^+$",fontdict=font)
-            ax.set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=font)
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_vT_vs_qp"),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-        if False:
-            # ------------ 2. Plot the evolution of the least action path alongside max-flux path --------
-            # Possibility: divide the pathway by committor level, but plot lead time on the horizontal axis. 
-            quantiles = 0.01*np.array([5.0,25.0,40.0,50.0,60.0,75.0,95.0])
-            zi = model.q['zi']
-            funlib = model.observable_function_library()
-            eps = 1e-10
-            tb = self.dam_moments['one']['xb'][1,:,:]
-            tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
-            tb[comm_fwd <= eps] == np.nan
-            tb_min,tb_max = np.nanmin(tb),np.nanmax(tb)
-            num_levels = 25 # 17 is the default
-            tbflat = tb.flatten()
-            tbflat = tbflat[np.isnan(tbflat)==0]
-            tbflat = tbflat[(tbflat>tb_min)*(tbflat<tb_max)]
-            tb_edges = np.nanquantile(tbflat, np.linspace(0,1,num_levels+1))
-            tb_levels = (tb_edges[:-1] + tb_edges[1:])/2
-            tb_tol_list = (tb_edges[1:] - tb_edges[:-1])/1.0
-            #tb_tol_list[0] = min(tb_tol_list[0], 0.99*(tb_levels[0] - tb_min))
-            #tb_tol_list[-1] = min(tb_tol_list[-1], 0.99*(tb_max - tb_levels[-1]))
-            #tb_levels = np.linspace(tb_min,tb_max,num_levels) #[1:-1]
-            qp_levels = np.linspace(0,1,17)[1:-1]
-            tb_qp_corr = np.nanmean((tb - np.nanmean(tb))*(comm_fwd - np.nanmean(comm_fwd)))
-            if tb_qp_corr < 0:
-                tb_levels = tb_levels[::-1]
-            print("tb_levels = {}".format(tb_levels))
-            #tb_tol = np.abs(tb_levels[1]-tb_levels[0])/2.0
-            qp_tol = np.abs(qp_levels[1] - qp_levels[0])/2.0
-            print("tb_qp_corr = ", tb_qp_corr)
-            rflux = []
-            rflux_idx = []
-            Uprof_quants = []
-            vTprof_quants = []
-            vTintref_quants = []
-            qp_quants = [] # Plot the committor as a function of lead time here
-            tb_levels_real = []
-            ramp = tb.reshape((Nx,Nt,1))*np.sign(tb_qp_corr)
-            #ramp = comm_fwd.reshape((Nx,Nt,1)) #* np.sign(tb_qp_corr)
-            for ti in range(len(tb_levels)):
-                tb_tol = tb_tol_list[ti]
-                print("tb_levels[ti] * np.sign(tb_qp_corr) = {}".format(tb_levels[ti]*np.sign(tb_qp_corr)))
-                ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,tb_levels[ti]*np.sign(tb_qp_corr),tb_tol,None,0.0)
-                #ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[ti],qp_tol,None,0.0)
-                if len(ridx_ti) > 0:
-                    ridx_ti = np.array(ridx_ti)
-                    rflux_ti = np.array(rflux_ti)
-                    rflux += [rflux_ti]
-                    rflux_idx += [ridx_ti]
-                    tb_levels_real += [tb_levels[ti]]
-                    #tb_levels_real += [np.mean(tb[ridx_ti,tidx])] ##[np.sum(tb[ridx_ti,tidx]*rflux_ti)/np.sum(rflux_ti*(rflux_ti>0))] #[ti]]
-                    # Determine height-by-height median
-                    U = funlib["U"]["fun"](data.X[ridx_ti,tidx])
-                    print(f"Uzi: min={U[:,zi].min()}, max={U[:,zi].max()}")
-                    Uq = np.zeros((len(quantiles),U.shape[1]))
-                    for j in range(U.shape[1]):
-                        order = np.argsort(U[:,j])
-                        cdf = np.cumsum(rflux_ti[order])
-                        for qi in range(len(quantiles)):
-                            quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
-                            Uq[qi,j] = U[order[quant_idx],j]
-                    Uprof_quants += [Uq]
-                    vT = funlib["vT"]["fun"](data.X[ridx_ti,tidx])
-                    vTq = np.zeros((len(quantiles),vT.shape[1]))
-                    for j in range(vT.shape[1]):
-                        order = np.argsort(vT[:,j])
-                        cdf = np.cumsum(rflux_ti[order])
-                        for qi in range(len(quantiles)):
-                            quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
-                            vTq[qi,j] = vT[order[quant_idx],j]
-                    vTprof_quants += [vTq]
-                    vTintref = funlib["vTintref"]["fun"](data.X[ridx_ti,tidx])
-                    vTirq = np.zeros(len(quantiles))
-                    order = np.argsort(vTintref)
-                    cdf = np.cumsum(vTintref[order])
-                    for qi in range(len(quantiles)):
-                        quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
-                        vTirq[qi] = vTintref[order[quant_idx]]
-                    vTintref_quants += [vTirq]
-                    qp_ti = comm_fwd[ridx_ti,tidx]
-                    qp_ti_q = np.zeros(len(quantiles))
-                    order = np.argsort(qp_ti)
-                    cdf = np.cumsum(qp_ti[order])
-                    for qi in range(len(quantiles)):
-                        quant_idx = np.where(cdf/cdf[-1] > quantiles[qi])[0][0]
-                        qp_ti_q[qi] = qp_ti[order[quant_idx]]
-                    qp_quants += [qp_ti_q]
-            tb_levels_real = np.array(tb_levels_real)
-            print("len(tb_levels_real) = {}".format(len(tb_levels_real)))
-            print(f"tb_levels_real = {tb_levels_real}")
-            # Now create two figures: one for zonal wind, and one for heat flux / vTint
-            Uprof_quants = np.array(Uprof_quants)
-            vTprof_quants = np.array(vTprof_quants)
-            vTintref_quants = np.array(vTintref_quants)
-            qp_quants = np.array(qp_quants)
-            # ----------- Zonal wind --------------
-            fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex=True)
-            # Least action path in upper left
-            model.plot_least_action_scalars(self.physical_param_folder,obs_names=["Uref"],fig=fig,ax=[ax[0,0]],negtime=True)
-            for i in range(2):
-                ax[i,1].set_xlim(ax[0,0].get_xlim())
-            # Max-probability path in upper right
-            zi = model.q['zi']
-            levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
-            Uzi_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
-            for qi in range(len(quantiles)):
-                Uzi_quant_interp[qi] = scipy.interpolate.interp1d(tb_levels_real,Uprof_quants[:,qi,zi],kind='cubic')(levels_interp)
-            med_qi = len(quantiles)//2
-            for qi in range(med_qi): # Assume an odd number with the middle is 50%
-                ax[0,1].fill_between(-levels_interp,Uzi_quant_interp[qi]*funlib["U"]["units"],Uzi_quant_interp[len(quantiles)-1-qi]*funlib["U"]["units"],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
-            ax[0,1].plot(-levels_interp,Uzi_quant_interp[med_qi]*funlib["U"]["units"],color='black',zorder=med_qi)
-            ax[0,1].scatter(-tb_levels_real,Uprof_quants[:,med_qi,zi]*funlib["U"]["units"],color='black',marker='o',zorder=med_qi)
-            print(f"black dots: {Uprof_quants[:,med_qi,zi]}")
-            if composite_flag:
-                # Add composite 
-                composite_time = np.load(join(self.savefolder,"composite_time.npy"))
-                composite_Uzi = np.load(join(self.savefolder,"composite_Uref.npy"))
-                #ax[0,1].plot(composite_time,np.mean(composite_Uzi,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
-                ax[0,1].plot(composite_time,np.quantile(composite_Uzi,0.5,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
-                #ax[0,0].plot(composite_time,np.mean(composite_Uzi,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
-                ax[0,0].plot(composite_time,np.quantile(composite_Uzi,0.5,axis=0)*funlib["U"]["units"],color='black',linewidth=2,linestyle='--')
-            Uzi_a,Uzi_b = funlib["U"]["fun"](model.tpt_obs_xst)[:,zi]
-            print("Uzi_b*units = {}".format(Uzi_b*funlib["U"]["units"]))
-            ax[0,1].axhline(y=Uzi_a*funlib["U"]["units"],color='skyblue',linewidth=3)
-            ax[0,1].axhline(y=Uzi_b*funlib["U"]["units"],color='red',linewidth=3)
-            ax[0,1].set_title(r"Path distribution $U$ ($A\to B$)",fontdict=font)
-            print("hline y = {}".format(Uzi_b*funlib["U"]["units"]))
-
-            # Least action profiles in bottom two left
-            func_key_list = ["U"] #,"vT"]
-            _,_,ims_lap = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0],negtime=True)
-            # U profile in middle right
-            clim_u = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
-            _,_,imu = model.plot_profile_evolution(Uprof_quants[:,med_qi,:],-tb_levels_real,"U",fig=fig,ax=ax[1,1],clim=clim_u)
-            ax[1,1].set_title(r"Median %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
-            fig.colorbar(imu,ax=ax[1,1])
-            # Set x labels to False
-            for i in range(ax.shape[0]-1):
-                ax[i,0].xaxis.set_visible(False)
-                ax[i,1].xaxis.set_visible(False)
-            for i in range(ax.shape[0]):
-                ax[i,1].yaxis.set_visible(False)
-            # Correct position of top row
-            pos00 = ax[0,0].get_position()
-            pos10 = ax[1,0].get_position()
-            ax[0,0].set_position([pos10.x0,pos00.y0,pos10.width,pos00.height])
-            pos01 = ax[0,1].get_position()
-            pos11 = ax[1,1].get_position()
-            ax[0,1].set_position([pos11.x0,pos01.y0,pos11.width,pos01.height])
-            ## Fix horizontal ranges
-            #for i in range(3):
-            #    ax[i,1].set_xlim(ax[i,0].get_xlim())
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_U"),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # ---------- Heat flux --------------
-            fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex=True)
-            # Least action path in upper left
-            model.plot_least_action_scalars(self.physical_param_folder,obs_names=["vTintref"],fig=fig,ax=[ax[0,0]],negtime=True)
-            for i in range(2):
-                ax[i,1].set_xlim(ax[0,0].get_xlim())
-            # Max-probability path in upper right
-            #ax[0,1].set_xlim(ax[0,0].get_xlim())
-            zi = model.q['zi']
-            levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
-            vTintref_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
-            for qi in range(len(quantiles)):
-                vTintref_quant_interp[qi] = scipy.interpolate.interp1d(tb_levels_real,vTintref_quants[:,qi],kind='cubic')(levels_interp)
-            med_qi = len(quantiles)//2
-            for qi in range(med_qi): # Assume an odd number with the middle is 50%
-                ax[0,1].fill_between(-levels_interp,vTintref_quant_interp[qi]*funlib["vTintref"]["units"],vTintref_quant_interp[len(quantiles)-1-qi]*funlib["vTintref"]["units"],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
-            ax[0,1].plot(-levels_interp,vTintref_quant_interp[med_qi]*funlib["vTintref"]["units"],color='black',zorder=med_qi)
-            ax[0,1].scatter(-tb_levels_real,vTintref_quants[:,med_qi]*funlib["vTintref"]["units"],color='black',marker='o',zorder=med_qi)
-            vTintref_a,vTintref_b = funlib["vTintref"]["fun"](model.tpt_obs_xst)
-            ax[0,1].axhline(y=vTintref_a*funlib["vTintref"]["units"],color='skyblue',linewidth=3)
-            ax[0,1].axhline(y=vTintref_b*funlib["vTintref"]["units"],color='red',linewidth=3)
-            ax[0,1].set_title(r"Path distribution IHF ($A\to B$)",fontdict=font)
-
-            # Least action profiles in bottom two left
-            func_key_list = ["vT"] #,"mag"]
-            _,_,ims_lap = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0],negtime=True,logscale=True)
-            # vT profile in middle right
-            clim_vT = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
-            _,_,imvT = model.plot_profile_evolution(vTprof_quants[:,med_qi,:],-tb_levels_real,"vT",fig=fig,ax=ax[1,1],clim=clim_vT,logscale=True)
-            ax[1,1].set_title(r"Median %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
-            fig.colorbar(imvT,ax=ax[1,1])
-            # Set x labels to False
-            for i in range(ax.shape[0]-1):
-                ax[i,0].xaxis.set_visible(False)
-                ax[i,1].xaxis.set_visible(False)
-            for i in range(ax.shape[0]):
-                ax[i,1].yaxis.set_visible(False)
-            # Correct position of top row
-            pos00 = ax[0,0].get_position()
-            pos10 = ax[1,0].get_position()
-            ax[0,0].set_position([pos10.x0,pos00.y0,pos10.width,pos00.height])
-            pos01 = ax[0,1].get_position()
-            pos11 = ax[1,1].get_position()
-            ax[0,1].set_position([pos11.x0,pos01.y0,pos11.width,pos01.height])
-            ## Fix horizontal ranges
-            #for i in range(3):
-            #    ax[i,1].set_xlim(ax[i,0].get_xlim())
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_vT"),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # ----------- Committor --------------
-            fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(16,12),sharey='row',sharex=True)
-            xlap = load(join(self.physical_param_folder,"xmin_dirn1.npy"))
-            tlap = load(join(self.physical_param_folder,"tmin_dirn1.npy"))
-            adist_lap = model.adist(xlap)
-            bdist_lap = model.bdist(xlap)
-            tlap_idx0 = np.where((adist_lap>0)*(bdist_lap>0))[0][0]
-            if np.min(bdist_lap) <= 0:
-                tlap_idx1 = np.where(bdist_lap<=0)[0][0]
-            else:
-                tlap_idx1 = np.where((adist_lap>0)*(bdist_lap>0))[0][-1]
-            print(f"tlap_idx0 = {tlap_idx0}, tlap_idx1 = {tlap_idx1}")
-            tlap = tlap[tlap_idx0:tlap_idx1+1]
-            xlap = xlap[tlap_idx0:tlap_idx1+1]
-            tlap -= tlap[-1]
-            # Subsample
-            xlap = xlap[np.linspace(0,len(xlap)-1,200).astype(int)]
-            tlap = tlap[np.linspace(0,len(tlap)-1,200).astype(int)]
-            # Least action path in upper left
-            comm_fwd_lap = self.out_of_sample_extension(comm_fwd[:,0],data,xlap)
-            print(f"comm_fwd_lap: first={comm_fwd_lap[0]}, last={comm_fwd_lap[-1]}. . tlap: first={tlap[0]}, last={tlap[-1]}")
-            ax[0,0].plot(tlap,comm_fwd_lap,color='black',linewidth=2)
-            ax[0,0].set_xlabel(r"$-\eta_B^+$",fontdict=font)
-            ax[0,0].set_ylabel(r"$q_B^+$",fontdict=font)
-            ax[0,0].set_title(r"Minimum-action path ($A\to B$)",fontdict=font)
-            for i in range(2):
-                ax[i,1].set_xlim(ax[0,0].get_xlim())
-            # Max-probability path in right
-            levels_interp = np.linspace(tb_levels_real[0],tb_levels_real[-1],200)
-            qp_quant_interp = np.zeros((len(quantiles),len(levels_interp)))
-            for qi in range(len(quantiles)):
-                qp_quant_interp[qi] = scipy.interpolate.interp1d(tb_levels_real,qp_quants[:,qi],kind='cubic')(levels_interp)
-            med_qi = len(quantiles)//2
-            for qi in range(med_qi): # Assume an odd number with the middle is 50%
-                ax[0,1].fill_between(-levels_interp,qp_quant_interp[qi],qp_quant_interp[len(quantiles)-1-qi],color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
-            ax[0,1].plot(-levels_interp,qp_quant_interp[med_qi],color='black',zorder=med_qi)
-            ax[0,1].scatter(-tb_levels_real,qp_quants[:,med_qi],color='black',marker='o',zorder=med_qi)
-            ax[0,1].set_xlabel(r"$-\eta_B^+$",fontdict=font)
-            print(f"black dots: {qp_quants[:,med_qi]}")
-            if composite_flag:
-                # Add composite 
-                composite_time = np.load(join(self.savefolder,"composite_time.npy"))
-                composite_qp = np.load(join(self.savefolder,"composite_qp.npy"))
-                ax[0,1].plot(composite_time,np.quantile(composite_qp,0.5,axis=0),color='black',linewidth=2,linestyle='--')
-                ax[0,0].plot(composite_time,np.quantile(composite_qp,0.5,axis=0),color='black',linewidth=2,linestyle='--')
-            qp_a,qp_b = 0.0,1.0
-            ax[0,1].axhline(y=0,color='skyblue',linewidth=3)
-            ax[0,1].axhline(y=1,color='red',linewidth=3)
-            ax[0,0].axhline(y=0,color='skyblue',linewidth=3)
-            ax[0,0].axhline(y=1,color='red',linewidth=3)
-            ax[0,1].set_title(r"Path distribution $q_B^+$ ($A\to B$)",fontdict=font)
-            print("hline y = {}".format(Uzi_b*funlib["U"]["units"]))
-            ax[0,1].yaxis.set_visible(False)
-            # Least action profiles in bottom two left
-            func_key_list = ["U"] #,"vT"]
-            _,_,ims_lap = model.plot_least_action_profiles(self.physical_param_folder,prof_names=func_key_list,fig=fig,ax=ax[1:,0],negtime=True)
-            # U profile in middle right
-            clim_u = np.array([ims_lap[0].levels[0],ims_lap[0].levels[-1]])
-            _,_,imu = model.plot_profile_evolution(Uprof_quants[:,med_qi,:],-tb_levels_real,"U",fig=fig,ax=ax[1,1],clim=clim_u)
-            ax[1,1].set_title(r"Median %s$(z)$ profile [%s]"%(funlib[func_key_list[0]]["name"],funlib[func_key_list[0]]["unit_symbol"]),fontdict=font)
-            fig.colorbar(imu,ax=ax[1,1])
-            # Set x labels to False
-            for i in range(ax.shape[0]-1):
-                ax[i,0].xaxis.set_visible(False)
-                ax[i,1].xaxis.set_visible(False)
-            for i in range(ax.shape[0]):
-                ax[i,1].yaxis.set_visible(False)
-            # Correct position of top row
-            pos00 = ax[0,0].get_position()
-            pos10 = ax[1,0].get_position()
-            ax[0,0].set_position([pos10.x0,pos00.y0,pos10.width,pos00.height])
-            pos01 = ax[0,1].get_position()
-            pos11 = ax[1,1].get_position()
-            ax[0,1].set_position([pos11.x0,pos01.y0,pos11.width,pos01.height])
-            fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_qp"),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
         return
     def plot_transition_states_all(self,model,data,collect_flag=True):
         for dirn in ['ab']: #,'ba']:

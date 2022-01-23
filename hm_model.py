@@ -1129,6 +1129,52 @@ class HoltonMassModel(Model):
         def funz(x):
             return np.mean(fun(x),1).reshape((len(x),1))
         return funz
+    def plot_state_distribution_signed(self,X,rflux,rflux_idx,qlevels,qsymbol,colors=None,key="U",labels=None):
+        # Given a sequence of states (X) plot their mean and std on the same graph. For the Holton-Mass model, this means different zonal wind profiles.
+        #key = "U"
+        num_levels = len(qlevels)
+        funlib = self.observable_function_library()
+        Ua,Ub = funlib[key]["fun"](self.xst)
+        units = funlib[key]["units"]
+        q = self.q
+        fig,ax = plt.subplots(figsize=(6,6),dpi=200) # Top panel for positive flux, bottom panel for negative flux
+        # Plot a bunch of zonal wind profiles
+        #N = len(cv_x)
+        z = q['z_d'][1:-1]/1000
+        handles = []
+        ha, = ax.plot(units*Ua,z,color='blue',linestyle='dashed',linewidth=3,label=asymb)
+        hb, = ax.plot(units*Ub,z,color='red',linestyle='dashed',linewidth=3,label=bsymb)
+        handles += [ha,hb]
+        if colors is None: colors = plt.cm.coolwarm(qlevels)
+        if labels is None: labels = ["" for i in range(num_levels)]
+        print("colors = {}, labels = {}".format(colors,labels))
+        print("Before for loop: num_levels = {}, len(rflux) = {}, len(rflux_idx) = {}".format(num_levels,len(rflux),len(rflux_idx)))
+        for i in range(num_levels):
+            if len(rflux_idx[i]) > 0:
+                U = funlib[key]["fun"](X[rflux_idx[i]])
+                for zi in np.linspace(0,len(z)-1,10).astype(int): #range(len(z)):
+                    order = np.argsort(U[:,zi])
+                    rfzi = np.array(rflux[i])[order]
+                    Uzi = U[order,zi]
+                    # Restrict to places with flux > 10% of the max
+                    sig_idx = np.where(np.abs(rfzi) > 0.2*np.max(np.abs(rfzi)))
+                    rfzi = rfzi[sig_idx]
+                    Uzi = Uzi[sig_idx]
+                    # Make a histogram
+                    hist,bin_edges = np.histogram(Uzi,weights=rfzi,density=False,bins=min(20,len(rfzi)))
+                    bin_centers = (bin_edges[:-1] + bin_edges[1:])/2
+                    # Normalize
+                    hist *= 0.5*(z[1]-z[0])/np.max(np.abs(hist))
+                    # Plot
+                    ax.plot(units*bin_centers,z[zi]*np.ones(len(bin_centers)),color=colors[i],alpha=0.5)
+                    ax.plot(units*bin_centers,z[zi]+hist,color=colors[i],linewidth=1)
+        #ax.legend(handles=handles,prop={'size':13})
+        ax.set_ylabel(r"$z$ [km]",fontdict=font)
+        ax.set_xlabel("{} [{}]".format(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
+        xlim = ax.get_xlim()
+        fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
+        ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
+        return fig,ax
     def plot_state_distribution(self,X,rflux,rflux_idx,qlevels,qsymbol,colors=None,key="U",labels=None,quantiles=[0.25,0.75]):
         # Given a sequence of states (X) plot their mean and std on the same graph. For the Holton-Mass model, this means different zonal wind profiles.
         #key = "U"
@@ -1137,7 +1183,7 @@ class HoltonMassModel(Model):
         Ua,Ub = funlib[key]["fun"](self.xst)
         units = funlib[key]["units"]
         q = self.q
-        fig,ax = plt.subplots(figsize=(6,6))
+        fig,ax = plt.subplots(figsize=(6,6)) # Top panel for positive flux, bottom panel for negative flux
         # Plot a bunch of zonal wind profiles
         #N = len(cv_x)
         z = q['z_d'][1:-1]/1000
