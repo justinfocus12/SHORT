@@ -583,7 +583,7 @@ class TPT:
                     field_trans = field_fun(x_long[k0_padded:k1]).flatten()
                 if (not avg_prea_flag) and (k0 > k0_padded+1):
                     field_trans[:(k0-k0_padded-1)] = np.nan
-                ax[0,0].plot(t_long[k0_padded:k1]-t_long[k1],field_trans*units,color='gray',alpha=0.25,linewidth=1,zorder=-1)
+                ax[0,0].plot(t_long[k0_padded:k1]-t_long[k1],field_trans*units,color='gray',alpha=0.75,linewidth=1,zorder=-1)
                 if i in colored_idx:
                     color = trans_colors[np.where(colored_idx==i)[0][0]]
                     alpha = 1.0
@@ -619,7 +619,7 @@ class TPT:
                 ax[i,0].axhline(ab_long[0]*units,color='skyblue',zorder=-1)
                 ax[i,0].axhline(ab_long[1]*units,color='red',zorder=-1)
                 ax[i,0].set_ylabel(ylab,fontdict=font)
-                ylim = ax[i].get_ylim()
+                ylim = ax[i,0].get_ylim()
                 fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
                 ax[i,0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
             if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
@@ -3363,7 +3363,7 @@ class TPT:
         if fig is None or ax is None:
             fig,ax = plt.subplots()
         ramp = ramp.reshape((Nx,Nt,1))
-        bin_width = (np.nanmax(field)-np.nanmin(field))/50
+        bin_width = (np.nanmax(field)-np.nanmin(field))/30
         print(f"bin_width = {bin_width}")
         for ti in range(len(ramp_levels)):
             ramp_tol = ramp_tol_list[ti]
@@ -3386,7 +3386,7 @@ class TPT:
                 num_bins = int(round((np.max(f_ti) - np.min(f_ti))/bin_width))
                 hist,bin_edges = np.histogram(f_ti,weights=rflux_ti,density=False,bins=num_bins) #min(10,len(sig_idx)))
                 bin_centers = (bin_edges[1:]+bin_edges[:-1])/2
-                hist *= 0.5*(ramp_levels[1]-ramp_levels[0])*ramp_units/np.max(np.abs(hist))
+                hist *= 0.8*(ramp_levels[1]-ramp_levels[0])*ramp_units/np.max(np.abs(hist))
                 # Truncate bin centers to nontrivial fluxes
                 sig_bin_idx = np.where(np.abs(hist) > 0.1*np.max(np.abs(hist)))[0]
                 bin_centers = bin_centers[sig_bin_idx]
