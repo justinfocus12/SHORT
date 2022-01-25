@@ -3363,6 +3363,9 @@ class TPT:
             fig,ax = plt.subplots()
         ramp = ramp.reshape((Nx,Nt,1))
         ellipse_list = []
+        centers_x = []
+        centers_y = []
+        ramp_levels_real = []
         for ti in range(len(ramp_levels)):
             ramp_tol = ramp_tol_list[ti]
             ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,ramp_levels[ti],ramp_tol,None,0.0)
@@ -3372,6 +3375,7 @@ class TPT:
             ridx_ti = ridx_ti[pos_idx]
             rflux_ti = rflux_ti[pos_idx]
             if len(ridx_ti) > 0:
+                ramp_levels_real += [ramp_levels[ti]]
                 ridx_ti = np.array(ridx_ti)
                 rflux_ti = np.array(rflux_ti)
                 f_x = field_x[ridx_ti,tidx]
@@ -3380,6 +3384,8 @@ class TPT:
                 flux_sum = np.sum(rflux_ti)
                 mean_x = np.sum(f_x*rflux_ti)/flux_sum
                 mean_y = np.sum(f_y*rflux_ti)/flux_sum
+                centers_x += [mean_x]
+                centers_y += [mean_y]
                 print(f"mean_x = {mean_x}, mean_y = {mean_y}")
                 mean_xx = np.sum(f_x*f_x*rflux_ti)/flux_sum
                 mean_xy = np.sum(f_x*f_y*rflux_ti)/flux_sum
@@ -3402,22 +3408,31 @@ class TPT:
                     raise Exception(f"ERROR: the covariance matrix C has a nonpositive eigenvalue. lam = {lam}")
                 angle = np.arctan2(eig[1,1],eig[0,1])*180/np.pi
                 print(f"angle = {angle}")
-                ellipse = patches.Ellipse((mean_x*units_x,mean_y*units_y),2*np.sqrt(lam[1]),2*np.sqrt(lam[0]),angle=angle,fc='gray', fill=True)
-                ellipse_list += [ellipse]
+                sig_mult_list = [2,1,0.5]
+                for i_sig in range(len(sig_mult_list)):
+                    ellipse = patches.Ellipse((mean_x*units_x,mean_y*units_y),sig_mult_list[i_sig]*np.sqrt(lam[1]),sig_mult_list[i_sig]*np.sqrt(lam[0]),angle=angle,fc=plt.cm.Reds(1-(i_sig+1)/len(sig_mult_list)), fill=True, zorder=i_sig)
+                    ax.add_artist(ellipse)
+                #ellipse_list += [ellipse]
                 # Also draw the ellipse to make sure
                 theta = np.linspace(0,2*np.pi,60)
                 xx = np.sqrt(lam[1])*np.cos(theta)
                 yy = np.sqrt(lam[0])*np.sin(theta)
                 ell_edge = np.array([[np.cos(angle*np.pi/180),-np.sin(angle*np.pi/180)],[np.sin(angle*np.pi/180),np.cos(angle*np.pi/180)]]).dot(np.array([xx,yy]))
                 #ax.plot(mean_x*units_x+ell_edge[0],mean_y*units_y+ell_edge[1],color='black',linewidth=1)
-        ellipse_collection = PatchCollection(ellipse_list, zorder=1)
-        ax.add_collection(ellipse_collection)
+        #ellipse_collection = PatchCollection(ellipse_list, zorder=1)
+        #ax.add_collection(ellipse_collection)
+        centers_x = np.array(centers_x)
+        centers_y = np.array(centers_y)
+        ramp_levels_real = np.array(ramp_levels_real)
         field_y_a,field_y_b = self.out_of_sample_extension(field_y[:,0],data,model.tpt_obs_xst)
         ax.axhline(field_y_a*units_y,color='skyblue')
         ax.axhline(field_y_b*units_y,color='red')
         # Plot a center line
-        centers = np.array([ell.get_center() for ell in ellipse_list])
-        ax.plot(centers[:,0],centers[:,1],color='black',linewidth=2)
+        ramp_levels_interp = np.linspace(ramp_levels_real[0],ramp_levels_real[-1],100)
+        idx_interp = np.linspace(0,len(ramp_levels_real)-1,len(ramp_levels_real)).astype(int)
+        centers_x_interp = scipy.interpolate.interp1d(ramp_levels_real[idx_interp],centers_x[idx_interp],'cubic')(ramp_levels_interp)
+        centers_y_interp = scipy.interpolate.interp1d(ramp_levels_real[idx_interp],centers_y[idx_interp],'cubic')(ramp_levels_interp)
+        ax.plot(centers_x_interp*units_x,centers_y_interp*units_y,color='black',linewidth=2, zorder=10)
         return fig,ax
     def plot_median_flux_and_lap_signed(self,model,data,ramp,field,field_fun=None,ramp_units=1.0,field_units=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None,laptime_flag=False):
         # Just scalars. 
@@ -3702,9 +3717,13 @@ class TPT:
         # -------- Parametric ------------
         print(f"------------------------ Beginning parametric ----------------------")
         # Uref vs. lead time (parametric)
+        qpramp_levels_parametric = np.linspace(qpramp_min,qpramp_max,15)
+        qpramp_tol_list_parametric = np.zeros(len(qpramp_levels_parametric))
+        qpramp_tol_list_parametric[:-1] = (qpramp_levels_parametric[1:] - qpramp_levels_parametric[:-1])/2
+        qpramp_tol_list_parametric[-1] = (qpramp_levels_parametric[-1] - qpramp_levels_parametric[-2])/15
         field_x = tbramp
         field_y = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list)
+        fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["Uref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric)
         ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
         ax.set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
         fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_Uref_vs_tb"),bbox_inches="tight",pad_inches=0.2)
