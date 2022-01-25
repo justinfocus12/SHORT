@@ -571,7 +571,7 @@ class TPT:
                 colored_idx[i] = np.argmin(np.abs(transit_distribution - transit_time_quantile))
             #max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
             # Match the maximum duration with the later plots of flux distribution
-            max_duration = max(int(100/(t_long[1]-t_long[0])), max([ab_ends[i]-ab_starts[i] for i in colored_idx]) + 10)
+            max_duration = max(int(90/(t_long[1]-t_long[0])), max([ab_ends[i]-ab_starts[i] for i in colored_idx]) + 1)
             print("max_duration = {}".format(max_duration))
             field_trans_composite = np.zeros((num_trans,max_duration))
             for i in range(num_trans):
@@ -625,6 +625,7 @@ class TPT:
                 ax[i,0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
             if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
             ax[1,0].set_xlabel(xlab,fontdict=font)
+            ax[1,0].set_xlim([-max_duration,0])
             # TODO: now plot the second column the same quantity vs. lead time and vs. committor
             fig.savefig(join(self.savefolder,"transitory_{}_nt{}".format(field_abb,num_trans)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
@@ -3366,6 +3367,8 @@ class TPT:
         centers_x = []
         centers_y = []
         ramp_levels_real = []
+        # Predetermine the quantiles
+        quantiles = np.array([0.9,0.5,0.2])
         for ti in range(len(ramp_levels)):
             ramp_tol = ramp_tol_list[ti]
             ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,ramp_levels[ti],ramp_tol,None,0.0)
@@ -3408,9 +3411,10 @@ class TPT:
                     raise Exception(f"ERROR: the covariance matrix C has a nonpositive eigenvalue. lam = {lam}")
                 angle = np.arctan2(eig[1,1],eig[0,1])*180/np.pi
                 print(f"angle = {angle}")
-                sig_mult_list = [2,1,0.5]
-                for i_sig in range(len(sig_mult_list)):
-                    ellipse = patches.Ellipse((mean_x*units_x,mean_y*units_y),sig_mult_list[i_sig]*np.sqrt(lam[1]),sig_mult_list[i_sig]*np.sqrt(lam[0]),angle=angle,fc=plt.cm.Reds(1-(i_sig+1)/len(sig_mult_list)), fill=True, zorder=i_sig)
+                for i_sig in range(len(quantiles)):
+                    # Determine the semi-major and minor axes for this.
+                    R = np.sqrt(-2*np.log(1-lam[0]*lam[1]*quantiles[i_sig]/np.sqrt(2*np.pi)))
+                    ellipse = patches.Ellipse((mean_x*units_x,mean_y*units_y),R*np.sqrt(lam[1]),R*np.sqrt(lam[0]),angle=angle,fc=plt.cm.Reds(1-(i_sig+1)/len(quantiles)), fill=True, zorder=i_sig)
                     ax.add_artist(ellipse)
                 #ellipse_list += [ellipse]
                 # Also draw the ellipse to make sure
@@ -3725,6 +3729,7 @@ class TPT:
         field_y = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
         fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["Uref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric)
         ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
+        ax.set_xlim([-90,0])
         ax.set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
         fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_Uref_vs_tb"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
