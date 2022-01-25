@@ -11,6 +11,9 @@ matplotlib.use('AGG')
 #matplotlib.use('PDF')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import matplotlib.ticker as ticker
+import matplotlib.patches as patches
+from matplotlib.collections import PatchCollection
 matplotlib.rcParams['font.size'] = 12
 matplotlib.rcParams['font.family'] = 'serif'
 #matplotlib.rcParams['savefig.bbox'] = 'tight'
@@ -23,8 +26,6 @@ bigfont = {'family': 'serif', 'size': 30}
 bbigfont = {'family': 'serif', 'size': 40}
 giantfont = {'family': 'serif', 'size': 80}
 ggiantfont = {'family': 'serif', 'size': 120}
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import pickle
 import sys
 import subprocess
@@ -555,7 +556,7 @@ class TPT:
         # ------------ Next: plot only some transitions on their own plot --------------
         quantiles = np.array([0.05,0.25,0.4,0.5])
         if any_trans:
-            avg_prea_flag = False
+            avg_prea_flag = True
             fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(12,12),sharex=True,sharey=True)
             num_trans = min(300,len(ab_starts))
             print(f"num_trans = {num_trans}")
@@ -570,12 +571,12 @@ class TPT:
                 colored_idx[i] = np.argmin(np.abs(transit_distribution - transit_time_quantile))
             #max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
             # Match the maximum duration with the later plots of flux distribution
-            max_duration = max(int(120/(t_long[1]-t_long[0])), max([ab_ends[i]-ab_starts[i] for i in colored_idx]) + 10)
+            max_duration = max(int(100/(t_long[1]-t_long[0])), max([ab_ends[i]-ab_starts[i] for i in colored_idx]) + 10)
             print("max_duration = {}".format(max_duration))
             field_trans_composite = np.zeros((num_trans,max_duration))
             for i in range(num_trans):
                 if i % 10 == 0: print(f"Plotting transition {i} out of {num_trans}")
-                k0,k1 = ab_starts[i],ab_ends[i]
+                k0,k1 = ab_starts[i]-1,ab_ends[i]
                 k0_padded = k1 - max_duration # Get all the beginnings lined up
                 if field_fun is None:
                     field_trans = self.out_of_sample_extension(field,data,x_long[k0_padded:k1],k=15)
@@ -583,7 +584,7 @@ class TPT:
                     field_trans = field_fun(x_long[k0_padded:k1]).flatten()
                 if (not avg_prea_flag) and (k0 > k0_padded+1):
                     field_trans[:(k0-k0_padded-1)] = np.nan
-                ax[0,0].plot(t_long[k0_padded:k1]-t_long[k1],field_trans*units,color='gray',alpha=0.75,linewidth=1,zorder=-1)
+                ax[0,0].plot(t_long[k0_padded:k1]-t_long[k1],field_trans*units,color='gray',alpha=0.65,linewidth=0.75,zorder=-1)
                 if i in colored_idx:
                     color = trans_colors[np.where(colored_idx==i)[0][0]]
                     alpha = 1.0
@@ -3342,6 +3343,82 @@ class TPT:
         num = min(max_num_states,len(idx))
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
+    def plot_median_flux_parametric(self,model,data,ramp,field_x,field_y,units_x=1.0,units_y=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None):
+        Nx,Nt,xdim = data.X.shape
+        comm_fwd = self.dam_moments['one']['xb'][0,:,:]
+        comm_bwd = self.dam_moments['one']['ax'][0,:,:]
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
+        rampflat = ramp.flatten()
+        rampflat = rampflat[np.isnan(rampflat)==0]
+        if ramp_levels is None or ramp_tol_list is None:
+            num_levels = 20 # 17 is the default
+            ramp_min,ramp_max = np.nanmin(rampflat),np.nanmax(rampflat)
+            rampflat = rampflat[(rampflat>ramp_min)*(rampflat<ramp_max)]
+            ramp_edges = np.linspace(ramp_min,ramp_max,num_levels+1) 
+            #print(f"ramp_edges = {ramp_edges}")
+            ramp_levels = (ramp_edges[:-1] + ramp_edges[1:])/2
+            ramp_tol_list = (ramp_edges[1:] - ramp_edges[:-1])/1.0
+        # Plot
+        if fig is None or ax is None:
+            fig,ax = plt.subplots()
+        ramp = ramp.reshape((Nx,Nt,1))
+        ellipse_list = []
+        for ti in range(len(ramp_levels)):
+            ramp_tol = ramp_tol_list[ti]
+            ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,ramp_levels[ti],ramp_tol,None,0.0)
+            ridx_ti = np.array(ridx_ti)
+            rflux_ti = np.array(rflux_ti)
+            pos_idx = np.where(rflux_ti>0)[0]
+            ridx_ti = ridx_ti[pos_idx]
+            rflux_ti = rflux_ti[pos_idx]
+            if len(ridx_ti) > 0:
+                ridx_ti = np.array(ridx_ti)
+                rflux_ti = np.array(rflux_ti)
+                f_x = field_x[ridx_ti,tidx]
+                f_y = field_y[ridx_ti,tidx]
+                # Compute an equivalent ellipse
+                flux_sum = np.sum(rflux_ti)
+                mean_x = np.sum(f_x*rflux_ti)/flux_sum
+                mean_y = np.sum(f_y*rflux_ti)/flux_sum
+                print(f"mean_x = {mean_x}, mean_y = {mean_y}")
+                mean_xx = np.sum(f_x*f_x*rflux_ti)/flux_sum
+                mean_xy = np.sum(f_x*f_y*rflux_ti)/flux_sum
+                mean_yy = np.sum(f_y*f_y*rflux_ti)/flux_sum
+                #ax.plot(mean_x*units_x,mean_y*units_y,marker='o',color='gray',zorder=-1)
+                #ax.plot((mean_x+np.array([-1,1])*np.sqrt(mean_xx-mean_x**2))*units_x, mean_y*units_y*np.ones(2), color='gray', linewidth=3,zorder=-1)
+                #ax.plot(mean_x*units_x*np.ones(2), (mean_y+np.array([-1,1])*np.sqrt(mean_yy-mean_y**2))*units_y, color='gray', linewidth=3,zorder=-1)
+                # Covariance matrix
+                C = np.array([[mean_xx-mean_x**2, mean_xy-mean_x*mean_y], [mean_xy-mean_x*mean_y, mean_yy-mean_y**2]])
+                # Convert to dimensional form
+                D = np.diag([units_x,units_y])
+                C_d = D.dot(C).dot(D)
+                lam,eig = np.linalg.eigh(C_d)
+                order = np.argsort(lam)
+                lam = lam[order]
+                eig = eig[:,order]
+                print(f"lam = {lam}")
+                print(f"eig = {eig}")
+                if np.min(lam) <= 0:
+                    raise Exception(f"ERROR: the covariance matrix C has a nonpositive eigenvalue. lam = {lam}")
+                angle = np.arctan2(eig[1,1],eig[0,1])*180/np.pi
+                print(f"angle = {angle}")
+                ellipse = patches.Ellipse((mean_x*units_x,mean_y*units_y),2*np.sqrt(lam[1]),2*np.sqrt(lam[0]),angle=angle,fc='gray', fill=True)
+                ellipse_list += [ellipse]
+                # Also draw the ellipse to make sure
+                theta = np.linspace(0,2*np.pi,60)
+                xx = np.sqrt(lam[1])*np.cos(theta)
+                yy = np.sqrt(lam[0])*np.sin(theta)
+                ell_edge = np.array([[np.cos(angle*np.pi/180),-np.sin(angle*np.pi/180)],[np.sin(angle*np.pi/180),np.cos(angle*np.pi/180)]]).dot(np.array([xx,yy]))
+                #ax.plot(mean_x*units_x+ell_edge[0],mean_y*units_y+ell_edge[1],color='black',linewidth=1)
+        ellipse_collection = PatchCollection(ellipse_list, zorder=1)
+        ax.add_collection(ellipse_collection)
+        field_y_a,field_y_b = self.out_of_sample_extension(field_y[:,0],data,model.tpt_obs_xst)
+        ax.axhline(field_y_a*units_y,color='skyblue')
+        ax.axhline(field_y_b*units_y,color='red')
+        # Plot a center line
+        centers = np.array([ell.get_center() for ell in ellipse_list])
+        ax.plot(centers[:,0],centers[:,1],color='black',linewidth=2)
+        return fig,ax
     def plot_median_flux_and_lap_signed(self,model,data,ramp,field,field_fun=None,ramp_units=1.0,field_units=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None,laptime_flag=False):
         # Just scalars. 
         Nx,Nt,xdim = data.X.shape
@@ -3622,8 +3699,20 @@ class TPT:
         qpramp_tol_list[:-1] = (qpramp_levels[1:] - qpramp_levels[:-1])/2
         qpramp_tol_list[-1] = (qpramp_levels[-1] - qpramp_levels[-2])/15
         #ramp_levels[-1] = (ramp_levels[-1] + ramp_levels[-2])/2
+        # -------- Parametric ------------
+        print(f"------------------------ Beginning parametric ----------------------")
+        # Uref vs. lead time (parametric)
+        field_x = tbramp
+        field_y = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list)
+        ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
+        ax.set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_Uref_vs_tb"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        sys.exit()
         # ------ Signed: Plot committor and lead time against each other ----------
         print(f"-------------------- Beginning signed ------------------")
+        # Multiple things
         fig,ax = plt.subplots(ncols=2,figsize=(16,6))
         # lead time vs. committor
         _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,-tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
