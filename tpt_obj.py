@@ -610,7 +610,8 @@ class TPT:
                 lower = np.nanquantile(field_trans_composite, quantiles[qi], axis=0)
                 if qi < len(quantiles)-1:
                     upper = np.nanquantile(field_trans_composite, 1-quantiles[qi], axis=0)
-                    ax[1,0].fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
+                    reds = (qi+1)/len(quantiles)
+                    ax[1,0].fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds(reds),alpha=1.0,zorder=qi)
                 else:
                     ax[1,0].plot(t_long[:max_duration]-t_long[max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
             xlab = r"Time$-\tau_B^+$"
@@ -625,7 +626,7 @@ class TPT:
                 ax[i,0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
             if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
             ax[1,0].set_xlabel(xlab,fontdict=font)
-            ax[1,0].set_xlim([-max_duration,0])
+            ax[1,0].set_xlim([-max_duration*(t_long[1]-t_long[0]),0])
             # TODO: now plot the second column the same quantity vs. lead time and vs. committor
             fig.savefig(join(self.savefolder,"transitory_{}_nt{}".format(field_abb,num_trans)),bbox_inches="tight",pad_inches=0.2)
             plt.close(fig)
@@ -1951,6 +1952,9 @@ class TPT:
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        if keys[k] == 'one' and j == 1:
+                            print("I got onto the one and j if statement")
+                            _,_ = self.plot_field_2d(model,data,comm_fwd,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,contourf_flag=False,contour_notf_flag=True,contour_notf_levels=np.array([0.1,0.2,0.5,0.8,0.9]),fig=fig,ax=ax)
                         fsuff = 'cast_%s%d_xb_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
@@ -2840,11 +2844,11 @@ class TPT:
             _,dth,thaxes,cgrid,J1,J1_std,_,_,_ = helper.project_field(field1[:,d],chomss,theta_yj,shp=shp,avg_flag=False)
             J[:,d] = 1/(2*self.lag_time_current_display*np.prod(dth))*(J0 + J1)
         return thaxes,J
-    def plot_field_2d(self,model,data,field,weight,theta_x,shp=[60,60],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",current_flag=False,current_bdy_flag=False,comm_bwd=None,comm_fwd=None,current_shp=[25,25],abpoints_flag=False,theta_ab=None,avg_flag=True,logscale=False,ss=None,magu_fw=None,magu_obs=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',fig=None,ax=None,vmin=None,vmax=None):
+    def plot_field_2d(self,model,data,field,weight,theta_x,shp=[60,60],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",current_flag=False,current_bdy_flag=False,comm_bwd=None,comm_fwd=None,current_shp=[25,25],abpoints_flag=False,theta_ab=None,avg_flag=True,logscale=False,ss=None,magu_fw=None,magu_obs=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',fig=None,ax=None,vmin=None,vmax=None,contourf_flag=True,contour_notf_flag=False,contour_notf_levels=None):
         # theta_x is the observable on all of the x's
         # First plot the scalar
         #print("About to call Helper to plot 2d")
-        fig,ax = helper.plot_field_2d(field[:,0],weight,theta_x[:,0],shp=shp,cmap=cmap,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,avg_flag=avg_flag,std_flag=False,logscale=logscale,ss=ss,units=units,unit_symbols=unit_symbols,cbar_orientation=cbar_orientation,fig=fig,ax=ax,vmin=vmin,vmax=vmax)
+        fig,ax = helper.plot_field_2d(field[:,0],weight,theta_x[:,0],shp=shp,cmap=cmap,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,avg_flag=avg_flag,std_flag=False,logscale=logscale,ss=ss,units=units,unit_symbols=unit_symbols,cbar_orientation=cbar_orientation,fig=fig,ax=ax,vmin=vmin,vmax=vmax,contourf_flag=contourf_flag,contour_notf_flag=contour_notf_flag,contour_notf_levels=contour_notf_levels)
         #ax.set_xlim([np.min(theta_x[:,:,0])*units[0],np.max(theta_x[:,:,0])*units[0]])
         #ax.set_ylim([np.min(theta_x[:,:,1])*units[1],np.max(theta_x[:,:,1])*units[1]])
         #print("Helper's role is done")
@@ -3413,8 +3417,11 @@ class TPT:
                 print(f"angle = {angle}")
                 for i_sig in range(len(quantiles)):
                     # Determine the semi-major and minor axes for this.
-                    R = np.sqrt(-2*np.log(1-lam[0]*lam[1]*quantiles[i_sig]/np.sqrt(2*np.pi)))
-                    ellipse = patches.Ellipse((mean_x*units_x,mean_y*units_y),R*np.sqrt(lam[1]),R*np.sqrt(lam[0]),angle=angle,fc=plt.cm.Reds(1-(i_sig+1)/len(quantiles)), fill=True, zorder=i_sig)
+                    R = np.sqrt(-2*np.log(1-quantiles[i_sig]))
+                    print(f"for quantile {quantiles[i_sig]}, R = {R}")
+                    #reds = 1-0.5*quantiles[i_sig]
+                    reds = (i_sig+1)/(len(quantiles)+1)
+                    ellipse = patches.Ellipse((mean_x*units_x,mean_y*units_y),R*np.sqrt(lam[1]),R*np.sqrt(lam[0]),angle=angle,fc=plt.cm.Reds(reds), fill=True, zorder=i_sig)
                     ax.add_artist(ellipse)
                 #ellipse_list += [ellipse]
                 # Also draw the ellipse to make sure
@@ -3720,18 +3727,27 @@ class TPT:
         #ramp_levels[-1] = (ramp_levels[-1] + ramp_levels[-2])/2
         # -------- Parametric ------------
         print(f"------------------------ Beginning parametric ----------------------")
-        # Uref vs. lead time (parametric)
+        # ___ vs. lead time (parametric)
         qpramp_levels_parametric = np.linspace(qpramp_min,qpramp_max,15)
         qpramp_tol_list_parametric = np.zeros(len(qpramp_levels_parametric))
         qpramp_tol_list_parametric[:-1] = (qpramp_levels_parametric[1:] - qpramp_levels_parametric[:-1])/2
         qpramp_tol_list_parametric[-1] = (qpramp_levels_parametric[-1] - qpramp_levels_parametric[-2])/15
         field_x = tbramp
+        # U vs. lead time 
         field_y = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
         fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["Uref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric)
         ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
         ax.set_xlim([-90,0])
         ax.set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
         fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_Uref_vs_tb"),bbox_inches="tight",pad_inches=0.2)
+        plt.close(fig)
+        # vTint vs. lead time
+        field_y = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["vTintref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric)
+        ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
+        ax.set_xlim([-90,0])
+        ax.set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_vTintref_vs_tb"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         sys.exit()
         # ------ Signed: Plot committor and lead time against each other ----------

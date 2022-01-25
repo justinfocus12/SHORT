@@ -224,7 +224,7 @@ def plot_field_1d(theta,u,weight,shp=[20,],uname="",thetaname="",avg_flag=True,s
         ax.plot(xylim,xylim,color='black',linestyle='--')
     return fig,ax,handle
 
-def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",avg_flag=True,std_flag=True,logscale=False,ss=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',cbar_location='top',fig=None,ax=None,vmin=None,vmax=None,cbar_pad=0.2,fmt_x=None,fmt_y=None):
+def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",avg_flag=True,std_flag=True,logscale=False,ss=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',cbar_location='top',fig=None,ax=None,vmin=None,vmax=None,cbar_pad=0.2,fmt_x=None,fmt_y=None,contourf_flag=True,contour_notf_flag=False,contour_notf_levels=None):
     # The function inside TPT should just extend this one
     shp = np.array(shp)
     shp,dth,thaxes,cgrid,field_mean,field_std,field_std_L2,field_std_Linf,_ = project_field(field,weight,theta_x,shp,avg_flag=avg_flag)
@@ -244,27 +244,30 @@ def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldnam
         #field_mean[posidx] = np.log10(field_mean[posidx])
         field_mean[np.setdiff1d(np.arange(np.prod(shp)),posidx)] = np.nan
     locator = ticker.LogLocator(numticks=10) if logscale else ticker.MaxNLocator()
-    im = ax0.contourf(th01,th10,field_mean.reshape(shp),cmap=cmap,locator=locator,zorder=1,vmin=vmin,vmax=vmax)
     ax0.set_xlim([np.min(units[0]*thaxes[0]),np.max(units[0]*thaxes[0])])
     ax0.set_ylim([np.min(units[1]*thaxes[1]),np.max(units[1]*thaxes[1]) + 0.15*units[1]*np.ptp(thaxes[1])])
-    #print("eps = {} - {}".format(np.nanmax(field_mean),np.nanmin(field_mean)))
-    cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean),20)
-    # -------------------
-    # New colorbar code
-    ax0_left,ax0_bottom,ax0_width,ax0_height = ax0.get_position().bounds
-    if cbar_orientation == 'vertical':
-        sys.exit("Not doing vertical colorbars right now")
-    elif cbar_orientation == 'horizontal':
-        if cbar_location == 'bottom':
-            cbaxes = fig.add_axes([0.2,0.00,0.8,0.01])
-        elif cbar_location == 'top':
-            cbaxes = fig.add_axes([ax0_left+0.1*ax0_width,ax0_bottom+0.97*ax0_height,0.8*ax0_width,0.03*ax0_height])
-        if not logscale:
-            cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, orientation=cbar_orientation, format=ticker.FuncFormatter(cbar_fmt), ticks=np.linspace(np.nanmin(field_mean),np.nanmax(field_mean),4))
-        else:
-            cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, ticks=10.0**(np.linspace(np.log10(np.nanmin(field_mean)),np.log10(np.nanmax(field_mean)),4).astype(int)), orientation='horizontal')
-        cbar.ax.tick_params(labelsize=15)
+    if contourf_flag:
+        im = ax0.contourf(th01,th10,field_mean.reshape(shp),cmap=cmap,locator=locator,zorder=1,vmin=vmin,vmax=vmax)
+        #print("eps = {} - {}".format(np.nanmax(field_mean),np.nanmin(field_mean)))
+        cbar_fmt = generate_sci_fmt(np.nanmin(field_mean),np.nanmax(field_mean),20)
+        # -------------------
+        # New colorbar code
+        ax0_left,ax0_bottom,ax0_width,ax0_height = ax0.get_position().bounds
+        if cbar_orientation == 'vertical':
+            sys.exit("Not doing vertical colorbars right now")
+        elif cbar_orientation == 'horizontal':
+            if cbar_location == 'bottom':
+                cbaxes = fig.add_axes([0.2,0.00,0.8,0.01])
+            elif cbar_location == 'top':
+                cbaxes = fig.add_axes([ax0_left+0.1*ax0_width,ax0_bottom+0.97*ax0_height,0.8*ax0_width,0.03*ax0_height])
+            if not logscale:
+                cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, orientation=cbar_orientation, format=ticker.FuncFormatter(cbar_fmt), ticks=np.linspace(np.nanmin(field_mean),np.nanmax(field_mean),4))
+            else:
+                cbar = plt.colorbar(im, ax=ax0, cax=cbaxes, ticks=10.0**(np.linspace(np.log10(np.nanmin(field_mean)),np.log10(np.nanmax(field_mean)),4).astype(int)), orientation='horizontal')
+            cbar.ax.tick_params(labelsize=15)
     
+    elif contour_notf_flag:
+        ax0.contour(th01,th10,field_mean.reshape(shp),colors='black',linewidths=1.5,levels=contour_notf_levels,zorder=100)
     # -------------------
     # Old colorbar code
     #if cbar_orientation is not None:
