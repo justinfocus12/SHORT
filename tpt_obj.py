@@ -3348,7 +3348,7 @@ class TPT:
         num = min(max_num_states,len(idx))
         reac_dens_max_idx = np.argpartition(-reac_dens,num)[:num]
         return idx[reac_dens_max_idx],reac_dens[reac_dens_max_idx],theta_x[idx[reac_dens_max_idx]]
-    def plot_median_flux_parametric(self,model,data,ramp,field_x,field_y,units_x=1.0,units_y=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None):
+    def plot_median_flux_parametric(self,model,data,ramp,field_x,field_y,units_x=1.0,units_y=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None,ellipse_flag=False):
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
         comm_bwd = self.dam_moments['one']['ax'][0,:,:]
@@ -3372,7 +3372,13 @@ class TPT:
         centers_y = []
         ramp_levels_real = []
         # Predetermine the quantiles
-        quantiles = np.array([0.9,0.5,0.2])
+        quantiles = np.array([0.05,0.25,0.4,0.5]) #0.9,0.5,0.2])
+        quantiles_y_lower = np.nan*np.ones((len(quantiles)-1,len(ramp_levels)))
+        quantiles_y_upper = np.nan*np.ones((len(quantiles)-1,len(ramp_levels)))
+        quantiles_y_mid = np.nan*np.ones(len(ramp_levels))
+        quantiles_x_lower = np.nan*np.ones((len(quantiles)-1,len(ramp_levels)))
+        quantiles_x_upper = np.nan*np.ones((len(quantiles)-1,len(ramp_levels)))
+        quantiles_x_mid = np.nan*np.ones(len(ramp_levels))
         for ti in range(len(ramp_levels)):
             ramp_tol = ramp_tol_list[ti]
             ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,ramp_levels[ti],ramp_tol,None,0.0)
@@ -3387,6 +3393,26 @@ class TPT:
                 rflux_ti = np.array(rflux_ti)
                 f_x = field_x[ridx_ti,tidx]
                 f_y = field_y[ridx_ti,tidx]
+                # Compute quantiles in y direction
+                order = np.argsort(f_y)
+                cdf = np.cumsum(rflux_ti[order])
+                for qi in range(len(quantiles)-1):
+                    quantiles_y_lower[qi,ti] = f_y[order[np.where(cdf >= cdf[-1]*quantiles[qi])[0][0]]]
+                    quantiles_y_upper[qi,ti] = f_y[order[np.where(cdf >= cdf[-1]*(1-quantiles[qi]))[0][0]]]
+                    if quantiles_y_lower[qi,ti] > quantiles_y_upper[qi,ti]:
+                        raise Exception(f"ERROR: at qi={qi}, ti={ti}, the lower and upper y quantiles are {quantiles_y_lower[qi,ti]},{quantiles_y_upper[qi,ti]}")
+                quantiles_y_mid[ti] = f_y[order[np.where(cdf >= cdf[-1]*quantiles[-1])[0][0]]]
+                # Compute quantiles in x direction
+                order = np.argsort(f_x)
+                cdf = np.cumsum(rflux_ti[order])
+                for qi in range(len(quantiles)-1):
+                    quantiles_x_lower[qi,ti] = f_x[order[np.where(cdf >= cdf[-1]*quantiles[qi])[0][0]]]
+                    quantiles_x_upper[qi,ti] = f_x[order[np.where(cdf >= cdf[-1]*(1-quantiles[qi]))[0][0]]]
+                quantiles_x_mid[ti] = f_x[order[np.where(cdf >= cdf[-1]*quantiles[-1])[0][0]]]
+                # Compute median in x direction
+                order = np.argsort(f_x)
+                cdf = np.cumsum(rflux_ti[order])
+                quantiles_x_mid[ti] = f_x[order[np.where(cdf >= cdf[-1]*0.5)[0][0]]]
                 # Compute an equivalent ellipse
                 flux_sum = np.sum(rflux_ti)
                 mean_x = np.sum(f_x*rflux_ti)/flux_sum
@@ -3397,9 +3423,6 @@ class TPT:
                 mean_xx = np.sum(f_x*f_x*rflux_ti)/flux_sum
                 mean_xy = np.sum(f_x*f_y*rflux_ti)/flux_sum
                 mean_yy = np.sum(f_y*f_y*rflux_ti)/flux_sum
-                #ax.plot(mean_x*units_x,mean_y*units_y,marker='o',color='gray',zorder=-1)
-                #ax.plot((mean_x+np.array([-1,1])*np.sqrt(mean_xx-mean_x**2))*units_x, mean_y*units_y*np.ones(2), color='gray', linewidth=3,zorder=-1)
-                #ax.plot(mean_x*units_x*np.ones(2), (mean_y+np.array([-1,1])*np.sqrt(mean_yy-mean_y**2))*units_y, color='gray', linewidth=3,zorder=-1)
                 # Covariance matrix
                 C = np.array([[mean_xx-mean_x**2, mean_xy-mean_x*mean_y], [mean_xy-mean_x*mean_y, mean_yy-mean_y**2]])
                 # Convert to dimensional form
@@ -3415,14 +3438,15 @@ class TPT:
                     raise Exception(f"ERROR: the covariance matrix C has a nonpositive eigenvalue. lam = {lam}")
                 angle = np.arctan2(eig[1,1],eig[0,1])*180/np.pi
                 print(f"angle = {angle}")
-                for i_sig in range(len(quantiles)):
+                for i_sig in range(len(quantiles-1)):
                     # Determine the semi-major and minor axes for this.
-                    R = np.sqrt(-2*np.log(1-quantiles[i_sig]))
+                    R = np.sqrt(-2*np.log(2*quantiles[i_sig]))
                     print(f"for quantile {quantiles[i_sig]}, R = {R}")
                     #reds = 1-0.5*quantiles[i_sig]
                     reds = (i_sig+1)/(len(quantiles)+1)
                     ellipse = patches.Ellipse((mean_x*units_x,mean_y*units_y),R*np.sqrt(lam[1]),R*np.sqrt(lam[0]),angle=angle,fc=plt.cm.Reds(reds), fill=True, zorder=i_sig)
-                    ax.add_artist(ellipse)
+                    if ellipse_flag:
+                        ax.add_artist(ellipse)
                 #ellipse_list += [ellipse]
                 # Also draw the ellipse to make sure
                 theta = np.linspace(0,2*np.pi,60)
@@ -3434,16 +3458,33 @@ class TPT:
         #ax.add_collection(ellipse_collection)
         centers_x = np.array(centers_x)
         centers_y = np.array(centers_y)
+        good_tidx = np.where(np.any(np.isnan(quantiles_y_lower)+np.isnan(quantiles_y_upper)+np.isnan(quantiles_y_mid), axis=0) == 0)[0]
+        quantiles_y_lower = quantiles_y_lower[:,good_tidx]
+        quantiles_y_upper = quantiles_y_upper[:,good_tidx]
+        quantiles_y_mid = quantiles_y_mid[good_tidx]
+        quantiles_x_lower = quantiles_x_lower[:,good_tidx]
+        quantiles_x_upper = quantiles_x_upper[:,good_tidx]
+        quantiles_x_mid = quantiles_x_mid[good_tidx]
         ramp_levels_real = np.array(ramp_levels_real)
         field_y_a,field_y_b = self.out_of_sample_extension(field_y[:,0],data,model.tpt_obs_xst)
         ax.axhline(field_y_a*units_y,color='skyblue')
         ax.axhline(field_y_b*units_y,color='red')
-        # Plot a center line
-        ramp_levels_interp = np.linspace(ramp_levels_real[0],ramp_levels_real[-1],100)
-        idx_interp = np.linspace(0,len(ramp_levels_real)-1,len(ramp_levels_real)).astype(int)
-        centers_x_interp = scipy.interpolate.interp1d(ramp_levels_real[idx_interp],centers_x[idx_interp],'cubic')(ramp_levels_interp)
-        centers_y_interp = scipy.interpolate.interp1d(ramp_levels_real[idx_interp],centers_y[idx_interp],'cubic')(ramp_levels_interp)
-        ax.plot(centers_x_interp*units_x,centers_y_interp*units_y,color='black',linewidth=2, zorder=10)
+        if ellipse_flag:
+            # Plot a center line
+            ramp_levels_interp = np.linspace(ramp_levels_real[0],ramp_levels_real[-1],200)
+            idx_interp = np.linspace(0,len(ramp_levels_real)-1,len(ramp_levels_real)).astype(int)
+            centers_x_interp = scipy.interpolate.interp1d(ramp_levels_real[idx_interp],centers_x[idx_interp],'cubic')(ramp_levels_interp)
+            centers_y_interp = scipy.interpolate.interp1d(ramp_levels_real[idx_interp],centers_y[idx_interp],'cubic')(ramp_levels_interp)
+            ax.plot(centers_x_interp*units_x,centers_y_interp*units_y,color='black',linewidth=2, zorder=10)
+        else:
+            qx_interp = np.linspace(quantiles_x_mid.min(),quantiles_x_mid.max(),100)
+            qymid_interp = scipy.interpolate.interp1d(quantiles_x_mid,quantiles_y_mid,'cubic')(qx_interp)
+            for qi in range(len(quantiles)-1):
+                qy_dydown_interp = np.exp(scipy.interpolate.interp1d(quantiles_x_mid,np.log(quantiles_y_mid-quantiles_y_lower[qi]),'cubic')(qx_interp))
+                qy_dyup_interp = np.exp(scipy.interpolate.interp1d(quantiles_x_mid,np.log(quantiles_y_upper[qi]-quantiles_y_mid),'cubic')(qx_interp))
+                ax.fill_between(qx_interp*units_x,(qymid_interp-qy_dydown_interp)*units_y,(qymid_interp+qy_dyup_interp)*units_y,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
+            ax.plot(qx_interp*units_x,qymid_interp*units_y,color='black')
+            ax.scatter(quantiles_x_mid*units_x,quantiles_y_mid*units_y,marker='.',color='black')
         return fig,ax
     def plot_median_flux_and_lap_signed(self,model,data,ramp,field,field_fun=None,ramp_units=1.0,field_units=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None,laptime_flag=False):
         # Just scalars. 
@@ -3466,7 +3507,7 @@ class TPT:
         if fig is None or ax is None:
             fig,ax = plt.subplots()
         ramp = ramp.reshape((Nx,Nt,1))
-        bin_width = (np.nanmax(field)-np.nanmin(field))/30
+        bin_width = (np.nanmax(field)-np.nanmin(field))/50
         print(f"bin_width = {bin_width}")
         for ti in range(len(ramp_levels)):
             ramp_tol = ramp_tol_list[ti]
@@ -3646,6 +3687,7 @@ class TPT:
     def plot_transition_states_new(self,model,data):
         # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
         composite_flag = True 
+        plot_profile_flag = False
         # ------------------------------ 1. For three committor levels, plot the profile of zonal wind and heat flux. ----------------------------------
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
@@ -3679,11 +3721,11 @@ class TPT:
         colors = np.array([plt.cm.coolwarm(qpl) for qpl in qp_levels])
         colors[np.abs(qp_levels - 0.5) < 0.01] = matplotlib.colors.to_rgba('orange')
         qp_tol_list = 0.1*np.ones(len(qp_levels))
-        labels = [r"$q^+\in(%.1f,%.1f)$"%(
-            min(1, max(0, qp_levels[i]-qp_tol_list[i])),
-            min(1, max(0, qp_levels[i]+qp_tol_list[i])))
+        labels = [r"$q^+=%.2f$"%(0.5*(
+            min(1, max(0, qp_levels[i]-qp_tol_list[i])) + 
+            min(1, max(0, qp_levels[i]+qp_tol_list[i]))))
             for i in range(len(qp_levels))]
-        if False:
+        if plot_profile_flag:
             prof_key_list = ["U","vT","dqdy","q2"]
             rflux = []
             rflux_idx = []
@@ -3723,31 +3765,34 @@ class TPT:
         qpramp_levels = np.linspace(qpramp_min,qpramp_max,15)
         qpramp_tol_list = np.zeros(len(qpramp_levels))
         qpramp_tol_list[:-1] = (qpramp_levels[1:] - qpramp_levels[:-1])/2
-        qpramp_tol_list[-1] = (qpramp_levels[-1] - qpramp_levels[-2])/15
+        qpramp_tol_list[-1] = (qpramp_levels[-1] - qpramp_levels[-2])/2 #15
         #ramp_levels[-1] = (ramp_levels[-1] + ramp_levels[-2])/2
         # -------- Parametric ------------
         print(f"------------------------ Beginning parametric ----------------------")
         # ___ vs. lead time (parametric)
+        ellipse_flag = False
         qpramp_levels_parametric = np.linspace(qpramp_min,qpramp_max,15)
+        #qpramp_levels_parametric = np.concatenate((qpramp_levels_parametric,np.linspace(qpramp_levels_parametric[-2],qpramp_levels_parametric[-1],10)[1:-1]))
+        #qpramp_levels_parametric = np.sort(qpramp_levels_parametric)
         qpramp_tol_list_parametric = np.zeros(len(qpramp_levels_parametric))
         qpramp_tol_list_parametric[:-1] = (qpramp_levels_parametric[1:] - qpramp_levels_parametric[:-1])/2
-        qpramp_tol_list_parametric[-1] = (qpramp_levels_parametric[-1] - qpramp_levels_parametric[-2])/15
+        qpramp_tol_list_parametric[-1] = (qpramp_levels_parametric[-1] - qpramp_levels_parametric[-2])/8
         field_x = tbramp
         # U vs. lead time 
         field_y = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["Uref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric)
+        fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["Uref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric,ellipse_flag=ellipse_flag)
         ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
         ax.set_xlim([-90,0])
         ax.set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_Uref_vs_tb"),bbox_inches="tight",pad_inches=0.2)
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_Uref_vs_tb_nlev{}_ell{}".format(len(qpramp_levels_parametric),int(ellipse_flag))),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         # vTint vs. lead time
         field_y = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["vTintref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric)
+        fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["vTintref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric,ellipse_flag=ellipse_flag)
         ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
         ax.set_xlim([-90,0])
         ax.set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_vTintref_vs_tb"),bbox_inches="tight",pad_inches=0.2)
+        fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_vTintref_vs_tb_nlev{}_ell{}".format(len(qpramp_levels_parametric),int(ellipse_flag))),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         sys.exit()
         # ------ Signed: Plot committor and lead time against each other ----------
