@@ -118,6 +118,24 @@ def mean_uncertainty(X,num_blocks=10):
     print("mean(X) = {}. min(block_means) = {}. max(block_means) = {}, unc = {}".format(np.mean(X),np.min(block_means),np.max(block_means),unc))
     return unc
 
+def moving_least_squares(x,y,xint,lengthscale=1.0):
+    # Smooth out the 1d function (x,y), using nx points to either side. (On edges, only use one side).
+    N,Nint = len(x),len(xint)
+    dsq_xint_x = np.add.outer(xint,-x)**2
+    weights = np.exp(-dsq_xint_x/lengthscale**2) #*(dsq_xint_x <= (2*lengthscale)**2)
+    order = np.argsort(dsq_xint_x,axis=1)
+    weights *= (order <= 5)
+    zero_rows = np.where(np.sum(weights,axis=1)==0)[0]
+    for zi in zero_rows:
+        weights[zi,np.argmin(dsq_xint_x[zi,:])] = 1.0
+    weights = np.diag(1.0/np.sum(weights,axis=1)).dot(weights)
+    yint = weights.dot(y)
+    #yint = np.zeros(Nint)
+    #for i in range(Nint):
+    #    reg = linear_model.LinearRegression()
+    #    reg.fit(x.reshape(-1,1),y,sample_weight=weights[i,:])
+    #    yint[i] = reg.predict(xint[i:i+1].reshape(-1,1))[0]
+    return yint
 
 def both_grids(bounds,shp):
     # This time shp is the number of cells

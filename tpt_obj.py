@@ -4,6 +4,7 @@ from numpy import save,load
 import scipy
 from scipy.stats import describe
 from scipy import special
+from scipy.interpolate import splrep,splev
 import pandas as pd
 from sklearn import linear_model
 import matplotlib
@@ -554,7 +555,7 @@ class TPT:
         plt.close(fig)
         print("Done plotting field long")
         # ------------ Next: plot only some transitions on their own plot --------------
-        quantiles = np.array([0.05,0.25,0.4,0.5])
+        quantiles = np.array([0.15,0.25,0.4,0.5])
         if any_trans:
             avg_prea_flag = True
             fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(12,12),sharex=True,sharey=True)
@@ -3458,13 +3459,17 @@ class TPT:
         #ax.add_collection(ellipse_collection)
         centers_x = np.array(centers_x)
         centers_y = np.array(centers_y)
-        good_tidx = np.where(np.any(np.isnan(quantiles_y_lower)+np.isnan(quantiles_y_upper)+np.isnan(quantiles_y_mid), axis=0) == 0)[0]
+        good_tidx_y = np.where(np.any(np.isnan(quantiles_y_lower)+np.isnan(quantiles_y_upper)+np.isnan(quantiles_y_mid), axis=0) == 0)[0]
+        good_tidx_x = np.where(np.any(np.isnan(quantiles_x_lower)+np.isnan(quantiles_x_upper)+np.isnan(quantiles_x_mid), axis=0) == 0)[0]
+        good_tidx = np.intersect1d(good_tidx_x,good_tidx_y)
         quantiles_y_lower = quantiles_y_lower[:,good_tidx]
         quantiles_y_upper = quantiles_y_upper[:,good_tidx]
         quantiles_y_mid = quantiles_y_mid[good_tidx]
         quantiles_x_lower = quantiles_x_lower[:,good_tidx]
         quantiles_x_upper = quantiles_x_upper[:,good_tidx]
         quantiles_x_mid = quantiles_x_mid[good_tidx]
+        if len(np.unique(quantiles_x_mid)) < len(quantiles_x_mid):
+            raise Exception(f"ERROR: duplicates in qxm: {quantiles_x_mid}")
         ramp_levels_real = np.array(ramp_levels_real)
         field_y_a,field_y_b = self.out_of_sample_extension(field_y[:,0],data,model.tpt_obs_xst)
         ax.axhline(field_y_a*units_y,color='skyblue')
@@ -3473,18 +3478,32 @@ class TPT:
             # Plot a center line
             ramp_levels_interp = np.linspace(ramp_levels_real[0],ramp_levels_real[-1],200)
             idx_interp = np.linspace(0,len(ramp_levels_real)-1,len(ramp_levels_real)).astype(int)
-            centers_x_interp = scipy.interpolate.interp1d(ramp_levels_real[idx_interp],centers_x[idx_interp],'cubic')(ramp_levels_interp)
-            centers_y_interp = scipy.interpolate.interp1d(ramp_levels_real[idx_interp],centers_y[idx_interp],'cubic')(ramp_levels_interp)
+            centers_x_interp = scipy.interpolate.interp1d(ramp_levels_real[idx_interp],centers_x[idx_interp],'linear')(ramp_levels_interp)
+            centers_y_interp = scipy.interpolate.interp1d(ramp_levels_real[idx_interp],centers_y[idx_interp],'linear')(ramp_levels_interp)
             ax.plot(centers_x_interp*units_x,centers_y_interp*units_y,color='black',linewidth=2, zorder=10)
         else:
+            order = np.argsort(quantiles_x_mid)
             qx_interp = np.linspace(quantiles_x_mid.min(),quantiles_x_mid.max(),100)
-            qymid_interp = scipy.interpolate.interp1d(quantiles_x_mid,quantiles_y_mid,'cubic')(qx_interp)
+            # ------ Moving least squares ----
+            #qymid_interp = helper.moving_least_squares(quantiles_x_mid,quantiles_y_mid,qx_interp,lengthscale=3)
+            # -------- Scipy interp1d ----- 
+            qymid_interp = scipy.interpolate.interp1d(quantiles_x_mid,quantiles_y_mid,'quadratic')(qx_interp)
+            # -------- B-spline ----- 
+            #spl = splrep(quantiles_x_mid[order],quantiles_y_mid[order])
+            #qymid_interp = splev(qx_interp, spl)
             for qi in range(len(quantiles)-1):
-                qy_dydown_interp = np.exp(scipy.interpolate.interp1d(quantiles_x_mid,np.log(quantiles_y_mid-quantiles_y_lower[qi]),'cubic')(qx_interp))
-                qy_dyup_interp = np.exp(scipy.interpolate.interp1d(quantiles_x_mid,np.log(quantiles_y_upper[qi]-quantiles_y_mid),'cubic')(qx_interp))
+                # ---- Moving least squares ---
+                #qy_dydown_interp = np.exp(helper.moving_least_squares(quantiles_x_mid,np.log(quantiles_y_mid-quantiles_y_lower[qi]),qx_interp,lengthscale=3))
+                #qy_dyup_interp = np.exp(helper.moving_least_squares(quantiles_x_mid,np.log(quantiles_y_upper[qi]-quantiles_y_mid),qx_interp,lengthscale=3))
+                # ---- Scipy interp1d ---
+                qy_dydown_interp = np.exp(scipy.interpolate.interp1d(quantiles_x_mid,np.log(quantiles_y_mid-quantiles_y_lower[qi]),'quadratic')(qx_interp))
+                qy_dyup_interp = np.exp(scipy.interpolate.interp1d(quantiles_x_mid,np.log(quantiles_y_upper[qi]-quantiles_y_mid),'quadratic')(qx_interp))
+                # ----- B-spline ------
+                #qy_dydown_interp = np.exp(splev(qx_interp,splrep(quantiles_x_mid[order],np.log(quantiles_y_mid-quantiles_y_lower[qi])[order])))
+                #qy_dyup_interp = np.exp(splev(qx_interp,splrep(quantiles_x_mid[order],np.log(quantiles_y_upper[qi]-quantiles_y_mid)[order])))
                 ax.fill_between(qx_interp*units_x,(qymid_interp-qy_dydown_interp)*units_y,(qymid_interp+qy_dyup_interp)*units_y,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
             ax.plot(qx_interp*units_x,qymid_interp*units_y,color='black')
-            ax.scatter(quantiles_x_mid*units_x,quantiles_y_mid*units_y,marker='.',color='black')
+            ax.scatter(quantiles_x_mid*units_x,quantiles_y_mid*units_y,marker='o',color='black',zorder=2*len(quantiles))
         return fig,ax
     def plot_median_flux_and_lap_signed(self,model,data,ramp,field,field_fun=None,ramp_units=1.0,field_units=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None,laptime_flag=False):
         # Just scalars. 
@@ -3771,12 +3790,15 @@ class TPT:
         print(f"------------------------ Beginning parametric ----------------------")
         # ___ vs. lead time (parametric)
         ellipse_flag = False
-        qpramp_levels_parametric = np.linspace(qpramp_min,qpramp_max,15)
-        #qpramp_levels_parametric = np.concatenate((qpramp_levels_parametric,np.linspace(qpramp_levels_parametric[-2],qpramp_levels_parametric[-1],10)[1:-1]))
+        nqpramp = 15
+        qpramp_levels_parametric = np.linspace(qpramp_min,qpramp_max,nqpramp)
+        dqpramp = (qpramp_max-qpramp_min)/(nqpramp-1)
+        #qpramp_levels_parametric = np.concatenate((qpramp_levels_parametric,np.linspace(qpramp_levels_parametric[-2],qpramp_levels_parametric[-1],4)[1:-1]))
         #qpramp_levels_parametric = np.sort(qpramp_levels_parametric)
         qpramp_tol_list_parametric = np.zeros(len(qpramp_levels_parametric))
-        qpramp_tol_list_parametric[:-1] = (qpramp_levels_parametric[1:] - qpramp_levels_parametric[:-1])/2
-        qpramp_tol_list_parametric[-1] = (qpramp_levels_parametric[-1] - qpramp_levels_parametric[-2])/8
+        qpramp_tol_list_parametric[1:-1] = dqpramp/2
+        qpramp_tol_list_parametric[:1] = dqpramp/15
+        qpramp_tol_list_parametric[-1:] = dqpramp/15
         field_x = tbramp
         # U vs. lead time 
         field_y = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
