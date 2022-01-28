@@ -3505,7 +3505,7 @@ class TPT:
             ax.plot(qx_interp*units_x,qymid_interp*units_y,color='black')
             ax.scatter(quantiles_x_mid*units_x,quantiles_y_mid*units_y,marker='o',color='black',zorder=2*len(quantiles))
         return fig,ax
-    def plot_median_flux_and_lap_signed(self,model,data,ramp,field,field_fun=None,ramp_units=1.0,field_units=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None,laptime_flag=False):
+    def plot_median_flux_and_lap_signed(self,model,data,ramp,field,field_fun=None,ramp_units=1.0,field_units=1.0,ramp_levels=None,ramp_tol_list=None,fig=None,ax=None,laptime_flag=False,field_twin=None,twin_name=None):
         # Just scalars. 
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
@@ -3526,8 +3526,10 @@ class TPT:
         if fig is None or ax is None:
             fig,ax = plt.subplots()
         ramp = ramp.reshape((Nx,Nt,1))
-        bin_width = (np.nanmax(field)-np.nanmin(field))/50
+        bin_width = (np.nanmax(field)-np.nanmin(field))/30
         print(f"bin_width = {bin_width}")
+        twin_vals = []
+        ramp_levels_real = []
         for ti in range(len(ramp_levels)):
             ramp_tol = ramp_tol_list[ti]
             ridx_ti,rflux_ti,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,ramp_levels[ti],ramp_tol,None,0.0)
@@ -3537,6 +3539,7 @@ class TPT:
             #ridx_ti = ridx_ti[pos_idx]
             #rflux_ti = rflux_ti[pos_idx]
             if len(ridx_ti) > 0:
+                ramp_levels_real += [ramp_levels[ti]]
                 ridx_ti = np.array(ridx_ti)
                 rflux_ti = np.array(rflux_ti)
                 f_ti = field[ridx_ti,tidx]
@@ -3545,6 +3548,9 @@ class TPT:
                 rflux_ti = rflux_ti[order]
                 sig_idx = np.where(np.abs(rflux_ti) > 0.0*np.max(np.abs(rflux_ti)))[0]
                 f_ti = f_ti[sig_idx]
+                if field_twin is not None: 
+                    g_ti = field_twin[ridx_ti[sig_idx],tidx]
+                    twin_vals += [np.sum(g_ti*rflux_ti)/np.sum(rflux_ti)]
                 rflux_ti = rflux_ti[sig_idx]
                 num_bins = int(round((np.max(f_ti) - np.min(f_ti))/bin_width))
                 hist,bin_edges = np.histogram(f_ti,weights=rflux_ti,density=False,bins=num_bins) #min(10,len(sig_idx)))
@@ -3561,6 +3567,20 @@ class TPT:
                 #print(f"len(unique(f_ti)) = {len(np.unique(f_ti))}, len(unique(rflux_ti)) = {len(np.unique(rflux_ti))},") #\nf_ti = {f_ti},\nrflux_ti = {rflux_ti}")
                 #print(f"len(sig_idx) = {len(sig_idx)}, len(bin_centers) = {len(bin_centers)}")
                 #print(f"bin_centers*field_units = {bin_centers*field_units},\nhist*ramp_units = {hist*ramp_units}")
+        # ----------------- Make a secondary axis -----------
+        if field_twin is not None:
+            ramp_levels_real = np.array(ramp_levels_real)*ramp_units
+            twin_vals = np.array(twin_vals)
+            reg = linear_model.LinearRegression()
+            print(f"twin_vals = {twin_vals}, reg = {reg}")
+            reg.fit(ramp_levels_real.reshape(-1,1),twin_vals)
+            def field2twin(r):
+                return reg.intercept_ + reg.coef_[0]*r
+            def twin2field(t):
+                return (t - reg.intercept_)/reg.coef_[0]
+            secax = ax.secondary_xaxis('top', functions=(field2twin,twin2field))
+            secax.set_xlabel(twin_name,fontdict=ffont)
+            secax.tick_params(labelsize=12)
         # Least action path 
         xlap = load(join(self.physical_param_folder,"xmin_dirn1.npy"))
         tlap = load(join(self.physical_param_folder,"tmin_dirn1.npy"))
@@ -3707,6 +3727,9 @@ class TPT:
         # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
         composite_flag = True 
         plot_profile_flag = False
+        parametric_flag = False
+        signed_flag = True
+        unsigned_flag = False
         # ------------------------------ 1. For three committor levels, plot the profile of zonal wind and heat flux. ----------------------------------
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
@@ -3788,102 +3811,104 @@ class TPT:
         #ramp_levels[-1] = (ramp_levels[-1] + ramp_levels[-2])/2
         # -------- Parametric ------------
         print(f"------------------------ Beginning parametric ----------------------")
-        # ___ vs. lead time (parametric)
-        ellipse_flag = False
-        nqpramp = 15
-        qpramp_levels_parametric = np.linspace(qpramp_min,qpramp_max,nqpramp)
-        dqpramp = (qpramp_max-qpramp_min)/(nqpramp-1)
-        #qpramp_levels_parametric = np.concatenate((qpramp_levels_parametric,np.linspace(qpramp_levels_parametric[-2],qpramp_levels_parametric[-1],4)[1:-1]))
-        #qpramp_levels_parametric = np.sort(qpramp_levels_parametric)
-        qpramp_tol_list_parametric = np.zeros(len(qpramp_levels_parametric))
-        qpramp_tol_list_parametric[1:-1] = dqpramp/2
-        qpramp_tol_list_parametric[:1] = dqpramp/15
-        qpramp_tol_list_parametric[-1:] = dqpramp/15
-        field_x = tbramp
-        # U vs. lead time 
-        field_y = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["Uref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric,ellipse_flag=ellipse_flag)
-        ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
-        ax.set_xlim([-90,0])
-        ax.set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_Uref_vs_tb_nlev{}_ell{}".format(len(qpramp_levels_parametric),int(ellipse_flag))),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # vTint vs. lead time
-        field_y = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["vTintref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric,ellipse_flag=ellipse_flag)
-        ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
-        ax.set_xlim([-90,0])
-        ax.set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_vTintref_vs_tb_nlev{}_ell{}".format(len(qpramp_levels_parametric),int(ellipse_flag))),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        sys.exit()
+        if parametric_flag:
+            # ___ vs. lead time (parametric)
+            ellipse_flag = False
+            nqpramp = 15
+            qpramp_levels_parametric = np.linspace(qpramp_min,qpramp_max,nqpramp)
+            dqpramp = (qpramp_max-qpramp_min)/(nqpramp-1)
+            #qpramp_levels_parametric = np.concatenate((qpramp_levels_parametric,np.linspace(qpramp_levels_parametric[-2],qpramp_levels_parametric[-1],4)[1:-1]))
+            #qpramp_levels_parametric = np.sort(qpramp_levels_parametric)
+            qpramp_tol_list_parametric = np.zeros(len(qpramp_levels_parametric))
+            qpramp_tol_list_parametric[1:-1] = dqpramp/2
+            qpramp_tol_list_parametric[:1] = dqpramp/15
+            qpramp_tol_list_parametric[-1:] = dqpramp/15
+            field_x = tbramp
+            # U vs. lead time 
+            field_y = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+            fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["Uref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric,ellipse_flag=ellipse_flag)
+            ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
+            ax.set_xlim([-90,0])
+            ax.set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
+            fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_Uref_vs_tb_nlev{}_ell{}".format(len(qpramp_levels_parametric),int(ellipse_flag))),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # vTint vs. lead time
+            field_y = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+            fig,ax = self.plot_median_flux_parametric(model,data,qpramp,field_x,field_y,units_x=1.0,units_y=funlib["vTintref"]["units"],ramp_levels=qpramp_levels_parametric,ramp_tol_list=qpramp_tol_list_parametric,ellipse_flag=ellipse_flag)
+            ax.set_xlabel(r"$-\eta_B^+\mathrm{ [days]}$",fontdict=ffont)
+            ax.set_xlim([-90,0])
+            ax.set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
+            fig.savefig(join(self.savefolder,"lap_vs_tpt_parametric_vTintref_vs_tb_nlev{}_ell{}".format(len(qpramp_levels_parametric),int(ellipse_flag))),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
         # ------ Signed: Plot committor and lead time against each other ----------
         print(f"-------------------- Beginning signed ------------------")
-        # Multiple things
-        fig,ax = plt.subplots(ncols=2,figsize=(16,6))
-        # lead time vs. committor
-        _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,-tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
-        ax[0].set_ylabel(r"$-\eta_B^+$ [days]",fontdict=ffont)
-        ax[0].set_xlabel(r"$q^+_B$",fontdict=ffont)
-        # committor vs. lead time
-        _,_ = self.plot_median_flux_and_lap_signed(model,data,tbramp,qpramp,field_fun=None,field_units=1.0,ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1],laptime_flag=True)
-        ax[1].set_ylabel(r"$q^+_B$",fontdict=ffont)
-        ax[1].set_xlabel(r"$-\eta^+_B$",fontdict=ffont)
-        for i in range(2): ax[i].tick_params(axis='both',labelsize=15)
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_qptb_signed"),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Plot vs. lead time
-        fig,ax = plt.subplots(nrows=2,ncols=2,figsize=(16,12),sharex='col',sharey='row')
-        # Uref vs. (committor, lead time)
-        field = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0,0])
-        _,_  = self.plot_median_flux_and_lap_signed(model,data,tbramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0,1],laptime_flag=True)
-        ax[0,0].set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
-        # vTntref vs. (committor, lead time)
-        field = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1,0])
-        _,_ = self.plot_median_flux_and_lap_signed(model,data,tbramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1,1],laptime_flag=True)
-        ax[1,0].set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
-        ax[1,0].set_xlabel(r"$q^+_B$",fontdict=ffont)
-        ax[1,1].set_xlabel(r"$-\eta^+_B$ [days]",fontdict=ffont)
-        for i in range(2):
-            for j in range(2):
-                ax[i,j].tick_params(axis='both',labelsize=15)
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_all_vs_qptb_signed"),bbox_inches='tight',pad_inches=0.2)
-        plt.close(fig)
+        if signed_flag:
+            # Multiple things
+            fig,ax = plt.subplots(ncols=2,figsize=(16,6))
+            # lead time vs. committor
+            _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,-tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
+            ax[0].set_ylabel(r"$-\eta_B^+$ [days]",fontdict=ffont)
+            ax[0].set_xlabel(r"$q^+_B$",fontdict=ffont)
+            # committor vs. lead time
+            _,_ = self.plot_median_flux_and_lap_signed(model,data,tbramp,qpramp,field_fun=None,field_units=1.0,ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1],laptime_flag=True)
+            ax[1].set_ylabel(r"$q^+_B$",fontdict=ffont)
+            ax[1].set_xlabel(r"$-\eta^+_B$",fontdict=ffont)
+            for i in range(2): ax[i].tick_params(axis='both',labelsize=15)
+            fig.savefig(join(self.savefolder,"lap_vs_tpt_qptb_signed"),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # Plot vs. lead time
+            fig,ax = plt.subplots(nrows=2,ncols=2,figsize=(16,12),sharex='col',sharey='row')
+            # Uref vs. (committor, lead time)
+            field = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+            _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0,0],field_twin=tbramp,twin_name=r"$-\eta_B^+$ [days]")
+            #_,_  = self.plot_median_flux_and_lap_signed(model,data,tbramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0,1],laptime_flag=True)
+            ax[0,0].set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
+            # vTntref vs. (committor, lead time)
+            field = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+            _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1,0])
+            #_,_ = self.plot_median_flux_and_lap_signed(model,data,tbramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1,1],laptime_flag=True)
+            ax[1,0].set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
+            ax[1,0].set_xlabel(r"$q^+_B$",fontdict=ffont)
+            ax[1,1].set_xlabel(r"$-\eta^+_B$ [days]",fontdict=ffont)
+            for i in range(2):
+                for j in range(2):
+                    ax[i,j].tick_params(axis='both',labelsize=15)
+            fig.savefig(join(self.savefolder,"lap_vs_tpt_all_vs_qptb_signed"),bbox_inches='tight',pad_inches=0.2)
+            plt.close(fig)
         # ------ Unsigned: Plot committor and lead time against each other ----------
-        print(f"-------------------- Beginning unsigned ------------------")
-        fig,ax = plt.subplots(ncols=2,figsize=(16,6))
-        # lead time vs. committor
-        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,-tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
-        ax[0].set_ylabel(r"$-\eta_B^+$ [days]",fontdict=ffont)
-        ax[0].set_xlabel(r"$q^+_B$",fontdict=ffont)
-        # committor vs. lead time
-        _,_ = self.plot_median_flux_and_lap(model,data,tbramp,qpramp,field_fun=None,field_units=1.0,ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1],laptime_flag=True)
-        ax[1].set_ylabel(r"$q^+_B$",fontdict=ffont)
-        ax[1].set_xlabel(r"$-\eta^+_B$",fontdict=ffont)
-        for i in range(2): ax[i].tick_params(axis='both',labelsize=15)
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_qptb"),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Plot vs. lead time
-        fig,ax = plt.subplots(nrows=2,ncols=2,figsize=(16,12),sharex='col',sharey='row')
-        # Uref vs. (committor, lead time)
-        field = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0,0])
-        _,_  = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0,1],laptime_flag=True)
-        ax[0,0].set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
-        # vTntref vs. (committor, lead time)
-        field = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1,0])
-        _,_ = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1,1],laptime_flag=True)
-        ax[1,0].set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
-        ax[1,0].set_xlabel(r"$q^+_B$",fontdict=ffont)
-        ax[1,1].set_xlabel(r"$-\eta^+_B$ [days]",fontdict=ffont)
-        for i in range(2):
-            for j in range(2):
-                ax[i,j].tick_params(axis='both',labelsize=15)
-        fig.savefig(join(self.savefolder,"lap_vs_tpt_all_vs_qptb"),bbox_inches='tight',pad_inches=0.2)
-        plt.close(fig)
+        if unsigned_flag:
+            print(f"-------------------- Beginning unsigned ------------------")
+            fig,ax = plt.subplots(ncols=2,figsize=(16,6))
+            # lead time vs. committor
+            _,_ = self.plot_median_flux_and_lap(model,data,qpramp,-tb,field_fun=None,field_units=1.0,ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0])
+            ax[0].set_ylabel(r"$-\eta_B^+$ [days]",fontdict=ffont)
+            ax[0].set_xlabel(r"$q^+_B$",fontdict=ffont)
+            # committor vs. lead time
+            _,_ = self.plot_median_flux_and_lap(model,data,tbramp,qpramp,field_fun=None,field_units=1.0,ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1],laptime_flag=True)
+            ax[1].set_ylabel(r"$q^+_B$",fontdict=ffont)
+            ax[1].set_xlabel(r"$-\eta^+_B$",fontdict=ffont)
+            for i in range(2): ax[i].tick_params(axis='both',labelsize=15)
+            fig.savefig(join(self.savefolder,"lap_vs_tpt_qptb"),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # Plot vs. lead time
+            fig,ax = plt.subplots(nrows=2,ncols=2,figsize=(16,12),sharex='col',sharey='row')
+            # Uref vs. (committor, lead time)
+            field = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+            _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0,0])
+            _,_  = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0,1],laptime_flag=True)
+            ax[0,0].set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
+            # vTntref vs. (committor, lead time)
+            field = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+            _,_ = self.plot_median_flux_and_lap(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1,0])
+            _,_ = self.plot_median_flux_and_lap(model,data,tbramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1,1],laptime_flag=True)
+            ax[1,0].set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
+            ax[1,0].set_xlabel(r"$q^+_B$",fontdict=ffont)
+            ax[1,1].set_xlabel(r"$-\eta^+_B$ [days]",fontdict=ffont)
+            for i in range(2):
+                for j in range(2):
+                    ax[i,j].tick_params(axis='both',labelsize=15)
+            fig.savefig(join(self.savefolder,"lap_vs_tpt_all_vs_qptb"),bbox_inches='tight',pad_inches=0.2)
+            plt.close(fig)
         return
     def plot_transition_states_all(self,model,data,collect_flag=True):
         for dirn in ['ab']: #,'ba']:
