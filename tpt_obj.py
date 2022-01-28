@@ -3483,24 +3483,30 @@ class TPT:
             ax.plot(centers_x_interp*units_x,centers_y_interp*units_y,color='black',linewidth=2, zorder=10)
         else:
             order = np.argsort(quantiles_x_mid)
+            quantiles_x_mid = quantiles_x_mid[order]
+            quantiles_x_lower = quantiles_x_lower[:,order]
+            quantiles_x_upper = quantiles_x_upper[:,order]
+            quantiles_y_mid = quantiles_y_mid[order]
+            quantiles_y_lower = quantiles_y_lower[:,order]
+            quantiles_y_upper = quantiles_y_upper[:,order]
             qx_interp = np.linspace(quantiles_x_mid.min(),quantiles_x_mid.max(),100)
             # ------ Moving least squares ----
-            #qymid_interp = helper.moving_least_squares(quantiles_x_mid,quantiles_y_mid,qx_interp,lengthscale=3)
+            qymid_interp = helper.moving_least_squares(quantiles_x_mid,quantiles_y_mid,qx_interp,lengthscale=5.0,degree=1)
             # -------- Scipy interp1d ----- 
-            qymid_interp = scipy.interpolate.interp1d(quantiles_x_mid,quantiles_y_mid,'quadratic')(qx_interp)
+            #qymid_interp = scipy.interpolate.interp1d(quantiles_x_mid,quantiles_y_mid,'linear')(qx_interp)
             # -------- B-spline ----- 
-            #spl = splrep(quantiles_x_mid[order],quantiles_y_mid[order])
+            #spl = splrep(quantiles_x_mid,quantiles_y_mid)
             #qymid_interp = splev(qx_interp, spl)
             for qi in range(len(quantiles)-1):
                 # ---- Moving least squares ---
-                #qy_dydown_interp = np.exp(helper.moving_least_squares(quantiles_x_mid,np.log(quantiles_y_mid-quantiles_y_lower[qi]),qx_interp,lengthscale=3))
-                #qy_dyup_interp = np.exp(helper.moving_least_squares(quantiles_x_mid,np.log(quantiles_y_upper[qi]-quantiles_y_mid),qx_interp,lengthscale=3))
+                qy_dydown_interp = helper.moving_least_squares(quantiles_x_mid,(quantiles_y_mid-quantiles_y_lower[qi]),qx_interp,lengthscale=5.0,degree=1)
+                qy_dyup_interp = (helper.moving_least_squares(quantiles_x_mid,(quantiles_y_upper[qi]-quantiles_y_mid),qx_interp,lengthscale=5.0,degree=1))
                 # ---- Scipy interp1d ---
-                qy_dydown_interp = np.exp(scipy.interpolate.interp1d(quantiles_x_mid,np.log(quantiles_y_mid-quantiles_y_lower[qi]),'quadratic')(qx_interp))
-                qy_dyup_interp = np.exp(scipy.interpolate.interp1d(quantiles_x_mid,np.log(quantiles_y_upper[qi]-quantiles_y_mid),'quadratic')(qx_interp))
+                #qy_dydown_interp = np.exp(scipy.interpolate.interp1d(quantiles_x_mid,np.log(quantiles_y_mid-quantiles_y_lower[qi]),'linear')(qx_interp))
+                #qy_dyup_interp = np.exp(scipy.interpolate.interp1d(quantiles_x_mid,np.log(quantiles_y_upper[qi]-quantiles_y_mid),'linear')(qx_interp))
                 # ----- B-spline ------
-                #qy_dydown_interp = np.exp(splev(qx_interp,splrep(quantiles_x_mid[order],np.log(quantiles_y_mid-quantiles_y_lower[qi])[order])))
-                #qy_dyup_interp = np.exp(splev(qx_interp,splrep(quantiles_x_mid[order],np.log(quantiles_y_upper[qi]-quantiles_y_mid)[order])))
+                #qy_dydown_interp = np.exp(splev(qx_interp,splrep(quantiles_x_mid,np.log(quantiles_y_mid-quantiles_y_lower[qi]))))
+                #qy_dyup_interp = np.exp(splev(qx_interp,splrep(quantiles_x_mid,np.log(quantiles_y_upper[qi]-quantiles_y_mid))))
                 ax.fill_between(qx_interp*units_x,(qymid_interp-qy_dydown_interp)*units_y,(qymid_interp+qy_dyup_interp)*units_y,color=plt.cm.Reds((qi+1)/len(quantiles)),alpha=1.0,zorder=qi)
             ax.plot(qx_interp*units_x,qymid_interp*units_y,color='black')
             ax.scatter(quantiles_x_mid*units_x,quantiles_y_mid*units_y,marker='o',color='black',zorder=2*len(quantiles))
@@ -3580,7 +3586,7 @@ class TPT:
                 return (t - reg.intercept_)/reg.coef_[0]
             secax = ax.secondary_xaxis('top', functions=(field2twin,twin2field))
             secax.set_xlabel(twin_name,fontdict=ffont)
-            secax.tick_params(labelsize=12)
+            secax.tick_params(labelsize=10)
         # Least action path 
         xlap = load(join(self.physical_param_folder,"xmin_dirn1.npy"))
         tlap = load(join(self.physical_param_folder,"tmin_dirn1.npy"))
@@ -3727,8 +3733,8 @@ class TPT:
         # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
         composite_flag = True 
         plot_profile_flag = False
-        parametric_flag = False
-        signed_flag = True
+        parametric_flag = True
+        signed_flag = False
         unsigned_flag = False
         # ------------------------------ 1. For three committor levels, plot the profile of zonal wind and heat flux. ----------------------------------
         Nx,Nt,xdim = data.X.shape
@@ -3814,7 +3820,7 @@ class TPT:
         if parametric_flag:
             # ___ vs. lead time (parametric)
             ellipse_flag = False
-            nqpramp = 15
+            nqpramp = 30
             qpramp_levels_parametric = np.linspace(qpramp_min,qpramp_max,nqpramp)
             dqpramp = (qpramp_max-qpramp_min)/(nqpramp-1)
             #qpramp_levels_parametric = np.concatenate((qpramp_levels_parametric,np.linspace(qpramp_levels_parametric[-2],qpramp_levels_parametric[-1],4)[1:-1]))
@@ -3860,12 +3866,12 @@ class TPT:
             fig,ax = plt.subplots(nrows=2,ncols=2,figsize=(16,12),sharex='col',sharey='row')
             # Uref vs. (committor, lead time)
             field = funlib["Uref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-            _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0,0],field_twin=tbramp,twin_name=r"$-\eta_B^+$ [days]")
+            _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[0,0])
             #_,_  = self.plot_median_flux_and_lap_signed(model,data,tbramp,field,field_fun=funlib["Uref"]["fun"],field_units=funlib["Uref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[0,1],laptime_flag=True)
             ax[0,0].set_ylabel("%s [%s]"%(funlib["Uref"]["name"],funlib["Uref"]["unit_symbol"]),fontdict=ffont)
             # vTntref vs. (committor, lead time)
             field = funlib["vTintref"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-            _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1,0])
+            _,_ = self.plot_median_flux_and_lap_signed(model,data,qpramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=qpramp_levels,ramp_tol_list=qpramp_tol_list,fig=fig,ax=ax[1,0],field_twin=tbramp,twin_name=r"$-\eta_B^+$ [days]")
             #_,_ = self.plot_median_flux_and_lap_signed(model,data,tbramp,field,field_fun=funlib["vTintref"]["fun"],field_units=funlib["vTintref"]["units"],ramp_levels=tbramp_levels,ramp_tol_list=tbramp_tol_list,fig=fig,ax=ax[1,1],laptime_flag=True)
             ax[1,0].set_ylabel("%s [%s]"%(funlib["vTintref"]["name"],funlib["vTintref"]["unit_symbol"]),fontdict=ffont)
             ax[1,0].set_xlabel(r"$q^+_B$",fontdict=ffont)

@@ -118,23 +118,63 @@ def mean_uncertainty(X,num_blocks=10):
     print("mean(X) = {}. min(block_means) = {}. max(block_means) = {}, unc = {}".format(np.mean(X),np.min(block_means),np.max(block_means),unc))
     return unc
 
-def moving_least_squares(x,y,xint,lengthscale=1.0):
+def moving_polynomial_regression(x,y,xint,degree=2,window_radius=4,inv_lengthscale=1.0):
+    # For each interpolated point, do a quadratic interpolation of the two points on the left and two points on the right. 
+    # Assume x and xint are in order
+    if np.min(np.diff(x)) <= 0:
+        raise Exception(f"ERROR: x decreases somewhere. diff(x) = {np.diff(x)}")
+    if np.min(np.diff(xint)) <= 0:
+        raise Exception(f"ERROR: xint decreases somewhere. diff(xint) = {np.diff(xint)}")
+    if 2*window_radius+1 < degree+1:
+        raise Exception(f"ERROR: 2*window_radius+1 = {2*window_radius+1} < degree+1 = {degree+1}. The regression is under-constrained")
+    yint = np.zeros(len(xint))
+    for i_x_cent in range(len(x)):
+        i_x_min = int(max(0, i_x_cent-window_radius))
+        i_x_max = int(min(len(x)-1, i_x_cent+window_radius))
+        #if i_x_max == degree or i_x_max >= len(x)-degree+1:
+        #    i_x_min = i_x_max-degree
+        #else:
+        #    i_x_min = i_x_max-degree
+        # Quadratic regression
+        X = x[i_x_min:i_x_max+1]
+        Y = y[i_x_min:i_x_max+1]
+        features = np.array([X**j for j in range(degree+1)]).T
+        reg = linear_model.LinearRegression()
+        reg.fit(features,Y)
+        # Predict 
+        i_xint_min = np.where(xint >= x[i_x_min])[0][0]
+        i_xint_max = np.where(xint <= x[i_x_max])[0][-1]
+        Xint = xint[i_xint_min:i_xint_max+1]
+        #print(f"i_xint_(min,max) = {i_xint_min},{i_xint_max}")
+        #print(f"Xint.shape = {Xint.shape}")
+        pred = reg.predict(np.array([Xint**j for j in range(degree+1)]).T)
+        #print(f"pred.shape = {pred.shape}")
+        #print(f"target shape = {yint[i_xint_min:i_xint_max+1].shape}")
+        yint[i_xint_min:i_xint_max+1] = pred
+    return yint
+
+def moving_least_squares(x,y,xint,lengthscale=1.0,degree=1):
     # Smooth out the 1d function (x,y), using nx points to either side. (On edges, only use one side).
     N,Nint = len(x),len(xint)
     dsq_xint_x = np.add.outer(xint,-x)**2
+    # -------- RBF weights ------
     weights = np.exp(-dsq_xint_x/lengthscale**2) #*(dsq_xint_x <= (2*lengthscale)**2)
-    order = np.argsort(dsq_xint_x,axis=1)
-    weights *= (order <= 5)
-    zero_rows = np.where(np.sum(weights,axis=1)==0)[0]
-    for zi in zero_rows:
-        weights[zi,np.argmin(dsq_xint_x[zi,:])] = 1.0
+    #zero_rows = np.where(np.sum(weights,axis=1)==0)[0]
+    #for zi in zero_rows:
+    #    weights[zi,np.argmin(dsq_xint_x[zi,:])] = 1.0
+    # -------- Nearest-neighbor weights --------
+    #order = np.argsort(dsq_xint_x,axis=1)
+    #weights = 1.0*(order <= 4)
+    # --------------------------------------
     weights = np.diag(1.0/np.sum(weights,axis=1)).dot(weights)
     yint = weights.dot(y)
-    #yint = np.zeros(Nint)
-    #for i in range(Nint):
-    #    reg = linear_model.LinearRegression()
-    #    reg.fit(x.reshape(-1,1),y,sample_weight=weights[i,:])
-    #    yint[i] = reg.predict(xint[i:i+1].reshape(-1,1))[0]
+    yint = np.zeros(Nint)
+    features = np.array([x**j for j in range(degree+1)]).T
+    features_int = np.array([xint**j for j in range(degree+1)]).T
+    for i in range(Nint):
+        reg = linear_model.LinearRegression()
+        reg.fit(features,y,sample_weight=weights[i,:])
+        yint[i] = reg.predict(features_int[i:i+1])[0]
     return yint
 
 def both_grids(bounds,shp):
