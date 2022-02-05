@@ -3749,7 +3749,7 @@ class TPT:
         composite_flag = True 
         plot_profile_flag = False
         parametric_flag = True 
-        signed_flag = True
+        signed_flag = False
         unsigned_flag = False
         # ------------------------------ 1. For three committor levels, plot the profile of zonal wind and heat flux. ----------------------------------
         Nx,Nt,xdim = data.X.shape
