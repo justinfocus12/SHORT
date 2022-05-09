@@ -35,7 +35,7 @@ simfolder = join(datafolder,"runs")
 if not exists(simfolder): mkdir(simfolder)
 resultfolder = join(datafolder,"results")
 if not exists(resultfolder): mkdir(resultfolder)
-dayfolder = join(resultfolder,"2021-12-07")
+dayfolder = join(resultfolder,"2022-05-08")
 if not exists(dayfolder): mkdir(dayfolder)
 expfolder = join(dayfolder,"0")
 if not exists(expfolder): mkdir(expfolder)
@@ -49,20 +49,20 @@ least_action_flag =     0
 run_long_flag =         0
 run_short_flag =        0
 compute_tpt_flag =      0
-regression_flag =       0
-proj_1d_flag =          0
-demo_flag =             0
-qp_tb_coords_flag =     0
+regression_flag =       1
+proj_1d_flag =          1
+demo_flag =             1
+qp_tb_coords_flag =     1
 trans_state_flag =      1
-flux_dist_flag =        0
-plot_long_2d_flag =     0
+flux_dist_flag =        1
+plot_long_2d_flag =     1
 plot_trans_2d_flag =    0
-lifecycle_flag =        0
-display_cast_flag =     0
-display_current_flag =  0
-gen_rates_flag =        0
-plot_long_1d_flag =     0
-validation_flag =       0
+lifecycle_flag =        1
+display_cast_flag =     1
+display_current_flag =  1
+gen_rates_flag =        1
+plot_long_1d_flag =     1
+validation_flag =       1
 # ---------------------------------------
 
 # ---------- Set parameters --------------------------
@@ -155,6 +155,7 @@ if plot_long_2d_flag:
     tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
     # Now plot in (tb,qp) space.
     field_abbs = ["qp","Uref"]
+    print(f"About to plot 2d in field_abbs {field_abbs}")
     fieldnames = [r"$q_B^+$",funlib[field_abbs[1]]["name"]]
     field_funs = [None,funlib[field_abbs[1]]["fun"]]
     field_data = [comm_fwd,None]
@@ -162,6 +163,7 @@ if plot_long_2d_flag:
     field_unit_symbols = ["",funlib[field_abbs[1]]["unit_symbol"]]
     tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,field_data=field_data,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
     field_abbs = ["tb","Uref"]
+    print(f"About to plot 2d in field_abbs {field_abbs}")
     fieldnames = [r"$\eta_B^+$",funlib[field_abbs[1]]["name"]]
     field_funs = [None,funlib[field_abbs[1]]["fun"]]
     field_data = [tb, None]
@@ -169,12 +171,14 @@ if plot_long_2d_flag:
     field_unit_symbols = ["",funlib[field_abbs[1]]["unit_symbol"]]
     tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,field_data=field_data,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
     field_abbs = ["magref","Uref"]
+    print(f"About to plot 2d in field_abbs {field_abbs}")
     fieldnames = [funlib[f]["name"] for f in field_abbs]
     field_funs = [funlib[f]["fun"] for f in field_abbs]
     field_units = [funlib[f]["units"] for f in field_abbs]
     field_unit_symbols = [funlib[f]["unit_symbol"] for f in field_abbs]
     tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
     field_abbs = ["vTintref","Uref"]
+    print(f"About to plot 2d in field_abbs {field_abbs}")
     fieldnames = [funlib[f]["name"] for f in field_abbs]
     field_funs = [funlib[f]["fun"] for f in field_abbs]
     field_units = [funlib[f]["units"] for f in field_abbs]
