@@ -1,0 +1,60 @@
+/home/jf4241/SHORT/tpt_obj.py:1952: RuntimeWarning: invalid value encountered in greater
+  field[np.where(field > vmax**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1953: RuntimeWarning: invalid value encountered in less
+  field[np.where(field < vmin**j)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1724: RuntimeWarning: invalid value encountered in greater
+  field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1724: RuntimeWarning: invalid value encountered in less
+  field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1751: RuntimeWarning: invalid value encountered in greater
+  field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:1751: RuntimeWarning: invalid value encountered in less
+  field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+/home/jf4241/SHORT/helper.py:244: RuntimeWarning: All-NaN slice encountered
+  print("u in ({},{}), u_mean in ({},{})".format(np.nanmin(u),np.nanmax(u),np.nanmin(u_mean),np.nanmax(u_mean)))
+/home/jf4241/SHORT/helper.py:244: RuntimeWarning: All-NaN slice encountered
+  print("u in ({},{}), u_mean in ({},{})".format(np.nanmin(u),np.nanmax(u),np.nanmin(u_mean),np.nanmax(u_mean)))
+/home/jf4241/SHORT/helper.py:244: RuntimeWarning: All-NaN slice encountered
+  print("u in ({},{}), u_mean in ({},{})".format(np.nanmin(u),np.nanmax(u),np.nanmin(u_mean),np.nanmax(u_mean)))
+/home/jf4241/SHORT/helper.py:244: RuntimeWarning: All-NaN slice encountered
+  print("u in ({},{}), u_mean in ({},{})".format(np.nanmin(u),np.nanmax(u),np.nanmin(u_mean),np.nanmax(u_mean)))
+/home/jf4241/SHORT/tpt_obj.py:3770: RuntimeWarning: invalid value encountered in greater
+  tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
+/home/jf4241/SHORT/tpt_obj.py:3770: RuntimeWarning: invalid value encountered in less_equal
+  tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
+/home/jf4241/SHORT/tpt_obj.py:3771: RuntimeWarning: invalid value encountered in less_equal
+  tb[comm_fwd <= eps] == np.nan
+/home/jf4241/SHORT/tpt_obj.py:3775: RuntimeWarning: invalid value encountered in greater
+  numbad = np.nansum((bdist==0)*(tb>0))
+/home/jf4241/SHORT/tpt_obj.py:3816: RuntimeWarning: invalid value encountered in greater
+  tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
+/home/jf4241/SHORT/tpt_obj.py:3816: RuntimeWarning: invalid value encountered in less_equal
+  tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
+/home/jf4241/SHORT/tpt_obj.py:3817: RuntimeWarning: invalid value encountered in less_equal
+  tb[comm_fwd <= eps] == np.nan
+/home/jf4241/SHORT/tpt_obj.py:4223: RuntimeWarning: invalid value encountered in greater
+  interior_idx = np.where((comm_fwd > eps)*(comm_fwd < 1-eps))
+/home/jf4241/SHORT/tpt_obj.py:4223: RuntimeWarning: invalid value encountered in less
+  interior_idx = np.where((comm_fwd > eps)*(comm_fwd < 1-eps))
+/home/jf4241/SHORT/tpt_obj.py:2795: RuntimeWarning: All-NaN slice encountered
+  field_std_Linf = np.nanmax(field_std)*np.prod(dth)
+/home/jf4241/SHORT/tpt_obj.py:2103: RuntimeWarning: invalid value encountered in greater
+  ta = self.dam_moments['one']['xa'][1,:,0]*(1-qp > 1e-2)/(1-qp + 1*(1-qp <= 1e-2))
+/home/jf4241/SHORT/tpt_obj.py:2103: RuntimeWarning: invalid value encountered in less_equal
+  ta = self.dam_moments['one']['xa'][1,:,0]*(1-qp > 1e-2)/(1-qp + 1*(1-qp <= 1e-2))
+/home/jf4241/SHORT/tpt_obj.py:2104: RuntimeWarning: invalid value encountered in less_equal
+  ta[np.where(1-qp <= 1e-2)[0]] = np.nan
+/home/jf4241/SHORT/tpt_obj.py:2117: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:2117: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth0 > 0) or np.all(dqth0 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:2119: RuntimeWarning: invalid value encountered in greater
+  if not (np.all(dqth1 > 0) or np.all(dqth1 < 0)):
+/home/jf4241/SHORT/tpt_obj.py:2119: RuntimeWarning: invalid value encountered in less
+  if not (np.all(dqth1 > 0) or np.all(dqth1 < 0)):
+Traceback (most recent call last):
+  File "hm_bothcast_driver.py", line 277, in <module>
+    tpt.demonstrate_committor_mfpt(model,data,theta2d_fun,theta2d_names,theta2d_units,theta2d_unit_symbols)
+  File "/home/jf4241/SHORT/tpt_obj.py", line 2129, in demonstrate_committor_mfpt
+    th0_idx0 = th0_idx0[0]
+IndexError: index 0 is out of bounds for axis 0 with size 0

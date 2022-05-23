@@ -1,0 +1,13 @@
+/home/jf4241/SHORT/tpt_obj.py:1501: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1502: RuntimeWarning: invalid value encountered in sqrt
+  ax.plot(units_k*(eg_dga + np.sqrt(vg_dga)*np.array([-1,1])), units_t*et_dga*np.ones(2), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:1639: RuntimeWarning: invalid value encountered in double_scalars
+  dga_gamma_ba = beta**alpha/special.gamma(alpha)*bin_centers**(alpha-1)*np.exp(-beta*bin_centers)
+/home/jf4241/SHORT/tpt_obj.py:1487: RuntimeWarning: invalid value encountered in sqrt
+  dga_corr = (egt_t_dga - eg_dga)*et_dga/np.sqrt(vg_dga*vt_dga)
+/home/jf4241/SHORT/tpt_obj.py:1501: RuntimeWarning: invalid value encountered in sqrt
+  hdga, = ax.plot(units_k*eg_dga*np.ones(2),units_t*(et_dga + np.sqrt(vt_dga)*np.array([-1,1])), color='red', linestyle='-',linewidth=4,label='DGA')
+/home/jf4241/SHORT/tpt_obj.py:3129: RuntimeWarning: invalid value encountered in true_divide
+  weights = weights/np.sum(weights*(np.isnan(close_field)==0),0)
+ERROR: in out-of-sample-extension, nanmin(fnew) = 0.0 while nanmin(field) = 0.20062031638401961

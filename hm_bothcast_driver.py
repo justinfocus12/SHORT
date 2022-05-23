@@ -35,7 +35,7 @@ simfolder = join(datafolder,"runs")
 if not exists(simfolder): mkdir(simfolder)
 resultfolder = join(datafolder,"results")
 if not exists(resultfolder): mkdir(resultfolder)
-dayfolder = join(resultfolder,"2022-05-08")
+dayfolder = join(resultfolder,"2022-05-23")
 if not exists(dayfolder): mkdir(dayfolder)
 expfolder = join(dayfolder,"0")
 if not exists(expfolder): mkdir(expfolder)
@@ -149,27 +149,6 @@ funlib = model.observable_function_library()
 if plot_trans_2d_flag:
     tpt.plot_trans_2d_driver(model,data)
 if plot_long_2d_flag:
-    comm_fwd = tpt.dam_moments['one']['xb'][0,:,0] # Comittor
-    tb = tpt.dam_moments['one']['xb'][1,:,0]
-    eps = 1e-10
-    tb = tb*(comm_fwd > eps)/(comm_fwd + 1.0*(comm_fwd <= eps))
-    # Now plot in (tb,qp) space.
-    field_abbs = ["qp","Uref"]
-    print(f"About to plot 2d in field_abbs {field_abbs}")
-    fieldnames = [r"$q_B^+$",funlib[field_abbs[1]]["name"]]
-    field_funs = [None,funlib[field_abbs[1]]["fun"]]
-    field_data = [comm_fwd,None]
-    field_units = [1.0,funlib[field_abbs[1]]["units"]]
-    field_unit_symbols = ["",funlib[field_abbs[1]]["unit_symbol"]]
-    tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,field_data=field_data,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
-    field_abbs = ["tb","Uref"]
-    print(f"About to plot 2d in field_abbs {field_abbs}")
-    fieldnames = [r"$\eta_B^+$",funlib[field_abbs[1]]["name"]]
-    field_funs = [None,funlib[field_abbs[1]]["fun"]]
-    field_data = [tb, None]
-    field_units = [1.0,funlib[field_abbs[1]]["units"]]
-    field_unit_symbols = ["",funlib[field_abbs[1]]["unit_symbol"]]
-    tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,field_data=field_data,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
     field_abbs = ["magref","Uref"]
     print(f"About to plot 2d in field_abbs {field_abbs}")
     fieldnames = [funlib[f]["name"] for f in field_abbs]
@@ -188,7 +167,7 @@ if plot_long_2d_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["dqdyref","Uref"],["vTintref","dqdyref"],["vTintref","Uref"],][2:] #,["vTint21p5","U21p5"]] #,["magref","Uref"]]
+    theta_2d_abbs = [["dqdyref","Uref"],["vTintref","dqdyref"],["vTintref","Uref"],["vTint21p5","U21p5"]][2:] #,["magref","Uref"]]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:

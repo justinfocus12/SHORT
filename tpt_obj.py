@@ -1687,6 +1687,7 @@ class TPT:
         for k in range(1): # num_moments):
             # -----------------------------
             # A->A
+            print(f"------------ Starting A->A stuff -----------")
             comm_bwd = self.dam_moments[keys[k]]['ax'][0]
             comm_fwd = self.dam_moments[keys[k]]['xa'][0]
             weight = self.chom
@@ -1697,7 +1698,7 @@ class TPT:
             fieldname = r"$A\to A$"  #r"$\pi_{AB},J_{AB}$"
             field = comm_bwd*comm_fwd 
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1712,6 +1713,7 @@ class TPT:
             plt.close(fig)
             # -----------------------------
             # B->B
+            print(f"------------ Starting B->B stuff -----------")
             comm_bwd = self.dam_moments[keys[k]]['bx'][0]
             comm_fwd = self.dam_moments[keys[k]]['xb'][0]
             weight = self.chom
@@ -1724,7 +1726,7 @@ class TPT:
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
             #field *= (comm_fwd > 0)*(comm_fwd < 1)
             #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1739,6 +1741,7 @@ class TPT:
             plt.close(fig)
             # -----------------------------
             # A->B
+            print(f"------------ Starting A->B stuff -----------")
             comm_bwd = self.dam_moments[keys[k]]['ax'][0]
             comm_fwd = self.dam_moments[keys[k]]['xb'][0]
             weight = self.chom
@@ -1781,6 +1784,7 @@ class TPT:
             plt.close(fig)
             # ---------------------------------
             # B->A
+            print(f"------------ Starting B->A stuff -----------")
             fieldname = r"$B\to A$ density, current" #r"$\pi_{BA},J_{BA}$"
             comm_bwd = self.dam_moments[keys[k]]['bx'][0]
             comm_fwd = self.dam_moments[keys[k]]['xa'][0]
@@ -1811,7 +1815,7 @@ class TPT:
         Nx,Nt,xdim = data.X.shape
         keys = list(model.dam_dict.keys())
         num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
-        phase_flags = {'ab': False, 'ba': False, 'xa': False, 'xb': True, 'ax': False, 'bx': False}
+        phase_flags = {'ab': True, 'ba': False, 'xa': False, 'xb': True, 'ax': True, 'bx': False}
         for i in range(len(theta_2d_abbs)):
             print("Starting view (%s,%s)"%(theta_2d_abbs[i][0],theta_2d_abbs[i][1]))
             fun0 = funlib[theta_2d_abbs[i][0]]
@@ -2896,14 +2900,18 @@ class TPT:
             normalizer = ds*(Jmag != 0)/(np.sqrt((J0/(dth[0]))**2 + (J1/(dth[1]))**2) + (Jmag == 0))
             J0 *= normalizer*(1 - np.isnan(J0))
             J1 *= normalizer*(1 - np.isnan(J1))
-            print("Final J0 range = ({},{})".format(np.nanmin(J0),np.nanmax(J0)))
+            print("Final J0 range for ({}, {}) = ({},{})".format(fun0name,fun1name,np.nanmin(J0),np.nanmax(J0)))
             th01_subset,th10_subset = np.meshgrid(units[0]*thaxes_current[0][th0_subset],units[1]*thaxes_current[1][th1_subset],indexing='ij')
             ax.quiver(th01_subset,th10_subset,units[0]*J0,units[1]*J1,angles='xy',scale_units='xy',scale=1.0,color='black',width=1.4,headwidth=4.0,units='dots',zorder=4) # was width=2.0, headwidth=2.7
+            print(f"Quivering done for ({fun0name},{fun1name})")
         if magu_obs is not None:
+            print(f"Beginning to plot magu_obs")
             for ti in range(len(magu_obs)):
                 ax.plot(magu_obs[ti][:,0]*units[0],magu_obs[ti][:,1]*units[1],color='deepskyblue',zorder=3,alpha=1.0,linestyle='solid',linewidth=0.85)
+            print(f"Finishing plot of magu_obs")
         if magu_fw is not None:
             ax.plot(magu_fw[:,0]*units[0],magu_fw[:,1]*units[1],color='cyan',linewidth=2.0,zorder=5,linestyle='solid')
+        print("Returning from function plot_field_2d")
         return fig,ax 
     def inverse_committor_slice(self,field,comm_levels):
         comm_fwd = self.dam_moments['one']['xb'][0]
@@ -3130,9 +3138,9 @@ class TPT:
         fnew = np.nansum(close_field*weights,0)
         frange = np.nanmax(field) - np.nanmin(field)
         if np.nanmax(fnew) > np.nanmax(field) + 0.05*frange:
-            sys.exit("ERROR: in out-of-sample-extension, nanmax(fnew) = {} while nanmax(field) = {}".format(np.nanmax(fnew),np.nanmax(field)))
+            raise Exception("ERROR: in out-of-sample-extension, nanmax(fnew) = {} while nanmax(field) = {}".format(np.nanmax(fnew),np.nanmax(field)))
         if np.nanmin(fnew) < np.nanmin(field) - 0.05*frange:
-            sys.exit("ERROR: in out-of-sample-extension, nanmin(fnew) = {} while nanmin(field) = {}".format(np.nanmin(fnew),np.nanmin(field)))
+            raise Exception("ERROR: in out-of-sample-extension, nanmin(fnew) = {} while nanmin(field) = {}".format(np.nanmin(fnew),np.nanmin(field)))
 
         #fnew = np.zeros(len(xnew))
         #for i in range(len(xnew)):
@@ -3747,10 +3755,10 @@ class TPT:
     def plot_transition_states_new(self,model,data):
         # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
         composite_flag = True 
-        plot_profile_flag = False
+        plot_profile_flag = True 
         parametric_flag = True 
-        signed_flag = False
-        unsigned_flag = False
+        signed_flag = True 
+        unsigned_flag = True 
         # ------------------------------ 1. For three committor levels, plot the profile of zonal wind and heat flux. ----------------------------------
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]

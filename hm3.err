@@ -1,0 +1,3 @@
+/home/jf4241/SHORT/tpt_obj.py:3129: RuntimeWarning: invalid value encountered in true_divide
+  weights = weights/np.sum(weights*(np.isnan(close_field)==0),0)
+ERROR: in out-of-sample-extension, nanmin(fnew) = 0.0 while nanmin(field) = 0.2006165673702776
