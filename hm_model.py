@@ -539,13 +539,18 @@ class HoltonMassModel(Model):
         q = self.q
         # Compute the vertical derivatives of Xe^(z/2) (units are nondimensional)
         n = q['Nz']-1
-        Xz = first_derivative(X,lower,upper,q['dz'])
-        if k == 1:
-            Xder = (Xz + 0.5*X)*np.exp(q['z'][1:-1]/2)
-        elif k == 2:
-            Xzz = second_derivative(X,lower,upper,q['dz'])
-            Xder = (Xzz + Xz + 0.25*X)*np.exp(q['z'][1:-1]/2)
-        return Xder
+        if k == 0:
+            Xder = X #*np.exp(q['z'][1:-1]/2)
+        else:
+            Xz = first_derivative(X,lower,upper,q['dz'])
+            if k == 1:
+                Xder = (Xz + 0.5*X) #*np.exp(q['z'][1:-1]/2)
+            if k == 2:
+                Xzz = second_derivative(X,lower,upper,q['dz'])
+                Xder = (Xzz + Xz + 0.25*X) #*np.exp(q['z'][1:-1]/2)
+        else:
+            raise Exception(f"You asked for the {k}th derivative, but I only compute them up to k=2")
+        return Xder*np.exp(q['z'][1:-1]/2)
     def approximate_fixed_points(self):
         q = self.q
         n = q['Nz']-1
@@ -556,20 +561,37 @@ class HoltonMassModel(Model):
         kneez = np.argmin(np.abs(q['z_d'][1:-1] - 35.0e3))
         x[1,2*n:3*n] = np.maximum(q['UR_0'], q['UR_0'] + q['UR_z'][-1]*(q['z'][1:-1] - q['z'][kneez]))
         return x
-    def enstrophy(self,x):
+    def eddy_enstrophy(self,x,lat=60):
+        # This is corrected to deal with the squaredness. 
         q = self.q
         n = q['Nz']-1
         Nt = len(x)
-        # Compute all the necessary correlations
+        # Compute all the necessary correlations.
         X,Y = x[:,:n],x[:,n:2*n]
+        X0,Y0 = self.product_rule_z(X,q['Psi0'],0,0),self.product_rule_z(Y,0,0,0)
         X1,Y1 = self.product_rule_z(X,q['Psi0'],0,1),self.product_rule_z(Y,0,0,1)
         X2,Y2 = self.product_rule_z(X,q['Psi0'],0,2),self.product_rule_z(Y,0,0,2)
-        qpsq = (q['k']**2 + q['l']**2)*(X**2 + Y**2)
-        qpsq += -1/q['Gsq']*(q['k']**2 + q['l']**2) * (
-                X*X2 + Y*Y2 - X*X1 - Y*Y1)
-        qpsq += 1/q['Gsq']**2 * (X2**2 + Y2**2 - 2*(X1*X2 + Y1*Y2) + X1**2 + Y1**2)
-        qpsq *= 0.5*17/35
-        return qpsq
+        # term 1: (k^2+l^2)^2*(psi')^2
+        enstrophy = (q['k']**2 + q['l']**2)**2 * (X0**2 + Y0**2)/2
+        # term 2: (1/G^4) * (psi'_zz)^2
+        enstrophy += 1/q['Gsq']**2 * (X2**2 + Y2**2)/2
+        # term 3: (1/G^4) * (1/H^2) * (psi'_z)^2
+        enstrophy += 1/q['Gsq']**2 * (X1**2 + Y1**2)/2
+        # term 4: (1/G^4) * (-2/H) * (psi'_zz)*(psi'_z)
+        enstrophy -= 2/q['Gsq']**2 * (X1*X2 + Y1*Y2)/2
+        # term 5: -2/(G^2) * (k^2+l^2) + (psi'*psi'_zz)
+        enstrophy -= 2/q['Gsq'] * (q['k']**2 + q['l']**2) * (X0*X2 + Y0*Y2)/2 
+        # term 6: 2/(G^2) * (k^2+l^2) * 1/H * (psi'*psi'_z)
+        enstrophy += 2/q['Gsq'] * (q['k']**2 + q['l']**2) * (X0*X1 + Y0*Y1)/2
+        # Fix the latitude
+        enstrophy *= np.sin(lat*np.pi/180)**2
+        # Old mistaken code:
+        #qpsq = (q['k']**2 + q['l']**2)*(X**2 + Y**2)
+        #qpsq += -1/q['Gsq']*(q['k']**2 + q['l']**2) * (
+        #        X*X2 + Y*Y2 - X*X1 - Y*Y1)
+        #qpsq += 1/q['Gsq']**2 * (X2**2 + Y2**2 - 2*(X1*X2 + Y1*Y2) + X1**2 + Y1**2)
+        #qpsq *= 0.5*17/35
+        return enstrophy
     def meridional_heat_flux(self,x):
         q = self.q
         # Compute the meridional heat flux, perhaps of the whole timeseries
@@ -578,7 +600,7 @@ class HoltonMassModel(Model):
         heat_flux = np.ones([Nt,q['Nz']-1])
         heat_flux *= q['k'] 
         #heat_flux *= q['k_d']*q['H']*q['f0_d']/(2*q['ideal_gas_constant'])
-        heat_flux *= np.exp(q['z'][1:-1])*17.0/35
+        heat_flux *= np.exp(q['z'][1:-1])
         # Now it has to be multiplied by vertical derivatives
         Xz = first_derivative(x[:,:n],q['Psi0'],0,q['dz']) 
         Yz = first_derivative(x[:,n:2*n],0,0,q['dz'])
@@ -626,11 +648,8 @@ class HoltonMassModel(Model):
         U = x[:,2*n:3*n]
         Utop = (2*q['dz']*q['UR_z'][-1] - U[:,-2] + 4*U[:,-1])/3
         Uz = first_derivative(U,q['UR_0'],Utop,q['dz'])
-        #Uz[:,-1] = q['UR_z'][-1]
         Uzz = second_derivative(U,q['UR_0'],Utop,q['dz'])
-        #Uzz[:,-1] = (2*U[:,-2] + 2*q['dz']*q['UR_z'][-1] - 2*U[:,-1])/q['dz']**2
         qbar_grad = q['beta'] + q['l']**2*U*3.0/8 + 1/q['Gsq']*(Uz*3.0/8 - Uzz*3.0/8)
-        #qbar_grad *= 1.0/(q['length']*q['time'])
         return qbar_grad
     def epflux_z(self,x):
         q = self.q
@@ -650,7 +669,7 @@ class HoltonMassModel(Model):
         n = q['Nz']-1
         Nt = len(x)
         pv_flux = np.ones([Nt,q['Nz']-1])
-        pv_flux *= q['k']*17.0/35*np.exp(q['z'][1:-1])/2 # Need to put in rho0. 17/35 is the meridional average of sin^2*(3y)
+        pv_flux *= q['k']*np.exp(q['z'][1:-1])/2 # Need to put in rho0. 17/35 is the meridional average of sin^2*(3y)
         # Now it has to be multiplied by vertical derivatives
         Xzz = second_derivative(x[:,:n],q['Psi0'],0,q['dz'])
         Yzz = second_derivative(x[:,n:2*n],0,0,q['dz'])
@@ -694,11 +713,10 @@ class HoltonMassModel(Model):
         X2,Y2 = product_rule_z(X,q['Psi0'],0,q,2),product_rule_z(Y,0,0,q,2)
         a = q['alpha'][1:-1]
         az = q['alpha_z'][1:-1]
-        diss = 1/q['Gsq']*((q['k']**2+q['l']**2)*(X*X2 + Y*Y2)
-                + (az - a)*(X*X1 + Y*Y1))
-        diss += 1/q['Gsq']**2 * (-a*(X2**2 + Y2**2)
-                + (a - az)*(X2*X1 + Y2*Y1))
-        diss *= 0.5*17/35
+        diss = 1/q['Gsq']*((q['k']**2+q['l']**2)*(X*X2 + Y*Y2)/2
+                + (az - a)*(X*X1 + Y*Y1)/2)
+        diss += 1/q['Gsq']**2 * (-a*(X2**2 + Y2**2)/2
+                + (a - az)*(X2*X1 + Y2*Y1)/2)
         return diss
     def regression_features0(self,x):
         funlib = self.observable_function_library()
@@ -981,19 +999,19 @@ class HoltonMassModel(Model):
                  "unit_symbol": r"s$^{-1}$",
                  },
                 "q2":
-                {"fun": lambda X: self.enstrophy(X),
+                {"fun": lambda X: self.eddy_enstrophy(X),
                  "name":r"$\overline{q'^2}$",
                  "units": 1/q['time']**2,
                  "unit_symbol": r"s$^{-2}$",
                  },
                 "q2ref":
-                {"fun": lambda X: self.enstrophy(X)[:,q['zi']],
+                {"fun": lambda X: self.eddy_enstrophy(X)[:,q['zi']],
                  "name":r"$\overline{q'^2} (%.0f km)$"%self.ref_alt,
                  "units": 1/q['time']**2,
                  "unit_symbol": r"$s^{-2}$",
                  },
                 "q2mean":
-                {"fun": lambda X: np.mean(self.enstrophy(X),1),
+                {"fun": lambda X: np.mean(self.eddy_enstrophy(X),1),
                  "name":r"$\overline{q'^2}$ (z-mean)",
                  "units": 1/q['time']**2,
                  "unit_symbol": r"$s^{-2}$",
