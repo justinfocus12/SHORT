@@ -16,17 +16,17 @@ import matplotlib.ticker as ticker
 import matplotlib.patches as patches
 from matplotlib.collections import PatchCollection
 matplotlib.rcParams['font.size'] = 12
-matplotlib.rcParams['font.family'] = 'serif'
-#matplotlib.rcParams['savefig.bbox'] = 'tight'
-#matplotlib.rcParams['savefig.pad_inches'] = 0
-smallfont = {'family': 'serif', 'size': 8}
-medfont = {'family': 'serif', 'size': 13}
-font = {'family': 'serif', 'size': 18}
-ffont = {'family': 'serif', 'size': 22}
-bigfont = {'family': 'serif', 'size': 30}
-bbigfont = {'family': 'serif', 'size': 40}
-giantfont = {'family': 'serif', 'size': 80}
-ggiantfont = {'family': 'serif', 'size': 120}
+matplotlib.rcParams['font.family'] = 'monospace'
+matplotlib.rcParams['savefig.bbox'] = tight
+matplotlib.rcParams['savefig.pad_inches'] = 0.2
+smallfont = {'family': 'monospace', 'size': 8}
+medfont = {'family': 'monospace', 'size': 13}
+font = {'family': 'monospace', 'size': 18}
+ffont = {'family': 'monospace', 'size': 22}
+bigfont = {'family': 'monospace', 'size': 30}
+bbigfont = {'family': 'monospace', 'size': 40}
+giantfont = {'family': 'monospace', 'size': 80}
+ggiantfont = {'family': 'monospace', 'size': 120}
 import pickle
 import sys
 import subprocess
@@ -1674,6 +1674,7 @@ class TPT:
         del x_long
         # If I substitute in F- and F+ for q- and q+, I guess we'll see where pathways accumulate the most of whatever damage function it's measuring
         Nx,Nt,xdim = data.X.shape
+        ss = np.random.choice(np.arange(Nx),10000,replace=False)
         keys = list(model.dam_dict.keys())
         num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
         theta_xst = theta_2d_fun(model.tpt_obs_xst) # Possibly to be used as theta_ab
@@ -1698,7 +1699,7 @@ class TPT:
             fieldname = r"$A\to A$"  #r"$\pi_{AB},J_{AB}$"
             field = comm_bwd*comm_fwd 
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1726,7 +1727,7 @@ class TPT:
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
             #field *= (comm_fwd > 0)*(comm_fwd < 1)
             #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1752,24 +1753,7 @@ class TPT:
             fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
             field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            ## First no current
-            #fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=False,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            #fig.savefig(join(self.savefolder,"jab_rdens_nocurrent_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            #plt.close(fig)
-            ## Now with current, but without samples or least-action path
-            #fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            #fig.savefig(join(self.savefolder,"jab_rdens_noobs_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            #plt.close(fig)
-            ## Now with current, and samples, but no least-action path
-            #fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            #fig.savefig(join(self.savefolder,"jab_rdens_nofw_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            #plt.close(fig)
-            ## Now with current and least-action path
-            #fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
-            #fig.savefig(join(self.savefolder,"jab_rdens_nohorz_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            #plt.close(fig)
-            # Now with current and least-action path and horizontal lines
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True,ss=ss)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -2724,14 +2708,16 @@ class TPT:
         field = np.ones((Nx,Nt))
         fieldname = "Steady-state"
         weight = self.chom
+        ss = np.random.choice(np.arange(Nx),10000,replace=False)
         # No current 
-        fig,ax = self.plot_field_2d(model,data,field,weight,theta_2d_short,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=False,current_bdy_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,cmap=plt.cm.YlOrBr)
+        fig,ax = self.plot_field_2d(model,data,field,weight,theta_2d_short,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=False,current_bdy_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,cmap=plt.cm.YlOrBr,ss=ss)
         fig.savefig(join(self.savefolder,"pij_nocurrent_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         # With current
         fig,ax = self.plot_field_2d(model,data,field,weight,theta_2d_short,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,cmap=plt.cm.YlOrBr)
         fig.savefig(join(self.savefolder,"pij_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
+        return
     def display_change_of_measure_validation(self,model,data,theta_1d_fun,theta_2d_fun,theta_1d_name,theta_2d_names,theta_1d_units,theta_2d_units):
         # Display the change of measure from both DGA and simulation
         shp_1d = np.array([20])
@@ -2826,43 +2812,22 @@ class TPT:
         print("comm_fwd_ypj.shape = {}".format(comm_fwd_ypj.shape))
         print("theta_ypj.shape = {}".format(theta_ypj.shape))
         print("theta_x.shape = {}".format(theta_x.shape))
-        field0 = (chomss*comm_bwd_x*comm_fwd_ypj*(theta_ypj - theta_x).T).T
-        field1 = (chomss*comm_bwd_xpj*comm_fwd_yj*(theta_yj - theta_xpj).T).T
+        field0 = (chomss*comm_bwd_x*comm_fwd_ypj*(theta_ypj[ss] - theta_x[ss]).T).T
+        field1 = (chomss*comm_bwd_xpj*comm_fwd_yj*(theta_yj[ss] - theta_xpj[ss]).T).T
         print("field0.shape = {}, field1.shape = {}".format(field0.shape,field1.shape))
-        #sys.exit()
-        #    if dirn == -1:
-        #        comm_bwd = 1 - comm_bwd
-        #        comm_bwdpj = 1 - comm_bwdpj
-        #        comm_fwd_yj = 1 - comm_fwd_yj
-        #        comm_fwd_ypj = 1 - comm_fwd_ypj
-        #    field0 = (chomss*comm_bwd*comm_fwd_ypj*(theta_ypj - theta_x).T).T
-        #    field1 = (chomss*comm_bwdpj*comm_fwd_yj*(theta_yj - theta_xpj).T).T
-        #else:
-        #    field0 = (chomss*(theta_yj - theta_x).T).T
-        #    field1 = field0
         thdim = field0.shape[1]
         if shp is None: shp = 20*np.ones(thdim,dtype=int) # number of INTERIOR
         Ncell = np.prod(shp)
         J = np.zeros((Ncell,thdim))
         for d in range(thdim):
-            _,dth,thaxes,cgrid,J0,J0_std,_,_,_ = helper.project_field(field0[:,d],chomss,theta_x,shp=shp,avg_flag=False)
-            _,dth,thaxes,cgrid,J1,J1_std,_,_,_ = helper.project_field(field1[:,d],chomss,theta_yj,shp=shp,avg_flag=False)
+            _,dth,thaxes,cgrid,J0,J0_std,_,_,_ = helper.project_field(field0[:,d],chomss,theta_x[ss],shp=shp,avg_flag=False)
+            _,dth,thaxes,cgrid,J1,J1_std,_,_,_ = helper.project_field(field1[:,d],chomss,theta_yj[ss],shp=shp,avg_flag=False)
             J[:,d] = 1/(2*self.lag_time_current_display*np.prod(dth))*(J0 + J1)
         return thaxes,J
     def plot_field_2d(self,model,data,field,weight,theta_x,shp=[60,60],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",current_flag=False,current_bdy_flag=False,comm_bwd=None,comm_fwd=None,current_shp=[25,25],abpoints_flag=False,theta_ab=None,avg_flag=True,logscale=False,ss=None,magu_fw=None,magu_obs=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',fig=None,ax=None,vmin=None,vmax=None,contourf_flag=True,contour_notf_flag=False,contour_notf_levels=None):
-        # theta_x is the observable on all of the x's
-        # First plot the scalar
-        #print("About to call Helper to plot 2d")
         fig,ax = helper.plot_field_2d(field[:,0],weight,theta_x[:,0],shp=shp,cmap=cmap,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,avg_flag=avg_flag,std_flag=False,logscale=logscale,ss=ss,units=units,unit_symbols=unit_symbols,cbar_orientation=cbar_orientation,fig=fig,ax=ax,vmin=vmin,vmax=vmax,contourf_flag=contourf_flag,contour_notf_flag=contour_notf_flag,contour_notf_levels=contour_notf_levels)
-        #ax.set_xlim([np.min(theta_x[:,:,0])*units[0],np.max(theta_x[:,:,0])*units[0]])
-        #ax.set_ylim([np.min(theta_x[:,:,1])*units[1],np.max(theta_x[:,:,1])*units[1]])
-        #print("Helper's role is done")
         if abpoints_flag:
-            #ass = np.where(np.in1d(ss,self.aidx))[0]
-            #ass_theta = np.random.choice(ass,min(2000,len(ass)),replace=False)
             ass_theta = self.aidx
-            #bss = np.where(np.in1d(ss,self.bidx))[0]
-            #bss_theta = np.random.choice(bss,min(2000,len(bss)),replace=False)
             bss_theta = self.bidx
             ax.scatter(units[0]*theta_x[ass_theta,0,0],units[1]*theta_x[ass_theta,0,1],color='lightgray',marker='.',zorder=2)
             ax.scatter(units[0]*theta_x[bss_theta,0,0],units[1]*theta_x[bss_theta,0,1],color='lightgray',marker='.',zorder=2)

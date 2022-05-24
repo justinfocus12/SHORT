@@ -6,13 +6,13 @@ import matplotlib
 matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 matplotlib.rcParams['font.size'] = 10
-matplotlib.rcParams['font.family'] = 'serif'
+matplotlib.rcParams['font.family'] = 'monospace'
 matplotlib.rcParams['savefig.bbox'] = 'tight'
-matplotlib.rcParams['savefig.pad_inches'] = 0
-smallfont = {'family': 'serif', 'size': 10,}
-font = {'family': 'serif', 'size': 18,}
-ffont = {'family': 'serif', 'size': 25}
-bigfont = {'family': 'serif', 'size': 40}
+matplotlib.rcParams['savefig.pad_inches'] = 0.2
+smallfont = {'family': 'monospace', 'size': 10,}
+font = {'family': 'monospace', 'size': 18,}
+ffont = {'family': 'monospace', 'size': 25}
+bigfont = {'family': 'monospace', 'size': 40}
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.colors as mpl_colors
