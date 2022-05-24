@@ -29,7 +29,6 @@ asymb = r"$\mathbf{a}$"
 bsymb = r"$\mathbf{b}$"
 
 class HoltonMassModel(Model):
-    #def __init__(self,hB_d=38.5,du_per_day=1.0,dh_per_day=0.0,ref_alt=30.0,abdefdim=75):
     def __init__(self,physical_params,xst=None):
         self.ref_alt = physical_params['ref_alt'] # in kilometers
         q = {
@@ -675,9 +674,19 @@ class HoltonMassModel(Model):
             phase0 = phase[:,i]
         ang_disp_mag = -phase/(q['sx'])
         return ang_disp_mag
-    def wave_transience(self,x):
+    def test_enstrophy_equation(self,x):
+        # Compute the left-hand side of Eq. 2-11 of Yoden 1987 to check if it's zero. 
+        # The time derivative of enstrophy will have to be approximated as a finite difference. 
         q = self.q
-        # The wave transience term (but not dividided by dq/dy)
+        Nx = len(x)
+        n = q['Nz']-1
+        enstrophy_tendency = np.zeros((Nx,n))
+        pvflux = self.meridional_pv_flux(x)
+        pvgrad = self.background_pv_gradient(x)
+        diss = np.zeros((Nx,n))
+    def dissipation(self,x):
+        q = self.q
+        # The dissipation term from Eq. 2-11 of Yoden 1987 (but not dividided by dq/dy), and with a minus sign. 
         n = q['Nz']-1
         Nt = len(x)
         X,Y = x[:,:n],x[:,n:2*n]
@@ -685,12 +694,12 @@ class HoltonMassModel(Model):
         X2,Y2 = product_rule_z(X,q['Psi0'],0,q,2),product_rule_z(Y,0,0,q,2)
         a = q['alpha'][1:-1]
         az = q['alpha_z'][1:-1]
-        wt = 1/q['Gsq']*((q['k']**2+q['l']**2)*(X*X2 + Y*Y2)
+        diss = 1/q['Gsq']*((q['k']**2+q['l']**2)*(X*X2 + Y*Y2)
                 + (az - a)*(X*X1 + Y*Y1))
-        wt += 1/q['Gsq']**2 * (-a*(X2**2 + Y2**2)
+        diss += 1/q['Gsq']**2 * (-a*(X2**2 + Y2**2)
                 + (a - az)*(X2*X1 + Y2*Y1))
-        wt *= 0.5*17/35
-        return wt
+        diss *= 0.5*17/35
+        return diss
     def regression_features0(self,x):
         funlib = self.observable_function_library()
         n = self.q['Nz']-1
@@ -989,9 +998,9 @@ class HoltonMassModel(Model):
                  "units": 1/q['time']**2,
                  "unit_symbol": r"$s^{-2}$",
                  },
-                "wtran":
-                {"fun": lambda X: wave_transience(X,q),
-                 "name": r"$-\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
+                "diss":
+                {"fun": lambda X: self.dissipation(X),
+                 "name": r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
                  },
             }
         return funs
