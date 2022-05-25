@@ -545,11 +545,11 @@ class HoltonMassModel(Model):
             Xz = first_derivative(X,lower,upper,q['dz'])
             if k == 1:
                 Xder = (Xz + 0.5*X) #*np.exp(q['z'][1:-1]/2)
-            if k == 2:
+            elif k == 2:
                 Xzz = second_derivative(X,lower,upper,q['dz'])
                 Xder = (Xzz + Xz + 0.25*X) #*np.exp(q['z'][1:-1]/2)
-        else:
-            raise Exception(f"You asked for the {k}th derivative, but I only compute them up to k=2")
+            else:
+                raise Exception(f"You asked for the {k}th derivative, but I only compute them up to k=2")
         return Xder*np.exp(q['z'][1:-1]/2)
     def approximate_fixed_points(self):
         q = self.q
@@ -572,7 +572,7 @@ class HoltonMassModel(Model):
         X1,Y1 = self.product_rule_z(X,q['Psi0'],0,1),self.product_rule_z(Y,0,0,1)
         X2,Y2 = self.product_rule_z(X,q['Psi0'],0,2),self.product_rule_z(Y,0,0,2)
         # term 1: (k^2+l^2)^2*(psi')^2
-        enstrophy = (q['k']**2 + q['l']**2)**2 * (X0**2 + Y0**2)/2
+        enstrophy = -(q['k']**2 + q['l']**2)**2 * (X0**2 + Y0**2)/2
         # term 2: (1/G^4) * (psi'_zz)^2
         enstrophy += 1/q['Gsq']**2 * (X2**2 + Y2**2)/2
         # term 3: (1/G^4) * (1/H^2) * (psi'_z)^2
@@ -584,7 +584,7 @@ class HoltonMassModel(Model):
         # term 6: 2/(G^2) * (k^2+l^2) * 1/H * (psi'*psi'_z)
         enstrophy += 2/q['Gsq'] * (q['k']**2 + q['l']**2) * (X0*X1 + Y0*Y1)/2
         # Fix the latitude
-        enstrophy *= np.sin(lat*np.pi/180)**2
+        enstrophy *= 1/2*np.sin(q['sy']*lat*np.pi/180)**2
         # Old mistaken code:
         #qpsq = (q['k']**2 + q['l']**2)*(X**2 + Y**2)
         #qpsq += -1/q['Gsq']*(q['k']**2 + q['l']**2) * (
@@ -639,7 +639,7 @@ class HoltonMassModel(Model):
         for i in range(1,n):
             ivt[:,i] = ivt[:,i-1] + 0.5*(heat_flux[:,i] + heat_flux[:,i+1])*q['dz']
         return ivt
-    def background_pv_gradient(self,x):
+    def background_pv_gradient(self,x,lat=60):
         q = self.q
         # Compute the meridional gradient of zonal-mean potential vorticity
         #rho0 = 0.41
@@ -649,7 +649,8 @@ class HoltonMassModel(Model):
         Utop = (2*q['dz']*q['UR_z'][-1] - U[:,-2] + 4*U[:,-1])/3
         Uz = first_derivative(U,q['UR_0'],Utop,q['dz'])
         Uzz = second_derivative(U,q['UR_0'],Utop,q['dz'])
-        qbar_grad = q['beta'] + q['l']**2*U*3.0/8 + 1/q['Gsq']*(Uz*3.0/8 - Uzz*3.0/8)
+        sinly = np.sin(q['sy']*lat*np.pi/180)
+        qbar_grad = q['beta'] + sinly*(q['l']**2*U + 1/q['Gsq']*(Uz - Uzz))
         return qbar_grad
     def epflux_z(self,x):
         q = self.q
@@ -693,31 +694,52 @@ class HoltonMassModel(Model):
             phase0 = phase[:,i]
         ang_disp_mag = -phase/(q['sx'])
         return ang_disp_mag
-    def test_enstrophy_equation(self,x):
+    def test_enstrophy_equation(self,x,lat=60,dt=None):
         # Compute the left-hand side of Eq. 2-11 of Yoden 1987 to check if it's zero. 
         # The time derivative of enstrophy will have to be approximated as a finite difference. 
         q = self.q
         Nx = len(x)
         n = q['Nz']-1
-        enstrophy_tendency = np.zeros((Nx,n))
         pvflux = self.meridional_pv_flux(x)
         pvgrad = self.background_pv_gradient(x)
-        diss = np.zeros((Nx,n))
-    def dissipation(self,x):
+        diss = self.dissipation(x,lat=lat)
+        # Now compute the terms with finite difference
+        if dt is None: dt = self.dt_sim
+        xdot_0 = self.drift_fun(x)
+        xdot_1 = self.drift_fun(x + xdot_0*dt)
+        q2_0 = self.eddy_enstrophy(xdot_0,lat=lat)
+        q2_1 = self.eddy_enstrophy(xdot_1,lat=lat)
+        enstrophy_tendency = (q2_1 - q2_0)/dt
+        lhs = enstrophy_tendency + pvflux*pvgrad - diss
+        print(f"dt = {dt}, Max abs LHS = {np.max(np.abs(lhs))}")
+        print(f"enstrophy_tendency mean = {np.mean(np.abs(enstrophy_tendency),axis=1)}")
+        print(f"pvflux mean = {np.mean(np.abs(pvflux),axis=1)}")
+        print(f"pvgrad mean = {np.mean(np.abs(pvgrad),axis=1)}")
+        print(f"diss mean = {np.mean(np.abs(diss),axis=1)}")
+        return lhs
+    def dissipation(self,x,lat=60):
         q = self.q
         # The dissipation term from Eq. 2-11 of Yoden 1987 (but not dividided by dq/dy), and with a minus sign. 
         n = q['Nz']-1
         Nt = len(x)
         X,Y = x[:,:n],x[:,n:2*n]
-        X1,Y1 = product_rule_z(X,q['Psi0'],0,q,1),product_rule_z(Y,0,0,q,1)
-        X2,Y2 = product_rule_z(X,q['Psi0'],0,q,2),product_rule_z(Y,0,0,q,2)
+        X0,Y0 = self.product_rule_z(X,q['Psi0'],0,0),self.product_rule_z(Y,0,0,0)
+        X1,Y1 = self.product_rule_z(X,q['Psi0'],0,1),self.product_rule_z(Y,0,0,1)
+        X2,Y2 = self.product_rule_z(X,q['Psi0'],0,2),self.product_rule_z(Y,0,0,2)
         a = q['alpha'][1:-1]
         az = q['alpha_z'][1:-1]
-        diss = 1/q['Gsq']*((q['k']**2+q['l']**2)*(X*X2 + Y*Y2)/2
-                + (az - a)*(X*X1 + Y*Y1)/2)
-        diss += 1/q['Gsq']**2 * (-a*(X2**2 + Y2**2)/2
-                + (a - az)*(X2*X1 + Y2*Y1)/2)
-        return diss
+        diss = 1/q['Gsq']*(q['k']**2+q['l']**2)*(
+            (az-a)*(X0*X1 + Y0*Y1)/2 + a*(X0*X2 + Y0*Y2)/2)
+        diss += 1/q['Gsq']**2 * (
+            - (az-2*a)*(X1*X2 + Y1*Y2)/2 
+            + (az-a)*(X1**2 + Y1**2)/2 
+            - a*(X2**2 + Y2**2)/2)
+        # Old code:
+        #diss = 1/q['Gsq']*((q['k']**2+q['l']**2)*(X*X2 + Y*Y2)/2
+        #        + (az - a)*(X*X1 + Y*Y1)/2)
+        #diss += 1/q['Gsq']**2 * (-a*(X2**2 + Y2**2)/2
+        #        + (a - az)*(X2*X1 + Y2*Y1)/2)
+        return diss*np.sin(q['l']*lat*np.pi/180)
     def regression_features0(self,x):
         funlib = self.observable_function_library()
         n = self.q['Nz']-1
@@ -1016,7 +1038,7 @@ class HoltonMassModel(Model):
                  "units": 1/q['time']**2,
                  "unit_symbol": r"$s^{-2}$",
                  },
-                "diss":
+                "dissipation":
                 {"fun": lambda X: self.dissipation(X),
                  "name": r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
                  },
