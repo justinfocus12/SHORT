@@ -649,8 +649,16 @@ class HoltonMassModel(Model):
         Utop = (2*q['dz']*q['UR_z'][-1] - U[:,-2] + 4*U[:,-1])/3
         Uz = first_derivative(U,q['UR_0'],Utop,q['dz'])
         Uzz = second_derivative(U,q['UR_0'],Utop,q['dz'])
+        print(f"U: min={U.min()}, max={U.max()}")
+        print(f"Uz: min={Uz.min()}, max={Uz.max()}")
+        print(f"Uzz: min={Uzz.min()}, max={Uzz.max()}")
+        print(f"beta = {q['beta']}")
         sinly = np.sin(q['sy']*lat*np.pi/180)
+        print(f"sy = {q['sy']}")
+        print(f"lat = {lat}")
+        print(f"sinly = {sinly}")
         qbar_grad = q['beta'] + sinly*(q['l']**2*U + 1/q['Gsq']*(Uz - Uzz))
+        print(f"qbar_grad: min={qbar_grad.min()}, max={qbar_grad.max()}")
         return qbar_grad
     def epflux_z(self,x):
         q = self.q
@@ -665,17 +673,17 @@ class HoltonMassModel(Model):
         dens = np.exp(-q['z'][1:-1])
         #pv_flux *= q['length']**3/(q['H']**2*q['time']**2)
         return pv_flux*dens
-    def meridional_pv_flux(self,x):
+    def meridional_pv_flux(self,x,lat=60):
         q = self.q
         n = q['Nz']-1
         Nt = len(x)
-        pv_flux = np.ones([Nt,q['Nz']-1])
-        pv_flux *= q['k']*np.exp(q['z'][1:-1])/2 # Need to put in rho0. 17/35 is the meridional average of sin^2*(3y)
-        # Now it has to be multiplied by vertical derivatives
-        Xzz = second_derivative(x[:,:n],q['Psi0'],0,q['dz'])
-        Yzz = second_derivative(x[:,n:2*n],0,0,q['dz'])
-        pv_flux *= (x[:,:n]*Yzz - x[:,n:2*n]*Xzz)
-        #pv_flux *= q['length']**3/(q['H']**2*q['time']**2)
+        X,Y = x[:,:n],x[:,n:2*n]
+        X0,Y0 = self.product_rule_z(X,q['Psi0'],0,0),self.product_rule_z(Y,0,0,0)
+        X1,Y1 = self.product_rule_z(X,q['Psi0'],0,1),self.product_rule_z(Y,0,0,1)
+        X2,Y2 = self.product_rule_z(X,q['Psi0'],0,2),self.product_rule_z(Y,0,0,2)
+        pv_flux = q['k']/q['Gsq']*(X0*Y2-Y0*X2)/2 
+        pv_flux += q['k']/q['Gsq']*(-X0*Y1+Y0*X1)/2
+        pv_flux *= np.sin(q['sy']*lat*np.pi/180)**2
         return pv_flux
     def angular_displacement_times_magnitude(self,x):
         q = self.q
@@ -700,8 +708,8 @@ class HoltonMassModel(Model):
         q = self.q
         Nx = len(x)
         n = q['Nz']-1
-        pvflux = self.meridional_pv_flux(x)
-        pvgrad = self.background_pv_gradient(x)
+        pvflux = self.meridional_pv_flux(x,lat=lat)
+        pvgrad = self.background_pv_gradient(x,lat=lat)
         diss = self.dissipation(x,lat=lat)
         # Now compute the terms with finite difference
         if dt is None: dt = self.dt_sim
@@ -716,7 +724,7 @@ class HoltonMassModel(Model):
         print(f"pvflux mean = {np.mean(np.abs(pvflux),axis=1)}")
         print(f"pvgrad mean = {np.mean(np.abs(pvgrad),axis=1)}")
         print(f"diss mean = {np.mean(np.abs(diss),axis=1)}")
-        return lhs
+        return enstrophy_tendency,pvflux,pvgrad,diss,lhs
     def dissipation(self,x,lat=60):
         q = self.q
         # The dissipation term from Eq. 2-11 of Yoden 1987 (but not dividided by dq/dy), and with a minus sign. 
@@ -734,12 +742,13 @@ class HoltonMassModel(Model):
             - (az-2*a)*(X1*X2 + Y1*Y2)/2 
             + (az-a)*(X1**2 + Y1**2)/2 
             - a*(X2**2 + Y2**2)/2)
+        diss *= np.sin(q['sy']*lat*np.pi/180)**2
         # Old code:
         #diss = 1/q['Gsq']*((q['k']**2+q['l']**2)*(X*X2 + Y*Y2)/2
         #        + (az - a)*(X*X1 + Y*Y1)/2)
         #diss += 1/q['Gsq']**2 * (-a*(X2**2 + Y2**2)/2
         #        + (a - az)*(X2*X1 + Y2*Y1)/2)
-        return diss*np.sin(q['l']*lat*np.pi/180)
+        return diss
     def regression_features0(self,x):
         funlib = self.observable_function_library()
         n = self.q['Nz']-1

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 matplotlib.rcParams['font.size'] = 25
 matplotlib.rcParams['font.family'] = 'monospace'
 matplotlib.rcParams['savefig.bbox'] = 'tight'
-matplotlib.rcParams['savefig.pad_inches'] = 0
+matplotlib.rcParams['savefig.pad_inches'] = 0.2
 font = {'family': 'monospace', 'size': 25,}
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
