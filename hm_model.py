@@ -736,7 +736,7 @@ class HoltonMassModel(Model):
         X2,Y2 = self.product_rule_z(X,q['Psi0'],0,2),self.product_rule_z(Y,0,0,2)
         a = q['alpha'][1:-1]
         az = q['alpha_z'][1:-1]
-        diss = 1/q['Gsq']*(q['k']**2+q['l']**2)*(
+        diss = 1/q['Gsq'] * (q['k']**2+q['l']**2)*(
             (az-a)*(X0*X1 + Y0*Y1)/2 + a*(X0*X2 + Y0*Y2)/2)
         diss += 1/q['Gsq']**2 * (
             - (az-2*a)*(X1*X2 + Y1*Y2)/2 
