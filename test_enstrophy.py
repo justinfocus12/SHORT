@@ -17,7 +17,7 @@ if not exists(savedir): mkdir(savedir)
 
 physical_params,_ = hm_params.get_physical_params()
 physical_params['hB_d'] = 55
-xst = None #np.load("xst.npy")
+xst = np.load("xst.npy")
 model = HoltonMassModel(physical_params,xst)
 q = model.q
 z = q['z_d'][1:-1]/1000
@@ -163,10 +163,9 @@ for i in range(len(x)):
     ax[3,1].set_title(r"$\overline{v'q'}$")
     # Dissipation
     ax[4,1].plot(z,-diss[i]/pvgrad[i],color='red')
-    ax[4,1].set_title(r"$-$Dissipation")
+    ax[4,1].set_title(r"$-$Dissipation/$\partial_y\overline{q}$")
     # Everything together
     ax[4,1].plot(z,enstrophy_tendency[i]/pvgrad[i],color='lightskyblue')
-    ax[4,1].set_title(r"$\overline{v'q'}$")
     ax[4,1].plot(z,pvflux[i],color='green')
     ax[4,1].plot(z,lhs[i]/pvgrad[i],color='gray',linestyle='--')
     # Invert the horizontal axis 

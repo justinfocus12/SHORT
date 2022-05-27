@@ -574,7 +574,8 @@ class HoltonMassModel(Model):
         Qsq = delta**2*(X**2 + Y**2)
         Qsq += Xzz**2 + Yzz**2
         Qsq -= 2*delta*(X*Xzz + Y*Yzz)
-        return 0.5*Qsq
+        Qsq *= 0.5*np.exp(q['z'][1:-1])
+        return Qsq
     def eddy_enstrophy(self,x,lat=60):
         # This is corrected to deal with the squaredness. 
         q = self.q
@@ -708,6 +709,7 @@ class HoltonMassModel(Model):
         Xzz = second_derivative(X,q['Psi0'],0,q['dz'])
         Yzz = second_derivative(Y,0,0,q['dz'])
         pvflux = q['k']*(X*Yzz - Y*Xzz)
+        pvflux *= np.exp(q['z'][1:-1])
         return pvflux
     def meridional_pv_flux(self,x,lat=60):
         q = self.q
@@ -780,6 +782,7 @@ class HoltonMassModel(Model):
         diss += (a/4-az/2)*(X*Xzz + Y*Yzz)
         diss -= az*(Xz*Xzz + Yz*Yzz)
         diss -= a*(Xzz**2 + Yzz**2)
+        diss *= np.exp(q['z'][1:-1])
         return diss
     def dissipation(self,x,lat=60):
         q = self.q
