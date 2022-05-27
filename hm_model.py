@@ -639,6 +639,17 @@ class HoltonMassModel(Model):
         for i in range(1,n):
             ivt[:,i] = ivt[:,i-1] + 0.5*(heat_flux[:,i] + heat_flux[:,i+1])*q['dz']
         return ivt
+    def background_pv_gradient_projected(self,x):
+        q = self.q
+        n = q['Nz']-1
+        Nt = len(x)
+        U = x[:,2*n:]
+        U_upper = 1.0/3*(4*U[:,-1] - U[:,-2] + 2*q['dz']*q['UR_z'][-1])
+        Uz = first_derivative(U,q['UR_0'],U_upper,q['dz'])
+        Uzz = second_derivative(U,q['UR_0'],U_upper,q['dz'])
+        pvgrad = q['Gsq']*(q['beta']+q['eps']*q['l']**2*U)
+        pvgrad += q['eps']*(Uz - Uzz)
+        return pvgrad
     def background_pv_gradient(self,x,lat=60):
         q = self.q
         # Compute the meridional gradient of zonal-mean potential vorticity
@@ -673,6 +684,17 @@ class HoltonMassModel(Model):
         dens = np.exp(-q['z'][1:-1])
         #pv_flux *= q['length']**3/(q['H']**2*q['time']**2)
         return pv_flux*dens
+    def meridional_pv_flux_projected(self,x):
+        q = self.q
+        n = q['Nz']-1
+        Nt = len(x)
+        X,Y = x[:,:n],x[:,n:2*n]
+        Xz = self.first_derivative(X,q['Psi0'],0,q['dz'])
+        Yz = self.first_derivative(Y,0,0,q['dz'])
+        Xzz = self.second_derivative(X,q['Psi0'],0,q['dz'])
+        Yzz = self.second_derivative(Y,0,0,q['dz'])
+        pvflux = -X*Yzz - Y*Xzz
+        return pvflux
     def meridional_pv_flux(self,x,lat=60):
         q = self.q
         n = q['Nz']-1
@@ -708,15 +730,15 @@ class HoltonMassModel(Model):
         q = self.q
         Nx = len(x)
         n = q['Nz']-1
-        pvflux = self.meridional_pv_flux(x,lat=lat)
-        pvgrad = self.background_pv_gradient(x,lat=lat)
-        diss = self.dissipation(x,lat=lat)
+        pvflux = self.meridional_pv_flux_projected(x,lat=lat)
+        pvgrad = self.background_pv_gradient_projected(x,lat=lat)
+        diss = self.dissipation_projected(x,lat=lat)
         # Now compute the terms with finite difference
         if dt is None: dt = self.dt_sim
         xdot_0 = self.drift_fun(x)
         xdot_1 = self.drift_fun(x + xdot_0*dt)
-        q2_0 = self.eddy_enstrophy(xdot_0,lat=lat)
-        q2_1 = self.eddy_enstrophy(xdot_1,lat=lat)
+        q2_0 = self.eddy_enstrophy_projected(xdot_0,lat=lat)
+        q2_1 = self.eddy_enstrophy_projected(xdot_1,lat=lat)
         enstrophy_tendency = (q2_1 - q2_0)/dt
         lhs = enstrophy_tendency + pvflux*pvgrad - diss
         print(f"dt = {dt}, Max abs LHS = {np.max(np.abs(lhs))}")
@@ -725,6 +747,23 @@ class HoltonMassModel(Model):
         print(f"pvgrad mean = {np.mean(np.abs(pvgrad),axis=1)}")
         print(f"diss mean = {np.mean(np.abs(diss),axis=1)}")
         return enstrophy_tendency,pvflux,pvgrad,diss,lhs
+    def dissipation_projected(self,x):
+        q = self.q
+        n = q['Nz']-1
+        Nt = len(x)
+        X,Y = x[:,:n],x[:,n:2*n]
+        Xz = self.first_derivative(X,q['Psi0'],0,q['dz'])
+        Xzz = self.second_derivative(X,q['Psi0'],0,q['dz'])
+        Yz = self.first_derivative(Y,0,0,q['dz'])
+        Yzz = self.second_derivative(Y,0,0,q['dz'])
+        a = q['alpha'][1:-1]
+        az = q['alpha_z'][1:-1]
+        delta = q['Gsq']*(q['k']**2+q['l']**2) + 1.0/4
+        diss = -delta*(a/4-az/2)*(X**2 + Y**2)
+        diss += 0.5*delta*az*(Xz**2 + Yz**2)
+        # Compute magnitude of derivatives and their vertical derivatives
+        psi_z_mag = Xz**2 + Yz**2
+        # TODO: finish this code 
     def dissipation(self,x,lat=60):
         q = self.q
         # The dissipation term from Eq. 2-11 of Yoden 1987 (but not dividided by dq/dy), and with a minus sign. 
