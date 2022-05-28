@@ -17,7 +17,7 @@ import matplotlib.patches as patches
 from matplotlib.collections import PatchCollection
 matplotlib.rcParams['font.size'] = 12
 matplotlib.rcParams['font.family'] = 'monospace'
-matplotlib.rcParams['savefig.bbox'] = tight
+matplotlib.rcParams['savefig.bbox'] = 'tight'
 matplotlib.rcParams['savefig.pad_inches'] = 0.2
 smallfont = {'family': 'monospace', 'size': 8}
 medfont = {'family': 'monospace', 'size': 13}
@@ -3762,7 +3762,8 @@ class TPT:
             min(1, max(0, qp_levels[i]+qp_tol_list[i]))))
             for i in range(len(qp_levels))]
         if plot_profile_flag:
-            prof_key_list = ["U","vT","dqdy","q2"]
+            #prof_key_list = ["U","vT","dqdy","q2"]
+            prof_key_list = ["U","dissproj","dqdyproj","enstproj","vqproj","ensttend"]
             rflux = []
             rflux_idx = []
             for qi in range(len(qp_levels)):

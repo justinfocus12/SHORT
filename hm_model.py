@@ -1112,7 +1112,7 @@ class HoltonMassModel(Model):
                 "vqproj": {
                         "fun": lambda X: self.meridional_pv_flux_projected(X),
                         "name": r"$\overline{v'q'}$",
-                        "units": q["length"]/q["time"]**2,
+                        "units": 1/q["Gsq"]*q["length"]/q["time"]**2,
                         "unit_symbol": r"m s$^{-2}$",
                         },
                 "q2":
@@ -1123,8 +1123,8 @@ class HoltonMassModel(Model):
                  },
                 "enstproj": {
                         "fun": lambda X: self.eddy_enstrophy_projected(X),
-                        "name": r"$\frac12\overline{q'^2}$",
-                        "units": 1/q["Gsq"]*1/q['time']**2,
+                        "name": r"$\frac{1}{2}\overline{q'^2}$",
+                        "units": 1/q["Gsq"]**2*1/q['time']**2,
                         "unit_symbol": r"s$^{-2}$",
                         },
                 "q2ref":
@@ -1142,9 +1142,15 @@ class HoltonMassModel(Model):
                 "dissproj": {
                         "fun": lambda X: self.dissipation_projected(X),
                         "name": r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
-                        "units": 1/q["Gsq"]*1/q['time']**3,
+                        "units": 1/q["Gsq"]**2*1/q["time"]**3,
                         "unit_symbol": "s$^{-3}$",
                  },
+                "ensttend": {
+                        "fun": lambda X: self.dissipation_projected(X) - self.meridional_pv_flux_projected(X)*self.background_pv_gradient_projected(X),
+                        "name": r"$\partial_t\overline{q'^2}$ inferred",
+                        "units": 1/q["Gsq"]**2*1/q["time"]**3,
+                        "unit_symbol": r"s$^{-3}$",
+                        },
             }
         return funs
     def plot_snapshot(self,xt,suffix=""):
