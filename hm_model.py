@@ -746,15 +746,25 @@ class HoltonMassModel(Model):
         q = self.q
         Nx = len(x)
         n = q['Nz']-1
-        pvflux = self.meridional_pv_flux_projected(x)
-        pvgrad = self.background_pv_gradient_projected(x)
-        diss = self.dissipation_projected(x)
-        # Now compute the terms with finite difference
         if dt is None: dt = self.dt_sim
         xdot = self.drift_fun(x)
-        q2_0 = self.eddy_enstrophy_projected(x)
-        q2_1 = self.eddy_enstrophy_projected(x + xdot*dt)
-        enstrophy_tendency = (q2_1 - q2_0)/dt
+        units_flag = True 
+        if units_flag:
+            funlib = self.observable_function_library()
+            pvflux = funlib["vqproj"]["fun"](x)*funlib["vqproj"]["units"]
+            pvgrad = funlib["dqdyproj"]["fun"](x)*funlib["dqdyproj"]["units"]
+            diss = funlib["dissproj"]["fun"](x)*funlib["dissproj"]["units"]
+            q2_0 = funlib["enstproj"]["fun"](x)*funlib["enstproj"]["units"]
+            q2_1 = funlib["enstproj"]["fun"](x + dt*xdot)*funlib["enstproj"]["units"]
+            enstrophy_tendency = (q2_1 - q2_0)/(dt*q["time"])
+        else:
+            pvflux = self.meridional_pv_flux_projected(x)
+            pvgrad = self.background_pv_gradient_projected(x)
+            diss = self.dissipation_projected(x)
+            q2_0 = self.eddy_enstrophy_projected(x)
+            q2_1 = self.eddy_enstrophy_projected(x + xdot*dt)
+            enstrophy_tendency = (q2_1 - q2_0)/dt
+        # Now compute the terms with finite difference
         lhs = enstrophy_tendency + pvflux*pvgrad - diss
         print(f"dt = {dt}, Max abs LHS = {np.max(np.abs(lhs))}")
         print(f"enstrophy_tendency mean = {np.mean(np.abs(enstrophy_tendency),axis=1)}")
@@ -774,14 +784,19 @@ class HoltonMassModel(Model):
         a = q['alpha'][1:-1]
         az = q['alpha_z'][1:-1]
         delta = q['Gsq']*(q['k']**2+q['l']**2) + 1.0/4
-        diss = -delta*(
-                (a/4-az/2)*(X**2 + Y**2)
-                -az*(X*Xz + Y*Yz)
-                -a*(X*Xzz + Y*Yzz)
-                )
-        diss += (a/4-az/2)*(X*Xzz + Y*Yzz)
-        diss -= az*(Xz*Xzz + Yz*Yzz)
+        diss = delta*(az/2 - a/4)*(X**2 + Y**2)
+        diss += delta*az*(X*Xz + Y*Yz)
+        diss += (a*(1.0/4 + delta) - az/2)*(Xzz*X + Yzz*Y)
+        diss -= az*(Xzz*Xz + Yzz*Yz)
         diss -= a*(Xzz**2 + Yzz**2)
+        #diss = -delta*(
+        #        (a/4-az/2)*(X**2 + Y**2)
+        #        -az*(X*Xz + Y*Yz)
+        #        -a*(X*Xzz + Y*Yzz)
+        #        )
+        #diss += (a/4-az/2)*(X*Xzz + Y*Yzz)
+        #diss -= az*(Xz*Xzz + Yz*Yzz)
+        #diss -= a*(Xzz**2 + Yzz**2)
         diss *= np.exp(q['z'][1:-1])
         return diss
     def dissipation(self,x,lat=60):
@@ -1064,6 +1079,12 @@ class HoltonMassModel(Model):
                  "units": 1.0/(q['length']*q['time']),
                  "unit_symbol": r"m$^{-1}$s$^{-1}$",
                  },
+                "dqdyproj": {
+                        "fun": lambda X: self.background_pv_gradient_projected(X),
+                        "name": r"$\partial_y\overline{q}$",
+                        "units": 1/q["Gsq"]*1/(q['length']*q['time']),
+                        "unit_symbol": "m$^{-1}$s$^{-1}$",
+                        },
                 "dqdymean":
                 {"fun": lambda X: np.mean(self.background_pv_gradient(X),1),
                  "name": r"$\partial_y\overline{q}$ (z-mean)",
@@ -1088,12 +1109,24 @@ class HoltonMassModel(Model):
                  "units": q['length']**3/(q['H']**2*q['time']**2),
                  "unit_symbol": r"s$^{-1}$",
                  },
+                "vqproj": {
+                        "fun": lambda X: self.meridional_pv_flux_projected(X),
+                        "name": r"$\overline{v'q'}$",
+                        "units": q["length"]/q["time"]**2,
+                        "unit_symbol": r"m s$^{-2}$",
+                        },
                 "q2":
                 {"fun": lambda X: self.eddy_enstrophy(X),
                  "name":r"$\overline{q'^2}$",
                  "units": 1/q['time']**2,
                  "unit_symbol": r"s$^{-2}$",
                  },
+                "enstproj": {
+                        "fun": lambda X: self.eddy_enstrophy_projected(X),
+                        "name": r"$\frac12\overline{q'^2}$",
+                        "units": 1/q["Gsq"]*1/q['time']**2,
+                        "unit_symbol": r"s$^{-2}$",
+                        },
                 "q2ref":
                 {"fun": lambda X: self.eddy_enstrophy(X)[:,q['zi']],
                  "name":r"$\overline{q'^2} (%.0f km)$"%self.ref_alt,
@@ -1106,9 +1139,11 @@ class HoltonMassModel(Model):
                  "units": 1/q['time']**2,
                  "unit_symbol": r"$s^{-2}$",
                  },
-                "dissipation":
-                {"fun": lambda X: self.dissipation(X),
-                 "name": r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
+                "dissproj": {
+                        "fun": lambda X: self.dissipation_projected(X),
+                        "name": r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
+                        "units": 1/q["Gsq"]*1/q['time']**3,
+                        "unit_symbol": "s$^{-3}$",
                  },
             }
         return funs

@@ -12,7 +12,7 @@ import os
 from os import mkdir
 from os.path import join,exists
 import sys
-savedir = "/scratch/jf4241/SHORT_holtonmass/results/2022-05-23/1"
+savedir = "/scratch/jf4241/SHORT_holtonmass/results/2022-05-23/2"
 if not exists(savedir): mkdir(savedir)
 
 physical_params,_ = hm_params.get_physical_params()
