@@ -1147,7 +1147,7 @@ class HoltonMassModel(Model):
                  },
                 "ensttend": {
                         "fun": lambda X: self.dissipation_projected(X) - self.meridional_pv_flux_projected(X)*self.background_pv_gradient_projected(X),
-                        "name": r"$\partial_t\overline{q'^2}$ inferred",
+                        "name": r"$\frac{1}{2}\partial_t\overline{q'^2}$ inferred",
                         "units": 1/q["Gsq"]**2*1/q["time"]**3,
                         "unit_symbol": r"s$^{-3}$",
                         },

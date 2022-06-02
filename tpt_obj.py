@@ -2784,6 +2784,36 @@ class TPT:
         field_std_L2 = np.sqrt(np.nansum(field_std**2)/Ncell) #*np.prod(dth))
         field_std_Linf = np.nanmax(field_std)*np.prod(dth)
         return shp,dth,thaxes,cgrid,field_mean,field_std,field_std_L2,field_std_Linf,bounds
+    def tendency_during_transition(self,model,data,theta_x,comm_bwd,comm_fwd):
+        Nx,Nt,thdim = theta_x.shape
+        xdim = data.X.shape[-1]
+        bdy_dist = lambda x: (np.minimum(model.adist(x),model.bdist(x)))
+        bdy_dist_x = bdy_dist(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
+        # We need to have at least one point ahead and one point behind, for every point. 
+        lag_time_max = self.lag_time_current_display
+        data.insert_boundaries_fwd(bdy_dist_x,lag_time_max/2,lag_time_max)
+        data.insert_boundaries_bwd(bdy_dist_x,lag_time_max/2,0)
+        tidx = np.argmin(np.abs(int(lag_time_max/2) - data.t_x))
+        comm_fwd_up = comm_fwd[np.arange(Nx),data.first_exit_idx_fwd]
+        eps = 0.001
+        comm_fwd_up[comm_fwd_up < eps] = np.nan
+        comm_fwd_tidx = comm_fwd[:,tidx]
+        comm_fwd_tidx[comm_fwd_tidx < eps] = np.nan
+        comm_bwd_dn = comm_bwd[np.arange(Nx),data.first_exit_idx_bwd]
+        comm_bwd_dn[comm_bwd_dn < eps] = np.nan
+        comm_bwd_tidx = comm_bwd[:,tidx]
+        comm_bwd_tidx[comm_bwd_tidx < eps] = np.nan
+        Tup = (comm_fwd_up*theta_x[np.arange(Nx),data.first_exit_idx_fwd,:].T/comm_fwd_tidx).T
+        Tdn = (comm_bwd_dn*theta_x[np.arange(Nx),data.first_exit_idx_bwd,:].T/comm_bwd_tidx).T
+        T0 = theta_x[:,tidx]
+        dt = data.t_x[data.first_exit_idx_fwd] - data.t_x[data.first_exit_idx_bwd]
+        dt[dt == 0] = np.nan
+        dtup = data.t_x[data.first_exit_idx_fwd] - data.t_x[tidx]
+        dtup[dtup == 0] = np.nan
+        dtdn = data.t_x[data.first_exit_idx_bwd] - data.t_x[tidx]
+        dtdn[dtdn == 0] = np.nan
+        L = ((Tup - T0).T/dt).T #((Tup - Tdn).T/dt).T
+        return L,tidx
     def project_current_new(self,model,data,theta_x,comm_bwd,comm_fwd):
         # compute J_(AB)\cdot\nabla\theta. theta is a multi-dimensional observable, so we end up with a vector of that size.
         # This should be used hopefully for maximizing the reactive flux on a surface. 
@@ -3670,22 +3700,41 @@ class TPT:
             ridx_qi,rflux_qi,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[qi],qp_tol,None,0.0)
             rflux += [rflux_qi]
             rflux_idx += [ridx_qi]
-        fig,ax = plt.subplots(ncols=3,figsize=(18,6))
-        model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key="enstproj",colors=colors,labels=labels,fig=fig,ax=ax[0])
-        ax[0].set_title("Eddy enstrophy")
+        fig,ax = plt.subplots(nrows=2,ncols=3,figsize=(18,12))
+        model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key="enstproj",colors=colors,labels=labels,fig=fig,ax=ax[0,0])
+        ax[0,0].set_title("Eddy enstrophy")
         # Now project the current operator onto each level of enstrophy
         funlib = model.observable_function_library()
         enstproj = funlib["enstproj"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,n))
+        Lab,tidx_ab = self.tendency_during_transition(model,data,enstproj,comm_bwd,comm_fwd)
+        L,tidx = self.tendency_during_transition(model,data,enstproj,np.ones_like(comm_bwd),np.ones_like(comm_fwd))
         Jab_up,Jab_dn = self.project_current_new(model,data,enstproj,comm_bwd,comm_fwd)
         J_up,J_dn = self.project_current_new(model,data,enstproj,np.ones_like(comm_bwd),np.ones_like(comm_fwd))
         z = model.q['z_d'][1:-1]/1000
         for qi in range(len(qp_levels)):
             J = np.sum(((J_up[rflux_idx[qi]] + J_dn[rflux_idx[qi]]).T/2 * rflux[qi]).T, axis=0) / np.nansum(rflux_qi)
             Jab = np.sum(((Jab_up[rflux_idx[qi]] + Jab_dn[rflux_idx[qi]]).T/2 * rflux[qi]).T, axis=0) / np.nansum(rflux_qi)
-            ax[1].plot(J,z,color=colors[qi])
-            ax[1].set_xlabel(r"$J\cdot\nabla(\frac{1}{2}\overline{q'^2})$")
-            ax[2].plot(Jab,z,color=colors[qi])
-            ax[2].set_xlabel(r"$J_{AB}\cdot\nabla(\frac{1}{2}\overline{q'^2})$")
+            ax[0,1].plot(J,z,color=colors[qi])
+            ax[0,1].set_xlabel(r"$J\cdot\nabla(\frac{1}{2}\overline{q'^2})$")
+            ax[0,2].plot(Jab,z,color=colors[qi])
+            ax[0,2].set_xlabel(r"$J_{AB}\cdot\nabla(\frac{1}{2}\overline{q'^2})$")
+            # Now tendencies
+            nnidx = np.where(np.any(np.isnan(L[rflux_idx[qi]]),axis=1)==0)[0]
+            print(f"nnidx.shape = {nnidx.shape}")
+            L_qi = np.sum((L[rflux_idx[qi]][nnidx].T * self.chom[rflux_idx[qi]][nnidx]).T, axis=0)/np.sum(self.chom[rflux_idx[qi]][nnidx])
+            Lab_qi = np.nansum((Lab[rflux_idx[qi]][nnidx].T * self.chom[rflux_idx[qi]][nnidx]).T, axis=0)/np.sum(self.chom[rflux_idx[qi]][nnidx])
+            ax[1,1].plot(L_qi*funlib["enstproj"]["units"],z,color=colors[qi])
+            ax[1,1].set_xlabel(r"$\partial_t(\frac{1}{2}\overline{q'^2})$ [%s day$^{-1}$]"%(funlib["enstproj"]["unit_symbol"]))
+            ax[1,1].set_title("Steady-state")
+            ax[1,2].plot(Lab_qi*funlib["enstproj"]["units"],z,color=colors[qi])
+            ax[1,2].set_xlabel(r"$\partial_t(\frac{1}{2}\overline{q'^2})$ [%s day$^{-1}$]"%(funlib["enstproj"]["unit_symbol"]))
+            ax[1,2].set_title(r"$x\to B$")
+            # Now plot the deterministic tendency
+            ensttend = funlib["ensttend"]["fun"](data.X[rflux_idx[qi]][nnidx][:,tidx])
+            L_deterministic = np.sum((ensttend.T * self.chom[rflux_idx[qi]][nnidx]).T, axis=0).T/np.sum(self.chom[rflux_idx[qi]][nnidx])
+            ax[1,0].plot(L_deterministic*funlib["ensttend"]["units"]*model.q["time"],z,color=colors[qi])
+            ax[1,0].set_xlabel(r"$\partial_t(\frac{1}{2}\overline{q'^2})$ [%s day$^{-1}$]"%(funlib["enstproj"]["unit_symbol"]))
+            ax[1,0].set_title("Deterministic")
         fig.savefig(join(self.savefolder,f"trans_state_profile_enstproj_ABnormal"))
         return
     def plot_transition_states_new(self,model,data):
