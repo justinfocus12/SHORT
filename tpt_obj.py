@@ -3085,6 +3085,7 @@ class TPT:
         return coeffs
     def out_of_sample_extension(self,field,data,xnew,ss_size=100000,k=15,inverse_lengthscale=1.0):
         # For a new sample (such as a long trajectory), extend the field to the new ones just by nearest-neighbor averaging
+        # Update: find the nearest neighbor whose value is not NaN
         prng = np.random.RandomState(0)
         good_idx = np.where(np.isnan(field)==0)[0]
         #ss = np.random.choice(np.arange(self.nshort),size=min(self.nshort,100000),replace=False)
@@ -3098,6 +3099,8 @@ class TPT:
             close_dsq[j] = dsq[knn[j],np.arange(len(xnew))]
         dsq = dsq[knn,np.arange(len(xnew))]
         close_field = field[ss[knn]]
+        if np.any(np.isnan(close_field)):
+            raise Exception("The close_field has some nan's, but we were supposed to discard those earlier")
         weights = np.exp(-inverse_lengthscale**2*close_dsq)
         weights = weights/np.sum(weights*(np.isnan(close_field)==0),0)
         fnew = np.nansum(close_field*weights,0)
@@ -3106,13 +3109,6 @@ class TPT:
             raise Exception("ERROR: in out-of-sample-extension, nanmax(fnew) = {} while nanmax(field) = {}".format(np.nanmax(fnew),np.nanmax(field)))
         if np.nanmin(fnew) < np.nanmin(field) - 0.05*frange:
             raise Exception("ERROR: in out-of-sample-extension, nanmin(fnew) = {} while nanmin(field) = {}".format(np.nanmin(fnew),np.nanmin(field)))
-
-        #fnew = np.zeros(len(xnew))
-        #for i in range(len(xnew)):
-        #    dsq = Xsq + np.sum(xnew[i]**2) - 2*self.X0[ss].dot(xnew[i])
-        #    knn = np.argpartition(dsq,k+1)[:k]
-        #    weights = np.exp(-0*dsq[knn])
-        #    fnew[i] = np.sum(field[ss[knn]]*weights)/np.sum(weights)
         return fnew
     def plot_prediction_curves_colored(self,model,data):
         # Plot the prediction curves to B, colored by the two canonical coordinates
@@ -3214,72 +3210,6 @@ class TPT:
         ax1.tick_params(axis='both',which='major',labelsize=15)
         fig.savefig(join(self.savefolder,"qp_tb_coords"),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
-        return
-    def plot_prediction_curves(self):
-        # VESTIGIAL
-        # Plot committor vs. lead time
-        # TODO: swap in modern names for mfpt, and also do the distribution thing
-        eps = 1e-2
-        # Define all the times and densities
-        qb = self.dam_moments['one']['xb'][0,:,0]
-        qma = self.dam_moments['one']['ax'][0,:,0]
-        piab = self.chom #*qb*qma
-        piab = np.maximum(piab,0)
-        piab *= 1.0/np.sum(piab)
-        tb = self.dam_moments['one']['xb'][1,:,0]*(qb > eps)/(qb + 1*(qb < eps))
-        tb[np.where(qb == 0)[0]] = np.nan
-        qa = self.dam_moments['one']['xa'][0,:,0]
-        qmb = self.dam_moments['one']['bx'][0,:,0]
-        piba = self.chom #*qa*qmb
-        piba = np.maximum(piba,0)
-        piba *= 1.0/np.sum(piba)
-        ta = self.dam_moments['one']['xa'][1,:,0]*(qa > eps)/(qa + 1*(qa < eps))
-        ymin = np.nanquantile(np.concatenate((tb,ta)),0.05)
-        ymax = np.nanquantile(np.concatenate((tb,ta)),0.95)
-        print("ymin = {}, ymax = {}".format(ymin,ymax))
-        print("A avoiding B in range {},{}".format(np.nanmin(ta),np.nanmax(ta)))
-        # x -> B
-        ss_xb = np.random.choice(np.arange(self.nshort),size=min(self.nshort,30000),replace=True,p=piab)
-        fig,ax = plt.subplots()
-        ax.scatter(qb[ss_xb],tb[ss_xb],color='black',marker='.',s=10,alpha=1.0,zorder=-1)
-        ax.set_ylim([ymin,ymax])
-        ax.set_xlabel(r"$P\{x\to B\}$",fontdict=font)
-        ax.set_ylabel(r"$E[\tau_B|x\to B]$ (days)",fontdict=font)
-        ax.xaxis.set_major_locator(plt.MaxNLocator(nbins=2))
-        ax.yaxis.set_major_locator(plt.MaxNLocator(nbins=3))
-        ax.tick_params(axis='both', which='major', labelsize=15)
-        #fig,ax = self.plot_field_2d(piab,np.ones(self.nshort),theta_x,shp=[25,25],cmap=plt.cm.summer,fieldname="",fun0name=r"Forward committor",fun1name=r"Time to $B$",current_flag=False,thetaj=None,abpoints_flag=False,std_flag=False,logscale=True)
-        coeffs = self.weighted_least_squares(qb,tb,self.chom)
-        print("prediction curves coeffs = {}".format(coeffs))
-        x = np.array([np.min(qb),np.max(qb)])
-        symbol = "+" if coeffs[1]>0 else ""
-        handle, = ax.plot(x,coeffs[0]+coeffs[1]*x,color='black',linewidth=3,label=r"$%.1f%s%.1fP\{x\to B\}$" % (coeffs[0],symbol,coeffs[1]))
-        ax.legend(handles=[handle],prop={'size': 20})
-        ax.set_title(r"Breakdown",fontdict=font)
-        ax.tick_params(axis='both',which='major',labelsize=15)
-        fig.savefig(join(self.savefolder,"pi_Tb_comm"))
-        plt.close(fig)
-        # x -> A
-        ss_xa = np.random.choice(np.arange(self.nshort),size=min(self.nshort,30000),replace=True,p=piba)
-        fig,ax = plt.subplots()
-        ta[np.where(qa < eps)[0]] = np.nan
-        ax.scatter(qa[ss_xa],ta[ss_xa],color='black',marker='.',s=10,alpha=1.0,zorder=-1)
-        ax.set_ylim([ymin,ymax])
-        ax.set_xlabel(r"$P\{x\to A\}$",fontdict=font)
-        ax.set_ylabel(r"$E[\tau_A|x\to A]$ (days)",fontdict=font)
-        ax.xaxis.set_major_locator(plt.MaxNLocator(nbins=2))
-        ax.yaxis.set_major_locator(plt.MaxNLocator(nbins=3))
-        ax.tick_params(axis='both', which='major', labelsize=15)
-        coeffs = self.weighted_least_squares(qa,ta,self.chom)
-        print("prediction curve coeffs = {}".format(coeffs))
-        x = np.array([0,1])
-        symbol = "+" if coeffs[1]>0 else ""
-        handle, = ax.plot(x,coeffs[0]+coeffs[1]*x,color='black',linewidth=3,label=r"$%0.1f%s%0.1fP\{x\to A\}$" % (coeffs[0],symbol,coeffs[1]))
-        ax.legend(handles=[handle],prop={'size': 20})
-        ax.set_title(r"Recovery",fontdict=font)
-        fig.savefig(join(self.savefolder,"pi_Ta_1-comm"))
-        plt.close(fig)
-        print("Prediction curves plotted")
         return
     def maximize_rflux_on_surface(self,model,data,theta_x,comm_bwd,comm_fwd,weight,theta_level,theta_tol,max_num_states,frac_of_max):
         print("theta_x.shape = {}".format(theta_x.shape))
@@ -3717,6 +3647,47 @@ class TPT:
         #fig.savefig(join(self.savefolder,"lap_vs_tpt_ab_profiles_U_vs_qp"),bbox_inches="tight",pad_inches=0.2)
         #plt.close(fig)
         return fig,ax
+    def plot_transition_states_ensttend(self,model,data):
+        # Plot the enstrophy tendency according to (1) deterministic model, (2) steady-state current, (3) reactive current
+        Nx,Nt,xdim = data.X.shape
+        n = model.q['Nz']-1
+        comm_fwd = self.dam_moments['one']['xb'][0,:,:]
+        comm_bwd = self.dam_moments['one']['ax'][0,:,:]
+        ramp = comm_fwd.reshape((Nx,Nt,1))
+        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
+        qp_levels = np.array([0.00,0.2,0.5,0.8,1.0])
+        colors = np.array([plt.cm.coolwarm(qpl) for qpl in qp_levels])
+        colors[np.abs(qp_levels - 0.5) < 0.01] = matplotlib.colors.to_rgba('orange')
+        qp_tol_list = 0.1*np.ones(len(qp_levels))
+        labels = [r"$q^+=%.2f$"%(0.5*(
+            min(1, max(0, qp_levels[i]-qp_tol_list[i])) + 
+            min(1, max(0, qp_levels[i]+qp_tol_list[i])))) 
+            for i in range(len(qp_levels))]
+        rflux = []
+        rflux_idx = []
+        for qi in range(len(qp_levels)):
+            qp_tol = qp_tol_list[qi]
+            ridx_qi,rflux_qi,_ = self.maximize_rflux_on_surface(model,data,ramp,comm_bwd,comm_fwd,self.chom,qp_levels[qi],qp_tol,None,0.0)
+            rflux += [rflux_qi]
+            rflux_idx += [ridx_qi]
+        fig,ax = plt.subplots(ncols=3,figsize=(18,6))
+        model.plot_state_distribution(data.X[:,tidx],rflux,rflux_idx,qp_levels,r"$q^+$",key="enstproj",colors=colors,labels=labels,fig=fig,ax=ax[0])
+        ax[0].set_title("Eddy enstrophy")
+        # Now project the current operator onto each level of enstrophy
+        funlib = model.observable_function_library()
+        enstproj = funlib["enstproj"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,n))
+        Jab_up,Jab_dn = self.project_current_new(model,data,enstproj,comm_bwd,comm_fwd)
+        J_up,J_dn = self.project_current_new(model,data,enstproj,np.ones_like(comm_bwd),np.ones_like(comm_fwd))
+        z = model.q['z_d'][1:-1]/1000
+        for qi in range(len(qp_levels)):
+            J = np.sum(((J_up[rflux_idx[qi]] + J_dn[rflux_idx[qi]]).T/2 * rflux[qi]).T, axis=0) / np.nansum(rflux_qi)
+            Jab = np.sum(((Jab_up[rflux_idx[qi]] + Jab_dn[rflux_idx[qi]]).T/2 * rflux[qi]).T, axis=0) / np.nansum(rflux_qi)
+            ax[1].plot(J,z,color=colors[qi])
+            ax[1].set_xlabel(r"$J\cdot\nabla(\frac{1}{2}\overline{q'^2})$")
+            ax[2].plot(Jab,z,color=colors[qi])
+            ax[2].set_xlabel(r"$J_{AB}\cdot\nabla(\frac{1}{2}\overline{q'^2})$")
+        fig.savefig(join(self.savefolder,f"trans_state_profile_enstproj_ABnormal"))
+        return
     def plot_transition_states_new(self,model,data):
         # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
         composite_flag = True 
@@ -3724,7 +3695,7 @@ class TPT:
         parametric_flag = True 
         signed_flag = True 
         unsigned_flag = True 
-        # ------------------------------ 1. For three committor levels, plot the profile of zonal wind and heat flux. ----------------------------------
+        # ------------------------------ 1. For several committor levels, plot the profile of zonal wind and heat flux. ----------------------------------
         Nx,Nt,xdim = data.X.shape
         comm_fwd = self.dam_moments['one']['xb'][0,:,:]
         comm_bwd = self.dam_moments['one']['ax'][0,:,:]
@@ -4059,131 +4030,6 @@ class TPT:
             fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
             print("Just saved a flux dist fig")
             plt.close(fig)
-        ## Now do surfaces of committor and lead time 
-        #eps = 0.01
-        #comm_fwd = self.dam_moments['one']['xb'][0,:,:]
-        #tb = self.dam_moments['one']['xb'][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
-        #tb[np.where(comm_fwd < eps)[0]] = np.nan
-        ## Committor and Lead time
-        #ramp_abbrv = "qp"
-        #func_abbrv = "tb"
-        #ramp = comm_fwd
-        #ramp_name = r"$q^+$"
-        #ramp_units = 1.0
-        #ramp_unit_symbol = "probability"
-        #func = tb
-        #func_name = r"$\eta^+$"
-        #func_units = 1.0
-        #func_unit_symbol = "days"
-        #dirn = 'ab'
-        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
-        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
-        ## Lead time and Committor
-        #ramp_abbrv = "tb"
-        #func_abbrv = "qp"
-        #ramp = tb
-        #ramp_name = r"$\eta^+$"
-        #ramp_units = 1.0
-        #ramp_unit_symbol = "days"
-        #func = comm_fwd
-        #func_name = r"$q^+$"
-        #func_units = 1.0
-        #func_unit_symbol = "probability"
-        #dirn = 'ab'
-        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
-        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
-        ## Committor and Uref
-        #ramp_abbrv = "qp"
-        #func_abbrv = "Uref"
-        #ramp = comm_fwd
-        #ramp_name = r"$q^+$"
-        #ramp_units = 1.0
-        #ramp_unit_symbol = "probability"
-        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        #func_name = funlib[func_abbrv]["name"]
-        #func_units = funlib[func_abbrv]["units"]
-        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        #dirn = 'ab'
-        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
-        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
-        ## Committor and vTintref
-        #ramp_abbrv = "qp"
-        #func_abbrv = "vTintref"
-        #ramp = comm_fwd
-        #ramp_name = r"$q^+$"
-        #ramp_units = 1.0
-        #ramp_unit_symbol = "probability"
-        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        #func_name = funlib[func_abbrv]["name"]
-        #func_units = funlib[func_abbrv]["units"]
-        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        #dirn = 'ab'
-        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
-        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
-        ## Committor and magref
-        #ramp_abbrv = "qp"
-        #func_abbrv = "magref"
-        #ramp = comm_fwd
-        #ramp_name = r"$q^+$"
-        #ramp_units = 1.0
-        #ramp_unit_symbol = "probability"
-        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        #func_name = funlib[func_abbrv]["name"]
-        #func_units = funlib[func_abbrv]["units"]
-        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        #dirn = 'ab'
-        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
-        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
-        ## Lead time and vTintref
-        #ramp_abbrv = "tb"
-        #func_abbrv = "vTintref"
-        #ramp = tb
-        #ramp_name = r"$\eta^+$"
-        #ramp_units = 1.0
-        #ramp_unit_symbol = "days"
-        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        #func_name = funlib[func_abbrv]["name"]
-        #func_units = funlib[func_abbrv]["units"]
-        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        #dirn = 'ab'
-        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
-        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
-        ## Lead time and magref
-        #ramp_abbrv = "tb"
-        #func_abbrv = "magref"
-        #ramp = tb
-        #ramp_name = r"$\eta^+$"
-        #ramp_units = 1.0
-        #ramp_unit_symbol = "days"
-        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        #func_name = funlib[func_abbrv]["name"]
-        #func_units = funlib[func_abbrv]["units"]
-        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        #dirn = 'ab'
-        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
-        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
-        ## Lead time and Uref
-        #ramp_abbrv = "tb"
-        #func_abbrv = "Uref"
-        #ramp = tb
-        #ramp_name = r"$\eta^+$"
-        #ramp_units = 1.0
-        #ramp_unit_symbol = "days"
-        #func = funlib[func_abbrv]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
-        #func_name = funlib[func_abbrv]["name"]
-        #func_units = funlib[func_abbrv]["units"]
-        #func_unit_symbol = funlib[func_abbrv]["unit_symbol"]
-        #dirn = 'ab'
-        #fig,ax = self.plot_flux_distributions_1d(model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=4)
-        #fig.savefig(join(self.savefolder,"flux_dist_ramp{}_func{}".format(ramp_abbrv,func_abbrv)),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
         return
     def plot_flux_distributions_1d_compact(self,model,data,ramp,ramp_name,ramp_units,ramp_unit_symbol,func,func_name,func_units,func_unit_symbol,num_levels=5,frac_of_max=0.0,fig=None,ax=None,clim=None):
         # At each level set of ramp, plot a distribution of flux density across the other variable func. (Will later extend to 2d). 
@@ -4325,191 +4171,6 @@ class TPT:
                 if ri == len(ramp_levels) - 1: 
                     ax[ri,j].set_xlabel("%s [%s]"%(func_name,func_unit_symbol), fontdict=medfont)
         return fig,ax
-    def plot_maxflux_profile(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="U",func_key_ref="Uref",fig=None,ax=None,clim=None):
-        # Plot the mean profile evolving over time (not committor)
-        funlib = model.observable_function_library()
-        flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
-        rflux_idx = flux_dict["idx"]
-        rflux = flux_dict["rflux"]
-        levels = flux_dict["levels"]
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
-        fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
-        fxrefa,fxrefb = funlib[func_key_ref]["fun"](model.tpt_obs_xst)
-        n = len(fxa) # Number of entries in a profile
-        fx_mean = np.zeros((num_levels,n))
-        fxref_lower = np.zeros(num_levels)
-        fxref_upper = np.zeros(num_levels)
-        for i in range(num_levels):
-            fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
-            fx_mean[i] = np.nansum(fxi.T*rflux[i],axis=1).T/np.nansum(rflux[i])
-            #fx_mean[i] = np.nanmean(fxi,axis=0)
-            fxrefi = funlib[func_key_ref]["fun"](data.X[rflux_idx[i],tidx])
-            order = np.argsort(fxrefi)
-            fxrefi = np.array(fxrefi)[order]
-            rflux[i] = np.array(rflux[i])[order]
-            cdf = np.cumsum(rflux[i])
-            if cdf[-1] <= 0: sys.exit("CDF[-1] = {}".format(cdf[-1]))
-            cdf *= 1.0/cdf[-1]
-            fxref_lower[i] = fxrefi[np.where(cdf > 0.05)[0][0]]
-            fxref_upper[i] = fxrefi[np.where(cdf > 0.95)[0][0]]
-        fig,ax,im = model.plot_profile_evolution(fx_mean,levels,func_key,fig=fig,ax=ax,clim=clim)
-        if ramp_name == 'leadtime':
-            xlab = r"Time to $B$ (days)" if dirn=='ab' else r"Time to $A$ (days)"
-        elif ramp_name == 'daeltime':
-            xlab = r"Time since $A$ (days)" if dirn=='ab' else r"Time since $B$ (days)"
-        ax.set_xlabel(xlab,fontdict=font)
-        ax.set_title("High prob. flux %s$(z)$ profile (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
-        # Find where fxref_lower_interp crosses the b line first
-        levels_interp = np.linspace(levels[0],levels[-1],200)
-        fxref_lower_interp = scipy.interpolate.interp1d(levels,fxref_lower,kind='cubic')(levels_interp)
-        fxref_upper_interp = scipy.interpolate.interp1d(levels,fxref_upper,kind='cubic')(levels_interp)
-        if fxrefb < fxrefa:
-            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fxref_lower_interp-fxrefb)))==2)[0]
-        else:
-            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fxref_upper_interp-fxrefb)))==2)[0]
-        if len(ub_crossing_idx) > 0: 
-            ax.axvline(x=np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2]),color='black',linestyle='--')
-        #fig.savefig(join(self.savefolder,"maxflux_profile_%s_funckey%s"%(dirn,func_key)),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
-        #print("Just saved in {}".format(self.savefolder))
-        return fig,ax,im
-    def plot_maxflux_path_new(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="Uref",fig=None,ax=None):
-        # Plot any observable function at the gates, as a timeseries.
-        funlib = model.observable_function_library()
-        flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
-        minlevel = flux_dict["minlevel"]
-        rflux_idx = flux_dict["idx"]
-        rflux = flux_dict["rflux"]
-        levels = flux_dict["levels"]
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
-        fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
-        # Instead of a scatter plot, make a mean-std plot
-        fx_mean = np.nan*np.ones(num_levels)
-        fx_std = np.nan*np.ones(num_levels)
-        fx_lower = np.nan*np.ones(num_levels) # 5th percentile
-        fx_upper = np.nan*np.ones(num_levels) # 95th percentile
-        for i in range(num_levels):
-            #print("rflux_idx[i]={}".format(rflux_idx[i]))
-            if len(rflux_idx[i]) > 0:
-                fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
-                order = np.argsort(fxi)
-                fxi = np.array(fxi)[order]
-                rflux[i] = np.array(rflux[i])[order]
-                fx_mean[i] = np.sum(fxi*rflux[i])/np.sum(rflux[i])   #np.mean(fxi)
-                fx_std[i] = np.sqrt(np.sum((fxi-fx_mean[i])**2*rflux[i])/(np.sum(rflux[i]))) #np.std(fxi)
-                cdf = np.cumsum(rflux[i])
-                #if cdf[-1] <= 0: sys.exit("CDF[-1] = {}".format(cdf[-1]))
-                if cdf[-1] > 0:
-                    cdf *= 1.0/cdf[-1]
-                    fx_lower[i] = fxi[np.where(cdf > 0.05)[0][0]]
-                    fx_upper[i] = fxi[np.where(cdf > 0.95)[0][0]]
-                    #fx_mean[i] = np.mean(fxi)
-                    #fx_std[i] = np.std(fxi)
-                    #ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
-        levels_interp = np.linspace(levels[0],levels[-1],200)
-        fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean,kind='cubic')(levels_interp)
-        fx_std_interp = scipy.interpolate.interp1d(levels,fx_std,kind='cubic')(levels_interp)
-        fx_lower_interp = scipy.interpolate.interp1d(levels,fx_lower,kind='cubic')(levels_interp)
-        fx_upper_interp = scipy.interpolate.interp1d(levels,fx_upper,kind='cubic')(levels_interp)
-        # Find where fx_lower_interp crosses the b line first
-        if fxb < fxa:
-            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_lower_interp-fxb)))==2)[0]
-        else:
-            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_upper_interp-fxb)))==2)[0]
-        if fig is None or ax is None:
-            fig,ax = plt.subplots()
-        ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
-        ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
-        ax.scatter(levels,fx_mean*funlib[func_key]["units"],color='black',marker='o')
-        color = 'darkorange' if dirn=='ab' else 'mediumspringgreen'
-        ax.plot(levels_interp,fx_mean_interp*funlib[func_key]["units"],color='black')
-        ax.fill_between(levels_interp,fx_lower_interp*funlib[func_key]["units"],fx_upper_interp*funlib[func_key]["units"],color=color,alpha=0.5)
-        if ramp_name == "committor":
-            xlab = r"$P_x\{x\to B\}$" if dirn=='ab' else r"$P_x\{x\to A\}$"
-        elif ramp_name == "leadtime":
-            xlab = r"Time to $B$" if dirn=='ab' else r"Time to $A$"
-        elif ramp_name == "daeltime":
-            xlab = r"Time since $A$" if dirn=='ab' else r"Time since $B$"
-        ax.set_xlabel(xlab,fontdict=font)
-        ax.set_ylabel("%s (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
-        title = r"High prob. flux path ($A\to B$)" if dirn=='ab' else r"Max-flux path ($B\to A$)"
-        ax.set_title(title,fontdict=font)
-        #fig.savefig(join(self.savefolder,("flux_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
-        if len(ub_crossing_idx) > 0: 
-            #ax.plot(np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2])*np.ones(2),funlib[func_key]["units"]*np.array([np.min(fx_lower_interp),np.max(fx_upper_interp)]),color='black',linestyle='--')
-            ax.axvline(x=np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2]),color='black',linestyle='--')
-        return fig,ax
-    def plot_maxflux_path(self,model,data,ramp_name,dirn,num_per_level=5,num_levels=11,frac_of_max=0.9,func_key="Uref",fig=None,ax=None):
-        # Plot any observable function at the gates, as a timeseries.
-        funlib = model.observable_function_library()
-        flux_dict = pickle.load(open((join(self.savefolder,"flux_{}_{}_fom{}_nlev{}_nplev{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level))).replace(".","p"),"rb"))
-        minlevel = flux_dict["minlevel"]
-        rflux_idx = flux_dict["idx"]
-        rflux = flux_dict["rflux"]
-        levels = flux_dict["levels"]
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        print("func_key = {}. Is it one of the keys? {}".format(func_key,func_key in funlib.keys()))
-        fxa,fxb = funlib[func_key]["fun"](model.tpt_obs_xst)
-        # Instead of a scatter plot, make a mean-std plot
-        fx_mean = np.nan*np.ones(num_levels)
-        fx_std = np.nan*np.ones(num_levels)
-        fx_lower = np.nan*np.ones(num_levels) # 5th percentile
-        fx_upper = np.nan*np.ones(num_levels) # 95th percentile
-        for i in range(num_levels):
-            #print("rflux_idx[i]={}".format(rflux_idx[i]))
-            if len(rflux_idx[i]) > 0:
-                fxi = funlib[func_key]["fun"](data.X[rflux_idx[i],tidx])
-                order = np.argsort(fxi)
-                fxi = np.array(fxi)[order]
-                rflux[i] = np.array(rflux[i])[order]
-                fx_mean[i] = np.sum(fxi*rflux[i])/np.sum(rflux[i])   #np.mean(fxi)
-                fx_std[i] = np.sqrt(np.sum((fxi-fx_mean[i])**2*rflux[i])/(np.sum(rflux[i]))) #np.std(fxi)
-                cdf = np.cumsum(rflux[i])
-                #if cdf[-1] <= 0: sys.exit("CDF[-1] = {}".format(cdf[-1]))
-                if cdf[-1] > 0:
-                    cdf *= 1.0/cdf[-1]
-                    fx_lower[i] = fxi[np.where(cdf > 0.05)[0][0]]
-                    fx_upper[i] = fxi[np.where(cdf > 0.95)[0][0]]
-                    #fx_mean[i] = np.mean(fxi)
-                    #fx_std[i] = np.std(fxi)
-                    #ax.scatter(levels[i]*np.ones(len(fxi)),fxi*funlib[func_key]["units"],color='black') 
-        levels_interp = np.linspace(levels[0],levels[-1],200)
-        fx_mean_interp = scipy.interpolate.interp1d(levels,fx_mean,kind='cubic')(levels_interp)
-        fx_std_interp = scipy.interpolate.interp1d(levels,fx_std,kind='cubic')(levels_interp)
-        fx_lower_interp = scipy.interpolate.interp1d(levels,fx_lower,kind='cubic')(levels_interp)
-        fx_upper_interp = scipy.interpolate.interp1d(levels,fx_upper,kind='cubic')(levels_interp)
-        # Find where fx_lower_interp crosses the b line first
-        if fxb < fxa:
-            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_lower_interp-fxb)))==2)[0]
-        else:
-            ub_crossing_idx = np.where(np.abs(np.diff(np.sign(fx_upper_interp-fxb)))==2)[0]
-        if fig is None or ax is None:
-            fig,ax = plt.subplots()
-        ax.plot(levels,fxa*funlib[func_key]["units"]*np.ones(len(levels)),color='skyblue',linewidth=3)
-        ax.plot(levels,fxb*funlib[func_key]["units"]*np.ones(len(levels)),color='red',linewidth=3)
-        ax.scatter(levels,fx_mean*funlib[func_key]["units"],color='black',marker='o')
-        color = 'darkorange' if dirn=='ab' else 'mediumspringgreen'
-        ax.plot(levels_interp,fx_mean_interp*funlib[func_key]["units"],color='black')
-        ax.fill_between(levels_interp,fx_lower_interp*funlib[func_key]["units"],fx_upper_interp*funlib[func_key]["units"],color=color,alpha=0.5)
-        if ramp_name == "committor":
-            xlab = r"$P_x\{x\to B\}$" if dirn=='ab' else r"$P_x\{x\to A\}$"
-        elif ramp_name == "leadtime":
-            xlab = r"Time to $B$" if dirn=='ab' else r"Time to $A$"
-        elif ramp_name == "daeltime":
-            xlab = r"Time since $A$" if dirn=='ab' else r"Time since $B$"
-        ax.set_xlabel(xlab,fontdict=font)
-        ax.set_ylabel("%s (%s)"%(funlib[func_key]["name"],funlib[func_key]["unit_symbol"]),fontdict=font)
-        title = r"High prob. flux path ($A\to B$)" if dirn=='ab' else r"Max-flux path ($B\to A$)"
-        ax.set_title(title,fontdict=font)
-        #fig.savefig(join(self.savefolder,("flux_plot_{}_{}_fom{}_nlev{}_nplev{}_funckey{}".format(ramp_name,dirn,frac_of_max,num_levels,num_per_level,func_key)).replace(".","p")),bbox_inches="tight",pad_inches=0.2)
-        #plt.close(fig)
-        if len(ub_crossing_idx) > 0: 
-            #ax.plot(np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2])*np.ones(2),funlib[func_key]["units"]*np.array([np.min(fx_lower_interp),np.max(fx_upper_interp)]),color='black',linestyle='--')
-            ax.axvline(x=np.mean(levels_interp[ub_crossing_idx[0]:ub_crossing_idx[0]+2]),color='black',linestyle='--')
-        return fig,ax
     def plot_transition_states(self,model,data,ramp_name,dirn,num_per_level=10,num_levels=3,frac_of_max=0.9,func_key="U",plot_level_subset=None):
         # func is now an altitude-dependent function
         if plot_level_subset is None: plot_level_subset = np.arange(num_levels)
@@ -4568,177 +4229,3 @@ class TPT:
         print("Saved transition state distribution in {}".format(self.savefolder))
         plt.close(fig)
         return
-    def plot_transition_states_committor(self,model,data,preload_idx=False):
-        # First, the finest-grained num_per_level and num_levels
-        num_per_level = 5
-        num_levels = 11
-        # ------------- Plot dominant transition states ----------------
-        #funlib = hm.observable_function_library(q)
-        Nx,Nt,xdim = data.X.shape
-        key = list(self.dam_moments.keys())[0]
-        comm_fwd = self.dam_moments[key]['xb'][0,:,:]
-        comm_bwd = self.dam_moments[key]['ax'][0,:,:]
-        weight = np.ones(data.nshort)/data.nshort #self.chom
-        qlevels = np.linspace(0.05,0.95,num_levels) #np.array([0.25,0.5,0.75])
-        tolerance = np.abs(qlevels[-1]-qlevels[0])/(2*num_levels)
-        funlib = model.observable_function_library()
-        # A -> B
-        if preload_idx:
-            reac_dens_idx = np.load(join(self.savefolder,"reac_dens_idx_ab_committor.npy"))
-        else:
-            reac_dens_idx = np.zeros((len(qlevels),num_per_level),dtype=int)
-        real_qlevels = np.zeros((len(qlevels),num_per_level))
-        colorlist = []
-        zorders = [2,0,1]
-        zorderlist = np.random.permutation(np.arange(len(qlevels)*num_per_level))
-        for i in range(len(qlevels)):
-            real_qlevels[i,:] = qlevels[i] 
-            color = plt.cm.coolwarm(qlevels[i]) #if i != 1 else 'gold'
-            colorlist += [color for j in range(num_per_level)]
-            #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
-        # save the reac dens idx
-        np.save(join(self.savefolder,"reac_dens_idx_ab_committor"),reac_dens_idx)
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_qlevels.flatten(),r"q^+",colorlist=colorlist,zorderlist=zorderlist)
-        ax.set_title(r"$A\to B$ transition states",fontdict=font)
-        fig.savefig(join(self.savefolder,"trans_states_ab"),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Now plot them over committor: wind at 30 km
-        func = funlib["Uref"]
-        fig,ax = plt.subplots()
-        for i in range(len(qlevels)):
-            print("reac_dens_idx[i,:]={}".format(reac_dens_idx[i,:]))
-            fxi = func["fun"](data.X[reac_dens_idx[i,:],0])
-            ax.scatter(qlevels[i]*np.ones(len(fxi)),fxi*func["units"],color='black') #plt.cm.coolwarm(1-tb_levels[i]/np.nanmax(tb)))
-        ax.set_xlabel(r"$P_x\{x\to B\}$",fontdict=font)
-        ax.set_ylabel("%s (%s)"%(func["name"],func["unit_symbol"]),fontdict=font)
-        ax.set_title(r"$A\to B$ max-flux (committor levels)",fontdict=font)
-        fig.savefig(join(self.savefolder,"maxflux_qp_ab"))
-        plt.close(fig)
-        # B -> A
-        if preload_idx:
-            reac_dens_idx = np.load(join(self.savefolder,"reac_dens_idx_ba_committor.npy"))
-        else:
-            reac_dens_idx = np.zeros((len(qlevels),num_per_level),dtype=int)
-        real_qlevels = np.zeros((len(qlevels),num_per_level))
-        colorlist = []
-        zorders = [2,0,1]
-        zorderlist = np.random.permutation(np.arange(len(qlevels)*num_per_level))
-        for i in range(len(qlevels)):
-            if not preload_idx: reac_dens_idx[i,:],reac_dens_weights,ans2 = self.maximize_rflux_on_surface(model,data,comm_fwd.reshape((Nx,Nt,1)),1-comm_bwd,1-comm_fwd,weight,qlevels[i],tolerance,num_per_level)
-            real_qlevels[i,:] = qlevels[i] 
-            color = plt.cm.coolwarm(qlevels[i]) #if i != 1 else 'gold'
-            colorlist += [color for j in range(num_per_level)]
-            #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
-        np.save(join(self.savefolder,"reac_dens_idx_ba_committor"),reac_dens_idx)
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_qlevels.flatten(),r"q^+",colorlist=colorlist,zorderlist=zorderlist)
-        ax.set_title(r"$B\to A$ transition states",fontdict=font)
-        fig.savefig(join(self.savefolder,"trans_states_ba"),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Now plot them over committor: wind at 30 km
-        func = funlib["Uref"]
-        fig,ax = plt.subplots()
-        for i in range(len(qlevels)):
-            print("reac_dens_idx[i,:]={}".format(reac_dens_idx[i,:]))
-            fxi = func["fun"](data.X[reac_dens_idx[i,:],0])
-            ax.scatter(1-qlevels[i]*np.ones(len(fxi)),fxi*func["units"],color='black') #plt.cm.coolwarm(1-tb_levels[i]/np.nanmax(tb)))
-        ax.set_xlabel(r"$P_x\{x\to A\}$",fontdict=font)
-        ax.set_ylabel("%s (%s)"%(func["name"],func["unit_symbol"]),fontdict=font)
-        ax.set_title(r"$B\to A$ max flux (committor levels)",fontdict=font)
-        fig.savefig(join(self.savefolder,"maxflux_qp_ba"))
-        plt.close(fig)
-        return
-    def plot_transition_states_leadtime(self,model,data,preload_idx=False):
-        num_per_level = 5
-        num_levels = 11
-        min_quantile,max_quantile = 0.05,0.95
-        # Plot dominant transition states at level sets of lead time
-        #funlib = hm.observable_function_library(q)
-        Nx,Nt,xdim = data.X.shape
-        key = list(self.dam_moments.keys())[0]
-        comm_fwd = self.dam_moments[key]['xb'][0,:,:]
-        comm_bwd = self.dam_moments[key]['ax'][0,:,:]
-        key = list(self.dam_moments.keys())[0]
-        funlib = model.observable_function_library()
-        weight = np.ones(data.nshort)/data.nshort #self.chom
-        # A -> B
-        eps = 1e-2
-        tb = self.dam_moments['one']['xb'][1,:,:]*(comm_fwd > eps)/(comm_fwd + 1*(comm_fwd < eps))
-        tb[np.where(comm_fwd < eps)[0]] = np.nan
-        tb_max,tb_min = np.nanquantile(tb[:,0],[max_quantile,min_quantile])
-        tolerance = np.abs(tb_max-tb_min)/(2*num_levels)
-        tb_levels = np.linspace(tb_max,tb_min,num_levels)
-        if preload_idx:
-            reac_dens_idx = np.load(join(self.savefolder,"reac_dens_idx_ab_time.npy"))
-        else:
-            reac_dens_idx = np.zeros((len(tb_levels),num_per_level),dtype=int)
-        real_tb_levels = np.zeros((len(tb_levels),num_per_level))
-        colorlist = []
-        zorders = [2,0,1]
-        zorderlist = np.random.permutation(np.arange(len(tb_levels)*num_per_level))
-        for i in range(len(tb_levels)):
-            if not preload_idx: reac_dens_idx[i,:],reac_dens_weights,ans2 = self.maximize_rflux_on_surface(model,data,tb.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,tb_levels[i],tolerance,num_per_level)
-            real_tb_levels[i,:] = tb_levels[i] 
-            color = plt.cm.coolwarm(1-tb_levels[i]/np.nanmax(tb)) #if i != 1 else 'gold'
-            colorlist += [color for j in range(num_per_level)]
-            #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
-        np.save(join(self.savefolder,"reac_dens_idx_ab_time"),reac_dens_idx)
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_tb_levels.flatten(),r"\eta^+",colorlist=colorlist,zorderlist=zorderlist)
-        ax.set_title(r"$A\to B$ transition states",fontdict=font)
-        fig.savefig(join(self.savefolder,"trans_states_ab_leadtime"),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Now plot them over time: wind at 30 km
-        func = funlib["Uref"]
-        fig,ax = plt.subplots()
-        for i in range(len(tb_levels)):
-            print("reac_dens_idx[i,:]={}".format(reac_dens_idx[i,:]))
-            fxi = func["fun"](data.X[reac_dens_idx[i,:],0])
-            ax.scatter(-tb_levels[i]*np.ones(len(fxi)),fxi*func["units"],color='black') #plt.cm.coolwarm(1-tb_levels[i]/np.nanmax(tb)))
-        ax.set_xlabel(r"Time to $B$",fontdict=font)
-        ax.set_ylabel("%s (%s)"%(func["name"],func["unit_symbol"]),fontdict=font)
-        ax.set_title(r"$A\to B$ max flux (time levels)",fontdict=font)
-        fig.savefig(join(self.savefolder,"maxflux_leadtime_ab"))
-        plt.close(fig)
-
-        # B -> A
-        eps = 1e-2
-        ta = self.dam_moments['one']['xa'][1,:,:]*(1-comm_fwd > eps)/(1-comm_fwd + 1*(1-comm_fwd < eps))
-        ta[np.where(1-comm_fwd < eps)[0]] = np.nan
-        ta_max,ta_min = np.nanquantile(ta[:,0],[max_quantile,min_quantile])
-        tolerance = np.abs(ta_max-ta_min)/(2*num_levels)
-        ta_levels = np.linspace(ta_max,ta_min,num_levels)
-        if preload_idx:
-            reac_dens_idx = np.load(join(self.savefolder,"reac_dens_idx_ba_time.npy"))
-        else:
-            reac_dens_idx = np.zeros((len(ta_levels),num_per_level),dtype=int)
-        real_ta_levels = np.zeros((len(ta_levels),num_per_level))
-        colorlist = []
-        zorders = [2,0,1]
-        zorderlist = np.random.permutation(np.arange(len(ta_levels)*num_per_level))
-        for i in range(len(ta_levels)):
-            if not preload_idx: reac_dens_idx[i,:],reac_dens_weights,ans2 = self.maximize_rflux_on_surface(model,data,ta.reshape((Nx,Nt,1)),comm_bwd,comm_fwd,weight,ta_levels[i],tolerance,num_per_level)
-            real_ta_levels[i,:] = ta_levels[i] 
-            color = plt.cm.coolwarm(ta_levels[i]/np.nanmax(ta)) #if i != 1 else 'gold'
-            colorlist += [color for j in range(num_per_level)]
-            #zorderlist += [np.random.choice([0,1]) for j in range(num_per_level)] #[zorders[i] for j in range(num_per_level)]
-        np.save(join(self.savefolder,"reac_dens_idx_ba_time"),reac_dens_idx)
-        tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        fig,ax = model.plot_multiple_states(data.X[reac_dens_idx.flatten(),tidx],real_tb_levels.flatten(),r"\eta^+",colorlist=colorlist,zorderlist=zorderlist)
-        ax.set_title(r"$B\to A$ transition states",fontdict=font)
-        fig.savefig(join(self.savefolder,"trans_states_ba_leadtime"),bbox_inches="tight",pad_inches=0.2)
-        plt.close(fig)
-        # Now plot them over time: wind at 30 km
-        func = funlib["Uref"]
-        fig,ax = plt.subplots()
-        for i in range(len(tb_levels)):
-            fxi = func["fun"](data.X[reac_dens_idx[i,:],0])
-            ax.scatter(-ta_levels[i]*np.ones(len(fxi)),fxi*func["units"],color='black') #plt.cm.coolwarm(1-ta_levels[i]/np.nanmax(ta)))
-        ax.set_xlabel(r"Time to $A$",fontdict=font)
-        ax.set_ylabel("%s (%s)"%(func["name"],func["unit_symbol"]),fontdict=font)
-        ax.set_title(r"$B\to A$ max flux (time levels)",fontdict=font)
-        fig.savefig(join(self.savefolder,"maxflux_leadtime_ba"))
-        plt.close(fig)
-        return
-

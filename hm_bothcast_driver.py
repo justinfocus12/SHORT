@@ -53,7 +53,8 @@ regression_flag =       0
 proj_1d_flag =          0
 demo_flag =             0
 qp_tb_coords_flag =     0
-trans_state_flag =      1
+trans_state_flag =      0
+trans_state_enst_flag = 1
 flux_dist_flag =        0
 plot_long_2d_flag =     0
 plot_trans_2d_flag =    0
@@ -206,9 +207,9 @@ if plot_long_1d_flag:
 # ---------- Plot dominant transition states-----------
 if trans_state_flag:
     tpt.plot_transition_states_new(model,data)
+if trans_state_enst_flag:
+    tpt.plot_transition_states_ensttend(model,data)
     #tpt.plot_transition_states_all(model,data,collect_flag=True)
-    #tpt.plot_transition_states_committor(model,data,preload_idx=True)
-    #tpt.plot_transition_states_leadtime(model,data,preload_idx=True)
 # -------------------------------------------------
 # ---------- Plot flux distributions -----------
 if flux_dist_flag:

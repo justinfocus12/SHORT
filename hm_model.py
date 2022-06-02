@@ -1333,7 +1333,7 @@ class HoltonMassModel(Model):
         fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
         ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
         return fig,ax
-    def plot_state_distribution(self,X,rflux,rflux_idx,qlevels,qsymbol,colors=None,key="U",labels=None,quantiles=[0.25,0.75]):
+    def plot_state_distribution(self,X,rflux,rflux_idx,qlevels,qsymbol,colors=None,key="U",labels=None,quantiles=[0.25,0.75],fig=None,ax=None):
         # Given a sequence of states (X) plot their mean and std on the same graph. For the Holton-Mass model, this means different zonal wind profiles.
         #key = "U"
         num_levels = len(qlevels)
@@ -1341,7 +1341,8 @@ class HoltonMassModel(Model):
         Ua,Ub = funlib[key]["fun"](self.xst)
         units = funlib[key]["units"]
         q = self.q
-        fig,ax = plt.subplots(figsize=(6,6)) # Top panel for positive flux, bottom panel for negative flux
+        if fig is None or ax is None:
+            fig,ax = plt.subplots(figsize=(6,6)) 
         # Plot a bunch of zonal wind profiles
         #N = len(cv_x)
         z = q['z_d'][1:-1]/1000
