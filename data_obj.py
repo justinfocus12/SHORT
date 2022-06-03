@@ -121,23 +121,26 @@ class Data:
     def insert_boundaries_fwd(self,bdy_dist_x,tmin,tmax):
         if tmin > tmax: sys.exit("HEY! Make sure tmin < tmax in insert_boundaries_fwd")
         #bdy_dist_x = bdy_dist(self.X.reshape((self.nshort*self.traj_length,self.xdim))).reshape((self.nshort,self.traj_length))
+        Nx,Nt = bdy_dist_x.shape
         ti_min = np.argmin(np.abs(tmin - self.t_x))
         ti_max = np.argmin(np.abs(tmax - self.t_x))
-        self.base_idx_fwd = ti_min*np.ones(self.nshort,dtype=int)
-        self.first_exit_idx_fwd = ti_max*np.ones(self.nshort,dtype=int)
-        self.last_idx_fwd = ti_max*np.ones(self.nshort,dtype=int)
+        self.base_idx_fwd = ti_min*np.ones(Nx,dtype=int)
+        self.first_exit_idx_fwd = ti_max*np.ones(Nx,dtype=int)
+        self.last_idx_fwd = ti_max*np.ones(Nx,dtype=int)
         for i in np.arange(ti_max-1,ti_min,-1):
             bidx = np.where(bdy_dist_x[:,i]==0)[0]
             self.first_exit_idx_fwd[bidx] = i
         return
     def insert_boundaries_bwd(self,bdy_dist_x,tmax,tmin):
-        if tmin > tmax: sys.exit("HEY! Make sure tmax > tmin in insert_boundaries_bwd")
+        if tmin > tmax: 
+            raise Exception("HEY! Make sure tmax > tmin in insert_boundaries_bwd")
         #bdy_dist_x = bdy_dist(self.X.reshape((self.nshort*self.traj_length,self.xdim))).reshape((self.nshort,self.traj_length))
+        Nx,Nt = bdy_dist_x.shape
         ti_min = np.argmin(np.abs(tmin - self.t_x))
         ti_max = np.argmin(np.abs(tmax - self.t_x))
-        self.base_idx_bwd = ti_max*np.ones(self.nshort,dtype=int)
-        self.first_exit_idx_bwd = ti_min*np.ones(self.nshort,dtype=int)
-        self.last_idx_bwd = ti_min*np.ones(self.nshort,dtype=int)
+        self.base_idx_bwd = ti_max*np.ones(Nx,dtype=int)
+        self.first_exit_idx_bwd = ti_min*np.ones(Nx,dtype=int)
+        self.last_idx_bwd = ti_min*np.ones(Nx,dtype=int)
         for i in np.arange(ti_min+1,ti_max,1):
             bidx = np.where(bdy_dist_x[:,i]==0)[0]
             self.first_exit_idx_bwd[bidx] = i

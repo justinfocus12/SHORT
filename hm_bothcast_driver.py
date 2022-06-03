@@ -123,8 +123,6 @@ short_simfolder = model.generate_data_short_multithreaded(x_long,simfolder,algo_
 
 # ---------- Initialize TPT ----------
 tpt = TPT(algo_params,physical_param_folder,long_simfolder,short_simfolder,savefolder)
-# Fix the lag_time_current
-tpt.lag_time_current = algo_params['lag_time_current']
 # Initialize data
 data = tpt.compile_data(model,istart=algo_params["istart"])
 # Initialize function approximator as MSM basis
@@ -145,6 +143,10 @@ print("TPT computation: done")
 
 # --------- Reload data and prepare to plot -----------
 tpt = pickle.load(open(join(savefolder,"tpt"),"rb"))
+# Fix the lag_time_current
+tpt.lag_time_current = algo_params['lag_time_current']
+tpt.lag_time_current_display = algo_params['lag_time_current_display']
+tpt.lag_halftime_current_display = algo_params['lag_halftime_current_display']
 tpt.label_x_long(model)
 print("Loaded TPT")
 funlib = model.observable_function_library()
