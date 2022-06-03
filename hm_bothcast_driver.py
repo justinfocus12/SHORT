@@ -78,7 +78,11 @@ copyfile(join(codefolder,"hm_params.py"),join(savefolder,"hm_params.py"))
 # -----------------------------------------------------
 np.random.seed(0)
 # ---------- 1. Initialize the model ----------
-model = HoltonMassModel(physical_params)
+#xst = None
+xst = np.load(join(savefolder,"xst.npy"))
+model = HoltonMassModel(physical_params,xst=xst)
+# Save the fixed points
+np.save(join(savefolder,"xst"),model.xst)
 funlib = model.observable_function_library()
 print("model Uref xst = {}".format(funlib["Uref"]["fun"](model.tpt_obs_xst)*funlib["Uref"]["units"]))
 print("model U xst[:,zi] = {}".format(funlib["U"]["fun"](model.tpt_obs_xst)[:,model.q['zi']]*funlib["Uref"]["units"]))
