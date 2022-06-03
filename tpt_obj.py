@@ -2785,24 +2785,44 @@ class TPT:
         field_std_Linf = np.nanmax(field_std)*np.prod(dth)
         return shp,dth,thaxes,cgrid,field_mean,field_std,field_std_L2,field_std_Linf,bounds
     def tendency_during_transition(self,model,data,theta_x,comm_bwd,comm_fwd):
+        # Compute the tendency during a transition, as well as overall tendency in SDE, as well as deterministic tendency. 
         Nx,Nt,thdim = theta_x.shape
         xdim = data.X.shape[-1]
-        bdy_dist = lambda x: np.ones_like(np.minimum(model.adist(x),model.bdist(x)))
+        bdy_dist = lambda x: (np.minimum(model.adist(x),model.bdist(x)))
         bdy_dist_x = bdy_dist(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
         # We need to have at least one point ahead and one point behind, for every point. 
         lag_time_max = self.lag_time_current_display
-        data.insert_boundaries(bdy_dist,lag_time_max)
-        comm_fwd_up = comm_fwd[np.arange(Nx),data.first_exit_idx]
+        ti0 = np.argmin(np.abs(lag_time_max/2))
+        data.insert_boundaries_fwd(bdy_dist_x,data.t_x[ti0],lag_time_max)
+        data.insert_boundaries_bwd(bdy_dist_x,data.t_x[ti0],0)
+        tiup = data.first_exit_idx_fwd
+        tidn = data.first_exit_idx_bwd
+        dt_up = data.t_x[tiup] - data.t_x[ti0]
+        dt_dn = data.t_x[ti0] - data.t_x[tidn]
+        if np.min(dt_dn) < 0 or np.min(dt_up) < 0:
+            raise Exception(f"min(dt_dn) = {np.min(dt_dn)} and min(dt_up) = {np.min(dt_up)}")
+        comm_fwd_0 = comm_fwd[:,ti0]
+        comm_fwd_up = comm_fwd[np.arange(Nx),tiup]
+        comm_bwd_0 = comm_bwd[:,ti0]
+        comm_bwd_dn = comm_bwd[np.arange(Nx),tidn]
         eps = 0.001
+        dt_up[dt_up == 0] = np.nan
+        dt_dn[dt_dn == 0] = np.nan
         comm_fwd_up[comm_fwd_up < eps] = np.nan
-        comm_fwd_now = comm_fwd[:,0]
-        comm_fwd_now[comm_fwd_now < eps] = np.nan
-        Tup = comm_fwd_up*theta_x[np.arange(Nx),data.first_exit_idx,:].T #/comm_fwd[:,0]).T
-        T0 = theta_x[:,0].T
-        dtup = data.t_x[data.first_exit_idx] - data.t_x[0]
-        dtup[dtup == 0] = np.nan
-        L = ((Tup - T0)/(comm_fwd_now*dtup)).T #((Tup - Tdn).T/dt).T
-        return L
+        comm_fwd_0[comm_fwd_0 < eps] = np.nan
+        comm_bwd_dn[comm_bwd_dn < eps] = np.nan
+        comm_bwd_0[comm_bwd_0 < eps] = np.nan
+        # First: tendency during transition
+        Lab_up = ((theta_x[np.arange(Nx),tiup].T * comm_fwd_up / comm_fwd_0 - theta_x[:,ti0].T)/dt_up).T
+        Lab_dn = ((theta_x[np.arange(Nx),tidn].T * comm_bwd_dn / comm_bwd_0 - theta_x[:,ti0].T)/dt_dn).T
+        Lab = Lab_up #0.5*(Lab_up - Lab_dn)
+        print(f"Computed tendency during transition")
+        # Second: tendency at steady state 
+        L_up = ((theta_x[np.arange(Nx),tiup].T - theta_x[np.arange(Nx),ti0].T)/dt_up).T
+        L_dn = ((theta_x[np.arange(Nx),tidn].T - theta_x[np.arange(Nx),ti0].T)/dt_dn).T
+        L = L_up #0.5*(L_up - L_dn)
+        print(f"Computed tendency at steady-state")
+        return Lab,L,ti0
     def project_current_new(self,model,data,theta_x,comm_bwd,comm_fwd):
         # compute J_(AB)\cdot\nabla\theta. theta is a multi-dimensional observable, so we end up with a vector of that size.
         # This should be used hopefully for maximizing the reactive flux on a surface. 
@@ -3690,52 +3710,87 @@ class TPT:
             rflux_idx += [ridx_qi]
 
         funlib = model.observable_function_library()
-        Q = funlib["enstproj"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,n))
-        U = funlib["U"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,n))
-        L_Q_ab = self.tendency_during_transition(model,data,Q,comm_bwd,comm_fwd)
-        L_U_ab = self.tendency_during_transition(model,data,U,comm_bwd,comm_fwd)
-        L_Q = self.tendency_during_transition(model,data,Q,np.ones_like(comm_bwd),np.ones_like(comm_fwd))
-        L_U = self.tendency_during_transition(model,data,U,np.ones_like(comm_bwd),np.ones_like(comm_fwd))
-        xlim_U = np.array([np.min(U),np.max(U)])*funlib["U"]["units"]
-        xlim_Q = np.array([np.min(Q),np.max(Q)])*funlib["enstproj"]["units"]
+        keys = ["enstproj","U","dqdyproj","dissproj"]
+        tendency = dict({key: dict() for key in keys})
+        for key in keys:
+            theta_x = funlib[key]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,n))
+            tendency[key]["Lab"],tendency[key]["L"],ti0 = self.tendency_during_transition(model,data,theta_x,comm_bwd,comm_fwd)
+            tendency[key]["theta"] = theta_x[:,ti0,:]
+            xdot = model.drift_fun(data.X[:,ti0,:])
+            theta_up = funlib[key]["fun"](data.X[:,ti0,:] + model.dt_sim*xdot)
+            theta_dn = funlib[key]["fun"](data.X[:,ti0,:] - model.dt_sim*xdot)
+            tendency[key]["thetadot"] = (theta_up - theta_dn)/(2*model.dt_sim)
         z = model.q['z_d'][1:-1]/1000
         for qi in range(len(qp_levels)):
-            # Two columns: zonal wind on left, enstrophy on right
-            fig,ax = plt.subplots(ncols=2,figsize=(12,6))
-            nnidx = np.where(np.any(np.isnan((L_Q+L_Q_ab+L_U+L_U_ab)[rflux_idx[qi]]),axis=1)==0)[0]
+            nnidx = np.where(np.any(np.isnan((tendency["U"]["Lab"])[rflux_idx[qi]]),axis=1)==0)[0]
             idx = np.array(rflux_idx[qi])[nnidx]
             weights = np.array(rflux[qi])[nnidx]
             sumweights = np.sum(weights)
-            # Zonal wind on left
-            U_qi = 0*np.sum((U[idx,0].T * weights).T, axis=0)/sumweights
-            LU_qi = np.sum((L_U[idx].T * weights).T, axis=0)/sumweights
-            print(f"LU_qi.shape = {LU_qi.shape}")
-            LUab_qi = np.sum((L_U_ab[idx].T * weights).T, axis=0)/sumweights
-            LU_det = np.sum((funlib["U"]["fun"](model.drift_fun(data.X[idx,0,:])).T * weights).T, axis=0)/sumweights
-            h_U, = ax[0].plot(U_qi*funlib["U"]["units"], z, color='gray', linestyle='--',label=r"$U(z)$")
-            h_LU, = ax[0].plot((U_qi+LU_qi)*funlib["U"]["units"], z, color='black', label=r"$LU(z)$")
-            h_LUab, = ax[0].plot((U_qi+LUab_qi)*funlib["U"]["units"], z, color='orange', label=r"$L_{AB}U(z)$")
-            h_LUdet, = ax[0].plot((U_qi+LU_det)*funlib["U"]["units"], z, color='cyan', label=r"$\dot{U}(z)$")
-            ax[0].legend(handles=[h_U,h_LU,h_LUab,h_LUdet])
-            ax[0].set_xlabel(r"[%s]"%(funlib['U']['unit_symbol']))
-            ax[0].set_title(r"%s at $q^+_B=%.2f$"%(funlib['U']['name'],qp_levels[qi]))
-            # Enstrophy on right
-            Q_qi = 0*np.sum((Q[idx,0].T * weights).T, axis=0)/sumweights
-            LQ_qi = np.sum((L_Q[idx].T * weights).T, axis=0)/sumweights
-            LQab_qi = np.sum((L_Q_ab[idx].T * weights).T, axis=0)/sumweights
-            LQ_det = np.sum((funlib["ensttend"]["fun"](data.X[idx,0,:]).T * weights).T, axis=0)/sumweights 
-            h_Q, = ax[1].plot(Q_qi*funlib["enstproj"]["units"], z, color='gray', linestyle='--',label=r"$Q(z)$")
-            h_LQ, = ax[1].plot((Q_qi+LQ_qi)*funlib["enstproj"]["units"], z, color='black', label=r"$LQ(z)$")
-            h_LQab, = ax[1].plot((Q_qi+LQab_qi)*funlib["enstproj"]["units"], z, color='orange', label=r"$L_{AB}Q(z)$")
-            h_LQdet, = ax[1].plot(Q_qi*funlib["enstproj"]["units"]+LQ_det*funlib["ensttend"]["units"]*model.q["time"], z, color='cyan', label=r"$\dot{Q}(z)$")
-            ax[1].legend(handles=[h_Q,h_LQ,h_LQab,h_LQdet])
-            ax[1].set_xlabel(r"[%s]"%(funlib['enstproj']['unit_symbol']))
-            ax[1].set_title(r"%s at $q^+_B=%.2f$"%(funlib['enstproj']['name'],qp_levels[qi]))
-            # Save the figure 
-            #ax[0].set_xlim(xlim_U)
-            #ax[1].set_xlim(xlim_Q)
-            fig.savefig(join(self.savefolder,f"trans_state_profile_U_enstproj_ABnormal_{qi}"))
-            plt.close(fig)
+            print(f"sumweights = {sumweights}")
+            for key in keys:
+                fig,ax = plt.subplots()
+                theta = 0*np.sum((tendency[key]["theta"][idx].T * weights).T, axis=0)/sumweights
+                L = np.sum((tendency[key]["theta"][idx].T * weights).T, axis=0)/sumweights
+                Lab = np.sum((tendency[key]["Lab"][idx].T * weights).T, axis=0)/sumweights
+                Ldet = np.sum((tendency[key]["thetadot"][idx].T * weights).T, axis=0)/sumweights
+
+                h_th, = ax.plot(theta*funlib[key]["units"], z, color='gray', linestyle='--',label=funlib[key]["name"])
+                h_Lab, = ax.plot((theta+Lab)*funlib[key]["units"], z, color='orange', label=r"$L_{AB}$%s"%(funlib[key]["name"]))
+                h_L, = ax.plot((theta+L)*funlib[key]["units"], z, color='cyan', label=r"$L$%s"%(funlib[key]["name"]))
+                h_Ldet, = ax.plot((theta+Ldet)*funlib[key]["units"], z, color='black', label=r"$\frac{d}{dt}$%s"%(funlib[key]["name"]))
+                ax.legend(handles=[h_th,h_Lab,h_L,h_Ldet])
+                ax.set_xlabel(r"%s [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
+                ax.set_ylabel(r"$z$ [km]")
+                ax.set_title(r"%s at $q^+_B=%.2f$"%(funlib[key]['name'],qp_levels[qi]))
+                fig.savefig(join(self.savefolder,f"trans_state_profile_ABnormal_{key}_{qi}"))
+                plt.close(fig)
+
+        if False:
+            Q = funlib["enstproj"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,n))
+            U = funlib["U"]["fun"](data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,n))
+            L_Q_ab = self.tendency_during_transition(model,data,Q,comm_bwd,comm_fwd)
+            L_U_ab = self.tendency_during_transition(model,data,U,comm_bwd,comm_fwd)
+            L_Q = self.tendency_during_transition(model,data,Q,np.ones_like(comm_bwd),np.ones_like(comm_fwd))
+            L_U = self.tendency_during_transition(model,data,U,np.ones_like(comm_bwd),np.ones_like(comm_fwd))
+            xlim_U = np.array([np.min(U),np.max(U)])*funlib["U"]["units"]
+            xlim_Q = np.array([np.min(Q),np.max(Q)])*funlib["enstproj"]["units"]
+            for qi in range(len(qp_levels)):
+                # Two columns: zonal wind on left, enstrophy on right
+                fig,ax = plt.subplots(ncols=2,figsize=(12,6))
+                nnidx = np.where(np.any(np.isnan((L_Q+L_Q_ab+L_U+L_U_ab)[rflux_idx[qi]]),axis=1)==0)[0]
+                idx = np.array(rflux_idx[qi])[nnidx]
+                weights = np.array(rflux[qi])[nnidx]
+                sumweights = np.sum(weights)
+                # Zonal wind on left
+                U_qi = 0*np.sum((U[idx,0].T * weights).T, axis=0)/sumweights
+                LU_qi = np.sum((L_U[idx].T * weights).T, axis=0)/sumweights
+                print(f"LU_qi.shape = {LU_qi.shape}")
+                LUab_qi = np.sum((L_U_ab[idx].T * weights).T, axis=0)/sumweights
+                LU_det = np.sum((funlib["U"]["fun"](model.drift_fun(data.X[idx,0,:])).T * weights).T, axis=0)/sumweights
+                h_U, = ax[0].plot(U_qi*funlib["U"]["units"], z, color='gray', linestyle='--',label=r"$U(z)$")
+                h_LU, = ax[0].plot((U_qi+LU_qi)*funlib["U"]["units"], z, color='black', label=r"$LU(z)$")
+                h_LUab, = ax[0].plot((U_qi+LUab_qi)*funlib["U"]["units"], z, color='orange', label=r"$L_{AB}U(z)$")
+                h_LUdet, = ax[0].plot((U_qi+LU_det)*funlib["U"]["units"], z, color='cyan', label=r"$\dot{U}(z)$")
+                ax[0].legend(handles=[h_U,h_LU,h_LUab,h_LUdet])
+                ax[0].set_xlabel(r"[%s]"%(funlib['U']['unit_symbol']))
+                ax[0].set_title(r"%s at $q^+_B=%.2f$"%(funlib['U']['name'],qp_levels[qi]))
+                # Enstrophy on right
+                Q_qi = 0*np.sum((Q[idx,0].T * weights).T, axis=0)/sumweights
+                LQ_qi = np.sum((L_Q[idx].T * weights).T, axis=0)/sumweights
+                LQab_qi = np.sum((L_Q_ab[idx].T * weights).T, axis=0)/sumweights
+                LQ_det = np.sum((funlib["ensttend"]["fun"](data.X[idx,0,:]).T * weights).T, axis=0)/sumweights 
+                h_Q, = ax[1].plot(Q_qi*funlib["enstproj"]["units"], z, color='gray', linestyle='--',label=r"$Q(z)$")
+                h_LQ, = ax[1].plot((Q_qi+LQ_qi)*funlib["enstproj"]["units"], z, color='black', label=r"$LQ(z)$")
+                h_LQab, = ax[1].plot((Q_qi+LQab_qi)*funlib["enstproj"]["units"], z, color='orange', label=r"$L_{AB}Q(z)$")
+                h_LQdet, = ax[1].plot(Q_qi*funlib["enstproj"]["units"]+LQ_det*funlib["ensttend"]["units"]*model.q["time"], z, color='cyan', label=r"$\dot{Q}(z)$")
+                ax[1].legend(handles=[h_Q,h_LQ,h_LQab,h_LQdet])
+                ax[1].set_xlabel(r"[%s]"%(funlib['enstproj']['unit_symbol']))
+                ax[1].set_title(r"%s at $q^+_B=%.2f$"%(funlib['enstproj']['name'],qp_levels[qi]))
+                # Save the figure 
+                #ax[0].set_xlim(xlim_U)
+                #ax[1].set_xlim(xlim_Q)
+                fig.savefig(join(self.savefolder,f"trans_state_profile_U_enstproj_ABnormal_{qi}"))
+                plt.close(fig)
 
 
 
