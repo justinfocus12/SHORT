@@ -119,7 +119,8 @@ class Data:
                 self.first_exit_idx[bidx] = np.minimum(self.first_exit_idx[bidx],i)
         return
     def insert_boundaries_fwd(self,bdy_dist_x,tmin,tmax):
-        if tmin > tmax: sys.exit("HEY! Make sure tmin < tmax in insert_boundaries_fwd")
+        if tmin > tmax: 
+            raise Exception("HEY! Make sure tmin < tmax in insert_boundaries_fwd")
         #bdy_dist_x = bdy_dist(self.X.reshape((self.nshort*self.traj_length,self.xdim))).reshape((self.nshort,self.traj_length))
         Nx,Nt = bdy_dist_x.shape
         ti_min = np.argmin(np.abs(tmin - self.t_x))

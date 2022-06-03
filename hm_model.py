@@ -855,11 +855,12 @@ class HoltonMassModel(Model):
         zlevel = lambda z: np.argmin(np.abs(q['z_d'][1:-1]/1000-z))
         n = q['Nz'] - 1
         funs = {
-                "U":
-                {"fun": lambda X: X[:,2*n:3*n],
-                 "name":r"$U$",
-                 "units": q['length']/q['time'],
-                 "unit_symbol": r"m/s"
+                "U": {
+                    "fun": lambda X: X[:,2*n:3*n],
+                    "name":r"$U$",
+                    "units": q['length']/q['time'],
+                    "unit_symbol": r"m/s",
+                    "name_english": "Zonal wind",
                  },
                 "Uref":
                 {"fun": lambda X: X[:,2*n+q['zi']],
@@ -1084,6 +1085,7 @@ class HoltonMassModel(Model):
                         "name": r"$\partial_y\overline{q}$",
                         "units": 1/q["Gsq"]*1/(q['length']*q['time']),
                         "unit_symbol": "m$^{-1}$s$^{-1}$",
+                        "name_english": "Mean PV gradient",
                         },
                 "dqdymean":
                 {"fun": lambda X: np.mean(self.background_pv_gradient(X),1),
@@ -1114,6 +1116,7 @@ class HoltonMassModel(Model):
                         "name": r"$\overline{v'q'}$",
                         "units": 1/q["Gsq"]*q["length"]/q["time"]**2,
                         "unit_symbol": r"m s$^{-2}$",
+                        "name_english": "Eddy PV flux",
                         },
                 "q2":
                 {"fun": lambda X: self.eddy_enstrophy(X),
@@ -1126,6 +1129,7 @@ class HoltonMassModel(Model):
                         "name": r"$\frac{1}{2}\overline{q'^2}$",
                         "units": 1/q["Gsq"]**2*1/q['time']**2,
                         "unit_symbol": r"s$^{-2}$",
+                        "name_english": "Eddy enstrophy",
                         },
                 "q2ref":
                 {"fun": lambda X: self.eddy_enstrophy(X)[:,q['zi']],
@@ -1144,6 +1148,7 @@ class HoltonMassModel(Model):
                         "name": r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
                         "units": 1/q["Gsq"]**2*1/q["time"]**3,
                         "unit_symbol": "s$^{-3}$",
+                        "name_english": "Dissipation",
                  },
                 "ensttend": {
                         "fun": lambda X: self.dissipation_projected(X) - self.meridional_pv_flux_projected(X)*self.background_pv_gradient_projected(X),
@@ -1152,6 +1157,13 @@ class HoltonMassModel(Model):
                         "unit_symbol": r"s$^{-3}$",
                         },
             }
+        funs["dqdyproj_vqproj"] = {
+                "fun": lambda X: funs["dqdyproj"]["fun"](X)*funs["vqproj"]["fun"](X),
+                "name": r"(%s)(%s)"%(funs["dqdyproj"]["name"],funs["vqproj"]["name"]),
+                "units": funs["dqdyproj"]["units"]*funs["vqproj"]["units"],
+                "unit_symbol": "s$^{-3}$",
+                "name_english": "Meridional PV advection",
+               }
         return funs
     def plot_snapshot(self,xt,suffix=""):
         q = self.q
