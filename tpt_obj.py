@@ -2785,9 +2785,12 @@ class TPT:
         field_std_L2 = np.sqrt(np.nansum(field_std**2)/Ncell) #*np.prod(dth))
         field_std_Linf = np.nanmax(field_std)*np.prod(dth)
         return shp,dth,thaxes,cgrid,field_mean,field_std,field_std_L2,field_std_Linf,bounds
-    def tendency_during_transition(self,model,data,X,theta_x,comm_bwd,comm_fwd,dirns):
+    def tendency_during_transition(self,model,data,X,theta_fun,comm_bwd,comm_fwd,dirns):
         # Compute the tendency during a transition, as well as overall tendency in SDE, as well as deterministic tendency. 
-        Nx,Nt,thdim = theta_x.shape
+        Nx,Nt,xdim = X.shape
+        theta_x = theta_fun(X.reshape((Nx*Nt,xdim)))
+        thdim = theta_x.size//(Nx*Nt)
+        theta_x = theta_x.reshape((Nx,Nt,thdim))
         xdim = X.shape[-1]
         bdy_dist = lambda x: (np.minimum(model.adist(x),model.bdist(x)))
         bdy_dist_x = bdy_dist(X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt))
@@ -2821,6 +2824,9 @@ class TPT:
             L_up = ((theta_x[np.arange(Nx),tiup].T * qp_up - theta_x[:,ti0].T * qp_0) * qm_0 / dt_up).T
             L_dn = ((theta_x[np.arange(Nx),tidn].T * qm_dn - theta_x[:,ti0].T * qm_0) * qp_0 / dt_dn).T
             L[dirn] = 0.5*(L_up - L_dn)
+        # Also compute the deterministic tendency
+        xdot = model.drift_fun(X)
+        L["deterministic"] = (theta_fun(X + model.dt_sim*xdot) - theta_fun(X - model.dt_sim*xdot))/(2*model.dt_sim)
         return L,ti0
         ## A -> A
         #Laa_up = ((theta_x[np.arange(Nx),tiup].T * (1-comm_fwd_up) - theta_x[:,ti0].T * (1-comm_fwd_0)) * comm_bwd_0 / dt_up).T 
@@ -3744,11 +3750,38 @@ class TPT:
         dirn_index = {"aa": 0, "ab": 1, "ba": 2, "bb": 3, "??": 4}
         dirn_colors = {"aa": "lightskyblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
         dirn_labels = {"aa": r"$A\to A$","ab": r"$A\to B$","ba": r"$B\to A$","bb": r"$B\to B$","??": r"Average"}
+        # ----------------- Compute least-action tendencies at each committor level ----------------------
+        lap = dict({
+            "ab": dict({
+                "x": load(join(self.physical_param_folder,"xmin_dirn1.npy")),
+                "t": load(join(self.physical_param_folder,"tmin_dirn1.npy")),
+                }),
+            "ba": dict({
+                "x": load(join(self.physical_param_folder,"xmin_dirn-1.npy")),
+                "t": load(join(self.physical_param_folder,"tmin_dirn-1.npy")),
+                }),
+            })
+        for dirn in ["ab","ba"]:
+            lap[dirn]["comm_fwd"] = self.out_of_sample_extension(self.dam_moments['one']['xb'][0,:,:],data,lap[dirn]["x"])[ss]
+            qlevel_idx_lap = []
+            for qi in range(len(qp_levels)):
+                qp_tol = qp_tol_list[qi]
+                idx_qi = np.where(np.abs(lap[dirn]["comm_fwd"] - qp_levels[qi]) < qp_tol)[0]
+                qlevel_idx_lap += [idx_qi]
+            lap[dirn]["qlevel_idx"] = qlevel_idx_lap
+            for key in keys:
+                theta_lap = funlib[key]["fun"](lap[dirn]["x"])
+                tendency_lap = np.zeros(theta_lap.shape)
+                tendency_lap[1:-1] = (theta_lap[2:] - theta_lap[:-2])/(lap[dirn]["t"][2:] - lap[dirn]["t"][:-2])
+                tendency_lap[0] = (theta_lap[1] - theta_lap[0])/(lap[dirn]["t"][1] - lap[dirn]["t"][0])
+                tendency_lap[-1] = (theta_lap[-1] - theta_lap[-2])/(lap[dirn]["t"][-1] - lap[dirn]["t"][-2])
+                lap[dirn][key] = np.zeros((len(qp_levels),n))
+                for qi in range(len(qp_levels)):
+                    lap[dirn][key][qi] = np.mean(tendency_lap[lap[dirn]["qlevel_idx"][qi]], axis=0)
+        # --------------------------------------------
         z = model.q['z_d'][1:-1]/1000
         for key in keys:
-            theta_x = funlib[key]["fun"](X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,n))
-            #tendency[key]["Laa"],tendency[key]["Lab"],tendency[key]["Lba"],tendency[key]["Lbb"],tendency[key]["L"],ti0 = self.tendency_during_transition(model,data,X,theta_x,comm_bwd,comm_fwd,dirns)
-            L,ti0 = self.tendency_during_transition(model,data,X,theta_x,comm_bwd,comm_fwd,dirns)
+            L,theta_x,ti0 = self.tendency_during_transition(model,data,X,funlib[key]["fun"],comm_bwd,comm_fwd,dirns)
             transdict = dict({})
             transdict["tendency"] = dict()
             for dirn in dirns:
@@ -3796,6 +3829,9 @@ class TPT:
                     #    handles["snapshot"] += [h]
                     h, = ax[1].plot(transdict["tendency"][dirn][qi]*funlib[key]["units"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
                     handles["tendency"] += [h]
+                    if dirn in lap.keys():
+                        h, = ax[1].plot(lap[dirn][key][qi]*funlib[key]["units"], z, color="purple", label=r"Min. Act.")
+                        handles["tendency"] += [h]
                 #ax[0].set_xlim(transdict["snapshot"]["xlim"]*funlib[key]["units"])
                 #ax[1].set_xlim(transdict["tendency"]["xlim"]*funlib[key]["units"])
                 ax[1].axvline(0,linestyle='--',color='gray')
