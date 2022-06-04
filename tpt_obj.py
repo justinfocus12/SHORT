@@ -2785,7 +2785,7 @@ class TPT:
         field_std_L2 = np.sqrt(np.nansum(field_std**2)/Ncell) #*np.prod(dth))
         field_std_Linf = np.nanmax(field_std)*np.prod(dth)
         return shp,dth,thaxes,cgrid,field_mean,field_std,field_std_L2,field_std_Linf,bounds
-    def tendency_during_transition(self,model,data,X,theta_x,comm_bwd,comm_fwd):
+    def tendency_during_transition(self,model,data,X,theta_x,comm_bwd,comm_fwd,dirns):
         # Compute the tendency during a transition, as well as overall tendency in SDE, as well as deterministic tendency. 
         Nx,Nt,thdim = theta_x.shape
         xdim = X.shape[-1]
@@ -2812,29 +2812,39 @@ class TPT:
         dt_up[dt_up == 0] = np.nan
         dt_dn[dt_dn == 0] = np.nan
         print(f"dt_up nanfrac = {np.mean(np.isnan(dt_up))}. dt_dn nanfrac = {np.mean(np.isnan(dt_dn))}")
-        # A -> A
-        Laa_up = ((theta_x[np.arange(Nx),tiup].T * (1-comm_fwd_up) - theta_x[:,ti0].T * (1-comm_fwd_0)) * comm_bwd_0 / dt_up).T 
-        Laa_dn = ((theta_x[np.arange(Nx),tidn].T * comm_bwd_dn - theta_x[:,ti0].T * comm_bwd_0) * (1-comm_fwd_0) /dt_dn).T
-        Laa = 0.5*(Laa_up - Laa_dn)
-        #  A -> B
-        Lab_up = ((theta_x[np.arange(Nx),tiup].T * comm_fwd_up - theta_x[:,ti0].T * comm_fwd_0) * comm_bwd_0 / dt_up).T 
-        Lab_dn = ((theta_x[np.arange(Nx),tidn].T * comm_bwd_dn - theta_x[:,ti0].T * comm_bwd_0) * comm_fwd_0 /dt_dn).T
-        Lab = 0.5*(Lab_up - Lab_dn)
-        # B -> A
-        Lba_up = ((theta_x[np.arange(Nx),tiup].T * (1-comm_fwd_up) - theta_x[:,ti0].T * (1-comm_fwd_0)) * (1-comm_bwd_0) / dt_up).T 
-        Lba_dn = ((theta_x[np.arange(Nx),tidn].T * (1-comm_bwd_dn) - theta_x[:,ti0].T * (1-comm_bwd_0)) * (1-comm_fwd_0) /dt_dn).T
-        Lba = 0.5*(Lba_up - Lba_dn)
-        # B -> B
-        Lbb_up = ((theta_x[np.arange(Nx),tiup].T * comm_fwd_up - theta_x[:,ti0].T * comm_fwd_0) * (1-comm_bwd_0) / dt_up).T 
-        Lbb_dn = ((theta_x[np.arange(Nx),tidn].T * (1-comm_bwd_dn) - theta_x[:,ti0].T * (1-comm_bwd_0)) * comm_fwd_0 /dt_dn).T
-        Lbb = 0.5*(Lbb_up - Lbb_dn)
-        print(f"Computed tendency during transition")
-        # Tendency at steady state 
-        L_up = ((theta_x[np.arange(Nx),tiup].T - theta_x[:,ti0].T)/dt_up).T
-        L_dn = ((theta_x[np.arange(Nx),tidn].T - theta_x[:,ti0].T)/dt_dn).T
-        L = 0.5*(L_up - L_dn)
-        print(f"Computed tendency at steady-state")
-        return Laa,Lab,Lba,Lbb,L,ti0
+        L = dict({})
+        for dirn in dirns:
+            qm_0 = comm_bwd_0*(dirn[0]=='a') + (1-comm_bwd_0)*(dirn[0]=='b') + np.ones(Nx)*(dirn[0]=="?")
+            qm_dn = comm_bwd_dn*(dirn[0]=='a') + (1-comm_bwd_dn)*(dirn[0]=='b') + np.ones(Nx)*(dirn[0]=='?')
+            qp_0 = comm_fwd_0*(dirn[1]=='b') + (1-comm_fwd_0)*(dirn[1]=='a') + np.ones(Nx)*(dirn[1]=='?')
+            qp_up = comm_fwd_up*(dirn[1]=='b') + (1-comm_fwd_up)*(dirn[1]=='a') + np.ones(Nx)*(dirn[1]=='?')
+            L_up = ((theta_x[np.arange(Nx),tiup].T * qp_up - theta_x[:,ti0].T * qp_0) * qm_0 / dt_up).T
+            L_dn = ((theta_x[np.arange(Nx),tidn].T * qm_dn - theta_x[:,ti0].T * qm_0) * qp_0 / dt_dn).T
+            L[dirn] = 0.5*(L_up - L_dn)
+        return L,ti0
+        ## A -> A
+        #Laa_up = ((theta_x[np.arange(Nx),tiup].T * (1-comm_fwd_up) - theta_x[:,ti0].T * (1-comm_fwd_0)) * comm_bwd_0 / dt_up).T 
+        #Laa_dn = ((theta_x[np.arange(Nx),tidn].T * comm_bwd_dn - theta_x[:,ti0].T * comm_bwd_0) * (1-comm_fwd_0) /dt_dn).T
+        #Laa = 0.5*(Laa_up - Laa_dn)
+        ##  A -> B
+        #Lab_up = ((theta_x[np.arange(Nx),tiup].T * comm_fwd_up - theta_x[:,ti0].T * comm_fwd_0) * comm_bwd_0 / dt_up).T 
+        #Lab_dn = ((theta_x[np.arange(Nx),tidn].T * comm_bwd_dn - theta_x[:,ti0].T * comm_bwd_0) * comm_fwd_0 /dt_dn).T
+        #Lab = 0.5*(Lab_up - Lab_dn)
+        ## B -> A
+        #Lba_up = ((theta_x[np.arange(Nx),tiup].T * (1-comm_fwd_up) - theta_x[:,ti0].T * (1-comm_fwd_0)) * (1-comm_bwd_0) / dt_up).T 
+        #Lba_dn = ((theta_x[np.arange(Nx),tidn].T * (1-comm_bwd_dn) - theta_x[:,ti0].T * (1-comm_bwd_0)) * (1-comm_fwd_0) /dt_dn).T
+        #Lba = 0.5*(Lba_up - Lba_dn)
+        ## B -> B
+        #Lbb_up = ((theta_x[np.arange(Nx),tiup].T * comm_fwd_up - theta_x[:,ti0].T * comm_fwd_0) * (1-comm_bwd_0) / dt_up).T 
+        #Lbb_dn = ((theta_x[np.arange(Nx),tidn].T * (1-comm_bwd_dn) - theta_x[:,ti0].T * (1-comm_bwd_0)) * comm_fwd_0 /dt_dn).T
+        #Lbb = 0.5*(Lbb_up - Lbb_dn)
+        #print(f"Computed tendency during transition")
+        ## Tendency at steady state 
+        #L_up = ((theta_x[np.arange(Nx),tiup].T - theta_x[:,ti0].T)/dt_up).T
+        #L_dn = ((theta_x[np.arange(Nx),tidn].T - theta_x[:,ti0].T)/dt_dn).T
+        #L = 0.5*(L_up - L_dn)
+        #print(f"Computed tendency at steady-state")
+        #return Laa,Lab,Lba,Lbb,L,ti0
     def project_current_new(self,model,data,theta_x,comm_bwd,comm_fwd):
         Nx,Nt,thdim = theta_x.shape
         xdim = data.X.shape[-1]
@@ -3722,73 +3732,79 @@ class TPT:
             min(1, max(0, qp_levels[i]-qp_tol_list[i])) + 
             min(1, max(0, qp_levels[i]+qp_tol_list[i])))) 
             for i in range(len(qp_levels))]
-        rflux_idx = []
+        qlevel_idx = []
         for qi in range(len(qp_levels)):
             qp_tol = qp_tol_list[qi]
-            ridx_qi = np.where(np.abs(comm_fwd - qp_levels[qi]) < qp_tol)[0]
-            rflux_idx += [ridx_qi]
+            idx_qi = np.where(np.abs(comm_fwd - qp_levels[qi]) < qp_tol)[0]
+            qlevel_idx += [idx_qi]
         funlib = model.observable_function_library()
         keys = ["enstproj","U","dqdyproj","dissproj","vqproj","dqdyproj_vqproj"]
-        dirns = ["aa","ab","ba","bb"]
-        dirn_colors = ["lightskyblue","orange","springgreen","red"]
-        tendency = dict({key: dict() for key in keys})
+        dirns = ["aa","ab","ba","bb","??"]
+        dirn_colors = {"aa": "lightskyblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
+        dirn_labels = {"aa": r"$A\to A$","ab": r"$A\to B$","ba": r"$B\to A$","bb": r"$B\to B$","??": r"Average"}
+        z = model.q['z_d'][1:-1]/1000
         for key in keys:
             theta_x = funlib[key]["fun"](X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,n))
-            tendency[key]["Laa"],tendency[key]["Lab"],tendency[key]["Lba"],tendency[key]["Lbb"],tendency[key]["L"],ti0 = self.tendency_during_transition(model,data,X,theta_x,comm_bwd,comm_fwd)
-            tendency[key]["theta"] = theta_x[:,ti0,:]
-            tendency[key]["xlim_snapshot"] = np.array([np.min(theta_x[:,ti0,:]), np.max(theta_x[:,ti0,:])])
-            tend_range = theta_x[:,ti0:,:] - theta_x[:,:Nt-ti0,:]
-            tendency[key]["xlim_tendency"] = np.array([np.min(tend_range),np.max(tend_range)])
-            xdot = model.drift_fun(X[:,ti0,:])
-            theta_up = funlib[key]["fun"](X[:,ti0,:] + model.dt_sim*xdot)
-            theta_dn = funlib[key]["fun"](X[:,ti0,:] - model.dt_sim*xdot)
-            tendency[key]["thetadot"] = (theta_up - theta_dn)/(2*model.dt_sim)
-            # Go through the committor levels now to compute limits on axis 
+            #tendency[key]["Laa"],tendency[key]["Lab"],tendency[key]["Lba"],tendency[key]["Lbb"],tendency[key]["L"],ti0 = self.tendency_during_transition(model,data,X,theta_x,comm_bwd,comm_fwd,dirns)
+            L,ti0 = self.tendency_during_transition(model,data,X,theta_x,comm_bwd,comm_fwd,dirns)
+            transdict = dict({})
+            transdict["tendency"] = dict()
+            for dirn in dirns:
+                transdict["tendency"][dirn] = np.zeros((len(qp_levels),n))
+            quantile_midranges = np.array([0.25,0.5,0.95])
+            transdict["snapshot"]  = dict({})
+            transdict["snapshot"]["quantiles"] = np.zeros((len(qp_levels),1+2*len(quantile_midranges),n))
+            transdict["tendency"]["xlim"] = np.array([np.inf,-np.inf])
+            transdict["snapshot"]["xlim"] = np.array([np.inf,-np.inf])
             for qi in range(len(qp_levels)):
-
-        for qi in range(len(qp_levels)):
-            print(f"Beginning to plot at committor level {qp_levels[qi]}")
-            #nnidx = np.where(np.any(np.isnan((tendency["U"]["Lab"])[rflux_idx[qi]]),axis=1)==0)[0]
-            idx = np.array(rflux_idx[qi]) #[nnidx]
-            weights_aa = chom[idx]/np.sum(chom[idx]*comm_bwd[idx,ti0]*(1-comm_fwd[idx,ti0])) 
-            weights_ab = chom[idx]/np.sum(chom[idx]*comm_bwd[idx,ti0]*comm_fwd[idx,ti0]) 
-            weights_ba = chom[idx]/np.sum(chom[idx]*(1-comm_bwd[idx,ti0])*(1-comm_fwd[idx,ti0])) 
-            weights_bb = chom[idx]/np.sum(chom[idx]*(1-comm_bwd[idx,ti0])*comm_fwd[idx,ti0]) 
-            weights = chom[idx]/np.sum(chom[idx])
-            print(f"sum weights = {np.sum(weights)}")
-            print(f"sum weights_ab = {np.sum(weights_ab)}")
-            for key in keys:
+                idx = np.array(qlevel_idx[qi]) 
+                for dirn in dirns:
+                    qm = comm_bwd[idx,ti0]*(dirn[0]=='a') + (1-comm_bwd[idx,ti0])*(dirn[0]=='b') + np.ones(len(idx))*(dirn[0]=='?')
+                    qp = comm_fwd[idx,ti0]*(dirn[1]=='b') + (1-comm_fwd[idx,ti0])*(dirn[1]=='a') + np.ones(len(idx))*(dirn[1]=='?')
+                    weights = chom[idx]/np.sum(chom[idx]*qm*qp) 
+                    transdict["tendency"][dirn][qi] = np.nansum((L[dirn][idx].T * weights).T, axis=0)
+                    transdict["tendency"]["xlim"][0] = min(transdict["tendency"]["xlim"][0],np.min(transdict["tendency"][dirn][qi]))
+                    transdict["tendency"]["xlim"][1] = max(transdict["tendency"]["xlim"][1],np.max(transdict["tendency"][dirn][qi]))
+                # Get the distribution for snapshots
+                weights = chom[idx]/np.sum(chom[idx])
+                transdict["snapshot"]["quantiles"][qi,len(quantile_midranges)] = np.nansum((theta_x[idx,ti0].T * weights).T, axis=0)
+                for zi in range(n):
+                    order = np.argsort(theta_x[idx,ti0,zi])
+                    cdf = np.cumsum(weights[order])
+                    for k in range(len(quantile_midranges)):
+                        alpha = (1 - quantile_midranges[k])/2
+                        transdict["snapshot"]["quantiles"][qi,2*k,zi] = theta_x[idx[order[np.where(cdf >= alpha)[0][0]]],ti0,zi]
+                        transdict["snapshot"]["quantiles"][qi,2*k+1,zi] = theta_x[idx[order[np.where(cdf >= 1-alpha)[0][0]]],ti0,zi]
+                    transdict["snapshot"]["quantiles"][qi,-1,zi] = theta_x[idx[order[np.where(cdf >= 0.5)[0][0]]],ti0,zi]
+                transdict["snapshot"]["xlim"][0] = min(transdict["snapshot"]["xlim"][0],np.min(transdict["snapshot"]["quantiles"][qi]))
+                transdict["snapshot"]["xlim"][1] = max(transdict["snapshot"]["xlim"][1],np.max(transdict["snapshot"]["quantiles"][qi]))
+            # Now plot them
+            for qi in range(len(qp_levels)):
                 fig,ax = plt.subplots(ncols=2,figsize=(12,6))
-                theta = np.nansum((tendency[key]["theta"][idx].T * weights).T, axis=0)
-                theta_std = np.sqrt(np.nansum((((tendency[key]["theta"][idx] - theta)**2).T * weights).T, axis=0))
-                Laa = np.nansum((tendency[key]["Laa"][idx].T * weights_aa).T, axis=0)
-                Lab = np.nansum((tendency[key]["Lab"][idx].T * weights_ab).T, axis=0)
-                Lba = np.nansum((tendency[key]["Lba"][idx].T * weights_ba).T, axis=0)
-                Lbb = np.nansum((tendency[key]["Lbb"][idx].T * weights_bb).T, axis=0)
-                L = np.nansum((tendency[key]["L"][idx].T * weights).T, axis=0)
-                Ldet = np.nansum((tendency[key]["thetadot"][idx].T * weights).T, axis=0)
-
-                ax[0].fill_betweenx(z, (theta-2*theta_std)*funlib[key]["units"],x2=(theta+2*theta_std)*funlib[key]["units"], color='gray')
-                h_th, = ax[0].plot(theta*funlib[key]["units"], z, color='black', linestyle='--',label="Snapshot")
-                h_L, = ax[1].plot((L)*funlib[key]["units"], z, color='black', label=r"Tendency")
-                h_Laa, = ax[1].plot((Laa)*funlib[key]["units"], z, color='lightskyblue', label=r"$A\to A$")
-                h_Lab, = ax[1].plot((Lab)*funlib[key]["units"], z, color='darkorange', label=r"$A\to B$")
-                h_Lba, = ax[1].plot((Lba)*funlib[key]["units"], z, color='springgreen', label=r"$B\to A$")
-                h_Lbb, = ax[1].plot((Lbb)*funlib[key]["units"], z, color='red', label=r"$B\to B$")
-                #h_Ldet, = ax.plot((theta+Ldet)*funlib[key]["units"], z, color='black', label=r"Deterministic tendency")
-                #ax[0].legend(handles=[h_th])
-                ax[1].legend(handles=[h_L,h_Laa,h_Lab,h_Lba,h_Lbb])
+                #ax[0].fill_betweenx(z, (theta-2*theta_std)*funlib[key]["units"],x2=(theta+2*theta_std)*funlib[key]["units"], color='gray')
+                handles = {"snapshot": [], "tendency": []}
+                for k in range(len(quantile_midranges)):
+                    ax[0].fill_betweenx(z, transdict["snapshot"]["quantiles"][qi,2*k]*funlib[key]["units"], x2=transdict["snapshot"]["quantiles"][qi,2*k+1]*funlib[key]["units"], color=plt.cm.binary(0.5*(1-k/len(quantile_midranges))), zorder=-1-k)
+                ax[0].plot(transdict["snapshot"]["quantiles"][qi,-1]*funlib[key]["units"], z, color='black')
+                #ax[0].plot(transdict["snapshot"]["quantiles"][qi,len(quantile_midranges)]*funlib[key]["units"], z, color='black')
+                # Now tendencies
+                for dirn in dirns:
+                    #if dirn == "??":
+                    #    h, = ax[0].plot(transdict["snapshot"][dirn][qi]*funlib[key]["units"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
+                    #    handles["snapshot"] += [h]
+                    h, = ax[1].plot(transdict["tendency"][dirn][qi]*funlib[key]["units"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
+                    handles["tendency"] += [h]
+                ax[0].set_xlim(transdict["snapshot"]["xlim"]*funlib[key]["units"])
+                ax[1].set_xlim(transdict["tendency"]["xlim"]*funlib[key]["units"])
+                ax[1].legend(handles=handles["tendency"])
                 ax[0].set_xlabel(r"%s [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
-                ax[1].set_xlabel(r"$E[\frac{\partial}{\partial t}$%s] [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
+                ax[1].set_xlabel(r"$E[\partial_t$%s] [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
                 ax[0].set_ylabel(r"$z$ [km]")
                 ax[1].set_ylabel(r"$z$ [km]")
                 ax[0].set_title(r"%s at %s"%(funlib[key]['name_english'],labels[qi]))
                 ax[1].set_title(r"%s tendencies at %s"%(funlib[key]['name_english'],labels[qi]))
-                #ax[0].set_xlim(tendency[key]["xlim_snapshot"]*funlib[key]["units"])
-                #ax[1].set_xlim(tendency[key]["xlim_tendency"]*funlib[key]["units"])
                 fig.savefig(join(self.savefolder,f"trans_state_profile_ABnormal_{key}_{qi}_Nx{Nx}"))
                 plt.close(fig)
-        z = model.q['z_d'][1:-1]/1000
         return
     def plot_transition_states_new(self,model,data):
         # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
