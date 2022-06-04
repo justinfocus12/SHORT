@@ -3724,7 +3724,7 @@ class TPT:
         chom = self.chom[ss]
         ramp = comm_fwd.reshape((Nx,Nt,1))
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        qp_levels = np.array([0.00,0.2,0.5,0.8,1.0])
+        qp_levels = np.array([0.00,0.2,0.5,0.8]) #,1.0])
         colors = np.array([plt.cm.coolwarm(qpl) for qpl in qp_levels])
         colors[np.abs(qp_levels - 0.5) < 0.01] = matplotlib.colors.to_rgba('orange')
         qp_tol_list = 0.1*np.ones(len(qp_levels))
@@ -3739,7 +3739,9 @@ class TPT:
             qlevel_idx += [idx_qi]
         funlib = model.observable_function_library()
         keys = ["enstproj","U","dqdyproj","dissproj","vqproj","dqdyproj_vqproj"]
-        dirns = ["aa","ab","ba","bb","??"]
+        #dirns = ["??","aa","ab","ba","bb"] #["aa","ab","ba","bb","??"]
+        dirns = ["??","ab"]
+        dirn_index = {"aa": 0, "ab": 1, "ba": 2, "bb": 3, "??": 4}
         dirn_colors = {"aa": "lightskyblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
         dirn_labels = {"aa": r"$A\to A$","ab": r"$A\to B$","ba": r"$B\to A$","bb": r"$B\to B$","??": r"Average"}
         z = model.q['z_d'][1:-1]/1000
@@ -3751,7 +3753,7 @@ class TPT:
             transdict["tendency"] = dict()
             for dirn in dirns:
                 transdict["tendency"][dirn] = np.zeros((len(qp_levels),n))
-            quantile_midranges = np.array([0.25,0.5,0.95])
+            quantile_midranges = np.array([0.25,0.5,0.90])
             transdict["snapshot"]  = dict({})
             transdict["snapshot"]["quantiles"] = np.zeros((len(qp_levels),1+2*len(quantile_midranges),n))
             transdict["tendency"]["xlim"] = np.array([np.inf,-np.inf])
@@ -3794,16 +3796,19 @@ class TPT:
                     #    handles["snapshot"] += [h]
                     h, = ax[1].plot(transdict["tendency"][dirn][qi]*funlib[key]["units"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
                     handles["tendency"] += [h]
-                ax[0].set_xlim(transdict["snapshot"]["xlim"]*funlib[key]["units"])
-                ax[1].set_xlim(transdict["tendency"]["xlim"]*funlib[key]["units"])
+                #ax[0].set_xlim(transdict["snapshot"]["xlim"]*funlib[key]["units"])
+                #ax[1].set_xlim(transdict["tendency"]["xlim"]*funlib[key]["units"])
+                ax[1].axvline(0,linestyle='--',color='gray')
                 ax[1].legend(handles=handles["tendency"])
                 ax[0].set_xlabel(r"%s [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
-                ax[1].set_xlabel(r"$E[\partial_t$%s] [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
+                ax[1].set_xlabel(r"$E\partial_t$[%s day$^{-1}$] [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
                 ax[0].set_ylabel(r"$z$ [km]")
                 ax[1].set_ylabel(r"$z$ [km]")
                 ax[0].set_title(r"%s at %s"%(funlib[key]['name_english'],labels[qi]))
                 ax[1].set_title(r"%s tendencies at %s"%(funlib[key]['name_english'],labels[qi]))
-                fig.savefig(join(self.savefolder,f"trans_state_profile_ABnormal_{key}_{qi}_Nx{Nx}"))
+                dirn_combo = np.sort([dirn_index[dirn] for dirn in dirns])
+                dirn_combo_str = "".join([str(index) for index in dirn_combo])
+                fig.savefig(join(self.savefolder,f"trans_state_profile_{dirn_combo_str}_{key}_{qi}_Nx{Nx}"))
                 plt.close(fig)
         return
     def plot_transition_states_new(self,model,data):
