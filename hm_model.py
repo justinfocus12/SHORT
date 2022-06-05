@@ -607,6 +607,13 @@ class HoltonMassModel(Model):
         #qpsq += 1/q['Gsq']**2 * (X2**2 + Y2**2 - 2*(X1*X2 + Y1*Y2) + X1**2 + Y1**2)
         #qpsq *= 0.5*17/35
         return enstrophy
+    def wave_activity_projected(self,x):
+        Qsq = self.eddy_enstrophy_projected(x)
+        dqdy = self.background_pv_gradient_projected(x)
+        eps = 1e-10
+        wa = Qsq / (dqdy + 1*(np.abs(dqdy) < eps))
+        wa[np.abs(dqdy)<eps] = np.nan
+        return wa
     def meridional_heat_flux(self,x):
         q = self.q
         # Compute the meridional heat flux, perhaps of the whole timeseries
@@ -1055,6 +1062,7 @@ class HoltonMassModel(Model):
                  "name": r"$\overline{v'T'}$",
                  "units": q['H']*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"K$\cdot$m/s",
+                 "name_english": "Heat flux",
                  },
                 "vT21p5": 
                 {"fun": lambda X: self.meridional_heat_flux(X)[:,zlevel(21.5)],
@@ -1164,6 +1172,13 @@ class HoltonMassModel(Model):
                 "unit_symbol": "s$^{-3}$",
                 "name_english": "Meridional PV advection",
                }
+        funs["waveactproj"] = {
+                "fun": lambda X: self.wave_activity_projected(X),
+                "name": r"$\overline{q'^2}/(2\partial_y\overline{q})$",
+                "units": funs["enstproj"]["units"]/funs["dqdyproj"]["units"],
+                "unit_symbol": "m/s",
+                "name_english": "Wave activity",
+                }
         return funs
     def plot_snapshot(self,xt,suffix=""):
         q = self.q
