@@ -2825,9 +2825,9 @@ class TPT:
             L_dn = ((theta_x[np.arange(Nx),tidn].T * qm_dn - theta_x[:,ti0].T * qm_0) * qp_0 / dt_dn).T
             L[dirn] = 0.5*(L_up - L_dn)
         # Also compute the deterministic tendency
-        xdot = model.drift_fun(X)
-        L["deterministic"] = (theta_fun(X + model.dt_sim*xdot) - theta_fun(X - model.dt_sim*xdot))/(2*model.dt_sim)
-        return L,ti0
+        xdot = model.drift_fun(X[:,ti0])
+        L["deterministic"] = (theta_fun(X[:,ti0] + model.dt_sim*xdot) - theta_fun(X[:,ti0] - model.dt_sim*xdot))/(2*model.dt_sim)
+        return L,theta_x,ti0
         ## A -> A
         #Laa_up = ((theta_x[np.arange(Nx),tiup].T * (1-comm_fwd_up) - theta_x[:,ti0].T * (1-comm_fwd_0)) * comm_bwd_0 / dt_up).T 
         #Laa_dn = ((theta_x[np.arange(Nx),tidn].T * comm_bwd_dn - theta_x[:,ti0].T * comm_bwd_0) * (1-comm_fwd_0) /dt_dn).T
@@ -3730,7 +3730,7 @@ class TPT:
         chom = self.chom[ss]
         ramp = comm_fwd.reshape((Nx,Nt,1))
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        qp_levels = np.array([0.00,0.2,0.5,0.8]) #,1.0])
+        qp_levels = np.array([0.00,0.2,0.5,0.8,1.0])
         colors = np.array([plt.cm.coolwarm(qpl) for qpl in qp_levels])
         colors[np.abs(qp_levels - 0.5) < 0.01] = matplotlib.colors.to_rgba('orange')
         qp_tol_list = 0.1*np.ones(len(qp_levels))
@@ -3751,18 +3751,24 @@ class TPT:
         dirn_colors = {"aa": "lightskyblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
         dirn_labels = {"aa": r"$A\to A$","ab": r"$A\to B$","ba": r"$B\to A$","bb": r"$B\to B$","??": r"Average"}
         # ----------------- Compute least-action tendencies at each committor level ----------------------
-        lap = dict({
-            "ab": dict({
-                "x": load(join(self.physical_param_folder,"xmin_dirn1.npy")),
-                "t": load(join(self.physical_param_folder,"tmin_dirn1.npy")),
-                }),
-            "ba": dict({
-                "x": load(join(self.physical_param_folder,"xmin_dirn-1.npy")),
-                "t": load(join(self.physical_param_folder,"tmin_dirn-1.npy")),
-                }),
-            })
+        print(f"Starting least-action tendencies")
+        lap = dict({})
         for dirn in ["ab","ba"]:
-            lap[dirn]["comm_fwd"] = self.out_of_sample_extension(self.dam_moments['one']['xb'][0,:,:],data,lap[dirn]["x"])[ss]
+            lap[dirn] = dict({})
+            dirn_int = 1*(dirn=="ab") - 1*(dirn=="ba")
+            xlap = load(join(self.physical_param_folder,f"xmin_dirn{dirn_int}.npy"))
+            tlap = load(join(self.physical_param_folder,f"tmin_dirn{dirn_int}.npy"))
+            print(f"xlap.shape = {xlap.shape}")
+            print(f"tlap.shape = {tlap.shape}")
+            Ntlap = len(tlap)
+            xlap = xlap[np.linspace(0,Ntlap-1,100).astype(int)]
+            tlap = tlap[np.linspace(0,Ntlap-1,100).astype(int)]
+            lap[dirn]["x"] = xlap
+            lap[dirn]["t"] = tlap
+        for dirn in ["ab","ba"]:
+            print(f"Starting out-of-sample extension for lap ({dirn})")
+            lap[dirn]["comm_fwd"] = self.out_of_sample_extension(self.dam_moments['one']['xb'][0,:,0],data,lap[dirn]["x"])
+            print(f"Finished out-of-sample extension for lap ({dirn})")
             qlevel_idx_lap = []
             for qi in range(len(qp_levels)):
                 qp_tol = qp_tol_list[qi]
@@ -3771,13 +3777,14 @@ class TPT:
             lap[dirn]["qlevel_idx"] = qlevel_idx_lap
             for key in keys:
                 theta_lap = funlib[key]["fun"](lap[dirn]["x"])
+                print(f"For key {key}, theta_lap.shape = {theta_lap.shape}")
                 tendency_lap = np.zeros(theta_lap.shape)
-                tendency_lap[1:-1] = (theta_lap[2:] - theta_lap[:-2])/(lap[dirn]["t"][2:] - lap[dirn]["t"][:-2])
+                tendency_lap[1:-1] = ((theta_lap[2:] - theta_lap[:-2]).T /(lap[dirn]["t"][2:] - lap[dirn]["t"][:-2])).T
                 tendency_lap[0] = (theta_lap[1] - theta_lap[0])/(lap[dirn]["t"][1] - lap[dirn]["t"][0])
                 tendency_lap[-1] = (theta_lap[-1] - theta_lap[-2])/(lap[dirn]["t"][-1] - lap[dirn]["t"][-2])
                 lap[dirn][key] = np.zeros((len(qp_levels),n))
                 for qi in range(len(qp_levels)):
-                    lap[dirn][key][qi] = np.mean(tendency_lap[lap[dirn]["qlevel_idx"][qi]], axis=0)
+                    lap[dirn][key][qi] = np.nanmean(tendency_lap[lap[dirn]["qlevel_idx"][qi]], axis=0)
         # --------------------------------------------
         z = model.q['z_d'][1:-1]/1000
         for key in keys:
@@ -3800,6 +3807,9 @@ class TPT:
                     transdict["tendency"][dirn][qi] = np.nansum((L[dirn][idx].T * weights).T, axis=0)
                     transdict["tendency"]["xlim"][0] = min(transdict["tendency"]["xlim"][0],np.min(transdict["tendency"][dirn][qi]))
                     transdict["tendency"]["xlim"][1] = max(transdict["tendency"]["xlim"][1],np.max(transdict["tendency"][dirn][qi]))
+                    if dirn in lap.keys():
+                        transdict["tendency"]["xlim"][0] = min(transdict["tendency"]["xlim"][0], np.min(lap[dirn][key][qi]))
+                        transdict["tendency"]["xlim"][1] = max(transdict["tendency"]["xlim"][1], np.max(lap[dirn][key][qi]))
                 # Get the distribution for snapshots
                 weights = chom[idx]/np.sum(chom[idx])
                 transdict["snapshot"]["quantiles"][qi,len(quantile_midranges)] = np.nansum((theta_x[idx,ti0].T * weights).T, axis=0)
@@ -3830,14 +3840,14 @@ class TPT:
                     h, = ax[1].plot(transdict["tendency"][dirn][qi]*funlib[key]["units"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
                     handles["tendency"] += [h]
                     if dirn in lap.keys():
-                        h, = ax[1].plot(lap[dirn][key][qi]*funlib[key]["units"], z, color="purple", label=r"Min. Act.")
+                        h, = ax[1].plot(lap[dirn][key][qi]*funlib[key]["units"], z, color="cyan", label=r"Min-action")
                         handles["tendency"] += [h]
                 #ax[0].set_xlim(transdict["snapshot"]["xlim"]*funlib[key]["units"])
                 #ax[1].set_xlim(transdict["tendency"]["xlim"]*funlib[key]["units"])
                 ax[1].axvline(0,linestyle='--',color='gray')
                 ax[1].legend(handles=handles["tendency"])
                 ax[0].set_xlabel(r"%s [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
-                ax[1].set_xlabel(r"$E\partial_t$[%s day$^{-1}$] [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
+                ax[1].set_xlabel(r"$E\partial_t$(%s) [%s day$^{-1}$]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
                 ax[0].set_ylabel(r"$z$ [km]")
                 ax[1].set_ylabel(r"$z$ [km]")
                 ax[0].set_title(r"%s at %s"%(funlib[key]['name_english'],labels[qi]))
