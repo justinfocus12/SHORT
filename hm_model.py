@@ -205,7 +205,7 @@ class HoltonMassModel(Model):
         rhs[:,n:2*n] += q['k']*q['eps']*X*((q['k']**2*q['Gsq']+0.25)*U - Uz + Uzz)
         rhs[:,n:2*n] += -q['k']*q['eps']*Xzz*U
         # U
-        rhs[:,2*n:3*n] = ((q['alpha_z'][1:-1]-q['alpha'][1:-1])*q['UR_z'][1:-1]) 
+        rhs[:,2*n:3*n] = ((q['alpha_z'][1:-1]-q['alpha'][1:-1])*q['UR_z'][1:-1]) + q['alpha'][1:-1]*q['UR_zz'][1:-1] 
         rhs[:,2*n:3*n] += -(q['alpha_z'][1:-1]-q['alpha'][1:-1])*Uz - q['alpha'][1:-1]*Uzz
         rhs[:,2*n:3*n] += q['eps']*q['k']*q['l']**2/2*np.exp(q['z'][1:-1])*(-X*Yzz + Y*Xzz)
         # Now invert the Laplacian on the left
@@ -661,6 +661,18 @@ class HoltonMassModel(Model):
         for i in range(1,n):
             ivt[:,i] = ivt[:,i-1] + 0.5*(heat_flux[:,i] + heat_flux[:,i+1])*q['dz']
         return ivt
+    def wind_relaxation_projected(self,x):
+        q = self.q
+        n = q['Nz']-1
+        Nt = len(x)
+        U = x[:,2*n:]
+        U_upper = 1.0/3*(4*U[:,-1] - U[:,-2] + 2*q['dz']*q['UR_z'][-1])
+        Uz = first_derivative(U,q['UR_0'],U_upper,q['dz'])
+        Uzz = second_derivative(U,q['UR_0'],U_upper,q['dz'])
+        a,az = q['alpha'][1:-1],q['alpha_z'][1:-1]
+        relax = (az-a)*(Uz - q['UR_z'][1:-1]) + a*(Uzz - q['UR_zz'][1:-1])
+        print(f"relax.shape = {relax.shape}")
+        return relax
     def background_pv_gradient_projected(self,x):
         q = self.q
         n = q['Nz']-1
@@ -1015,11 +1027,12 @@ class HoltonMassModel(Model):
                  "units": q['length']**2/(q['H']**2*q['time']),
                  "unit_symbol": r"$s^{-1}$",
                  },
-                "vTint": 
-                {"fun": lambda X: self.integrated_meridional_heat_flux(X),
-                 "name": r"IHF$(z)$", #"$\int_{0}^{z}e^{-z/H}\overline{v'T'}dz$",
-                 "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
-                 "unit_symbol": r"K$\cdot$m$^2/$s",
+                "vTint": {
+                        "fun": lambda X: self.integrated_meridional_heat_flux(X),
+                        "name": r"IHF$(z)$", #"$\int_{0}^{z}e^{-z/H}\overline{v'T'}dz$",
+                        "units": q['H']**2*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
+                        "unit_symbol": r"K$\cdot$m$^2/$s",
+                        "name_english": "Integrated heat flux",
                  },
                 "vTint13p5": 
                 {"fun": lambda X: self.integrated_meridional_heat_flux(X)[:,zlevel(13.5)],
@@ -1163,7 +1176,16 @@ class HoltonMassModel(Model):
                         "name": r"$\frac{1}{2}\partial_t\overline{q'^2}$ inferred",
                         "units": 1/q["Gsq"]**2*1/q["time"]**3,
                         "unit_symbol": r"s$^{-3}$",
+                        "name_english": r"Inferred enstrophy tendency"
                         },
+                "relaxproj": {
+                        "fun": lambda X: self.wind_relaxation_projected(X),
+                        "name": r"$\rho^{-1}\partial_z[\rho\alpha(U^R-U)_z]$",
+                        "units": 1/q["Gsq"]*1/(q['length']*q['time']**2),
+                        "unit_symbol": r"m$^{-1}$s$^{-2}$",
+                        "name_english": r"Thermal damping",
+                        },
+
             }
         funs["dqdyproj_vqproj"] = {
                 "fun": lambda X: funs["dqdyproj"]["fun"](X)*funs["vqproj"]["fun"](X),
