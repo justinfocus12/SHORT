@@ -52,8 +52,8 @@ compute_tpt_flag =      0
 
 plot_trans_2d_flag =    0
 plot_long_2d_flag =     0
-display_cast_flag =     0
-display_current_flag =  0
+display_cast_flag =     1
+display_current_flag =  1
 lifecycle_flag =        0
 gen_rates_flag =        0
 plot_long_1d_flag =     0
@@ -175,13 +175,13 @@ if plot_long_2d_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["grpvsq_ref","enstproj_ref"],["grpvsq_ref_sqrt","enstproj_ref_sqrt"],["grpvsq_plus_enstrophy_ref","grpvsq_enstproj_angle_ref"],][2:] #,["vTintref","Uref"],]
+    theta_2d_abbs = [["gramps_ref","enstproj_ref"],["gramps_ref_sqrt","enstproj_ref_sqrt"],["gramps_plus_enstrophy_ref","gramps_enstproj_angle_ref"],][1:2] #,["vTintref","Uref"],]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:
             tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
         if display_current_flag:
-            tpt.display_2d_currents(model,data,theta_2d_abbs)
+            tpt.display_2d_currents(model,data,theta_2d_abbs[i:i+1])
 # --------------------------------------------------------
 
 # ----------- Display lifecycle correlations -----------

@@ -1203,24 +1203,24 @@ class HoltonMassModel(Model):
                  },
                 "dissproj": {
                         "fun": lambda X: self.dissipation_projected(X),
-                        "name": r"$D_{\mathcal{E}}$", #r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
+                        "name": r"$D$", #r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
                         "units": 1/q["Gsq"]**2*1/q["time"]**3,
                         "unit_symbol": "s$^{-3}$",
                         "name_english": "Eddy enstrophy dissipation",
                  },
                 "ensttend": {
                         "fun": lambda X: self.dissipation_projected(X) - self.meridional_pv_flux_projected(X)*self.background_pv_gradient_projected(X),
-                        "name": r"$\frac{1}{2}\partial_t$%s inferred"%(funs["enstproj"]["name"]),
+                        "name": r"$\partial_t\mathcal{E}$ inferred",
                         "units": 1/q["Gsq"]**2*1/q["time"]**3,
                         "unit_symbol": r"s$^{-3}$",
                         "name_english": r"Inferred enstrophy tendency"
                         },
                 "relaxproj": {
                         "fun": lambda X: self.wind_relaxation_projected(X),
-                        "name": r"$D_{\beta_e}$", #r"$\rho^{-1}\partial_z[\rho\alpha(U - U^R)_z]$",
+                        "name": r"$\frac{\epsilon\ell^2}{2}R$", #r"$\rho^{-1}\partial_z[\rho\alpha(U - U^R)_z]$",
                         "units": 1/q["Gsq"]*1/(q['length']*q['time']**2),
                         "unit_symbol": r"m$^{-1}$s$^{-2}$",
-                        "name_english": r"Thermal damping",
+                        "name_english": r"Relaxation of GRAMPS",
                         },
 
             }
@@ -1240,14 +1240,14 @@ class HoltonMassModel(Model):
                 }
         funs["gramps"] = {
                 "fun": lambda X: funs["dqdyproj"]["fun"](X)**2/(q['eps']*q['l'])**2, 
-                "name": r"$(\epsilon\ell)^{-2}$%s$^2$"%(funs["dqdyproj"]["name"]),
+                "name": r"$\Gamma$",
                 "units": 1/q["Gsq"]**2 * 1/q["time"]**2, 
                 "unit_symbol": r"s$^{-2}$",
                 "name_english": "GRAMPS",
                 }
-        funs["gramps_relax"] = {
+        funs["gramps_relax_times_dqdy"] = {
                 "fun": lambda X: funs["relaxproj"]["fun"](X)*funs["dqdyproj"]["fun"](X)*2/(q['eps']*q['l']**2),
-                "name": r"$2\epsilon^{-1}\ell^{-2}$%s%s"%(funs["relaxproj"]["name"],funs["dqdyproj"]["name"]),
+                "name": r"R%s"%(funs["dqdyproj"]["name"]),
                 "units": q["length"]**2*funs["relaxproj"]["units"]*funs["dqdyproj"]["units"],
                 "unit_symbol": "s$^{-3}$",
                 "name_english": "GRAMPS relaxation",
@@ -1257,7 +1257,7 @@ class HoltonMassModel(Model):
                 "name": "%s$+$%s"%(funs["gramps"]["name"],funs["enstproj"]["name"]),
                 "units": funs["enstproj"]["units"],
                 "unit_symbol": "s$^{-2}$",
-                "name_english": "Enstrophy + GRAMPS",
+                "name_english": "%s + %s"%(funs["gramps"]["name_english"],funs["enstproj"]["name_english"]),
                 }
         funs["gramps_plus_enstrophy_ref"] = {
                 "fun": lambda X: (funs["gramps"]["fun"](X)[:,q['zi']] + funs["enstproj"]["fun"](X)[:,q['zi']]),
@@ -1266,13 +1266,13 @@ class HoltonMassModel(Model):
                 "unit_symbol": "s$^{-2}$",
                 "name_english": "Enstrophy + GRAMPS at $z=30$ km",
                 }
-        # --------- GRPVSQ stuff -------------
+        # --------- GRAMPS stuff -------------
         funs["gramps_sqrt"] = {
                 "fun": lambda X: np.sqrt(funs["gramps"]["fun"](X)),
-                "name": r"$(\epsilon\ell)^{-1}\beta_e$",
+                "name": r"%s$^{1/2}$"%(funs["gramps"]["name"]),
                 "units": np.sqrt(funs["gramps"]["units"]),
                 "unit_symbol": r"s$^{-1}$",
-                "name_english": "PV grad. mag.",
+                "name_english": "%s$^{1/2}$"%(funs["gramps"]["name_english"]),
                 }
         funs["gramps_ref"] = {
                 "fun": lambda X: funs["gramps"]["fun"](X)[:,q['zi']],
@@ -1293,12 +1293,12 @@ class HoltonMassModel(Model):
                 "name": r"$\int e^{-z/H}$%s$dz$"%(funs["gramps"]["name"]),
                 "units": funs["gramps"]["units"]*q["H"],
                 "unit_symbol": "%s m"%(funs["gramps"]["unit_symbol"]),
-                "name_english": "Integrated GPRVSQ",
+                "name_english": "Integrated GRAMPS",
                 }
         # --------- Enstrophy stuff -------------
         funs["enstproj_sqrt"] = {
                 "fun": lambda X: np.sqrt(funs["enstproj"]["fun"](X)),
-                "name": r"$\sqrt{\overline{q'^2}/2}$",
+                "name": r"%s$^{1/2}$"%(funs["enstproj"]["name"]),
                 "units": np.sqrt(funs["enstproj"]["units"]),
                 "unit_symbol": r"s$^{-1}$",
                 "name_english": "Enstrophy$^{1/2}$",
@@ -1330,14 +1330,14 @@ class HoltonMassModel(Model):
                 "name": r"ang(%s,%s) (30 km)"%(funs["gramps_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
                 "units": 1.0, 
                 "unit_symbol": "radians",
-                "name_english": "Enstrophy-GRPVSQ angle",
+                "name_english": "Enstrophy-GRAMPS angle",
                 }
         funs["gramps_enstproj_angle_ref"] = {
                 "fun": lambda X: np.arctan2(funs["enstproj_ref_sqrt"]["fun"](X), funs["gramps_ref_sqrt"]["fun"](X)),
                 "name": r"ang(%s,%s) (30 km)"%(funs["gramps_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
                 "units": 1.0, 
                 "unit_symbol": "radians",
-                "name_english": "Enstrophy-GRPVSQ angle (30 km)",
+                "name_english": "Enstrophy-GRAMPS angle (30 km)",
                 }
         return funs
     def plot_snapshot(self,xt,suffix=""):

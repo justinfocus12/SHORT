@@ -1800,7 +1800,9 @@ class TPT:
         funlib = model.observable_function_library()
         Nx,Nt,xdim = data.X.shape
         ss = np.random.choice(np.arange(Nx), size=100000, replace=False)
-        keys = list(model.dam_dict.keys())
+        keys = ["one"] #list(model.dam_dict.keys())
+        if keys[0] not in model.dam_dict.keys():
+            raise Exception(f"You asked for keys {keys}, but you have to choose from {model.dam_dict.keys()}")
         num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
         phase_flags = {'ab': True, 'ba': False, 'xa': False, 'xb': True, 'ax': True, 'bx': False}
         for i in range(len(theta_2d_abbs)):
@@ -1836,13 +1838,13 @@ class TPT:
                 else:
                     vmin,vmax = -np.inf,np.inf
                 # Plot the actual function first
-                field = field_units*model.dam_dict[keys[k]]['pay'](data.X[:,0]).reshape(-1,1)
-                fieldname = model.dam_dict[keys[k]]['name']
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=None,comm_fwd=None,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
-                fsuff = '%s_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
-                plt.close(fig)
-                for j in range(min(3,self.num_moments)):
+                #field = field_units*model.dam_dict[keys[k]]['pay'](data.X[:,0]).reshape(-1,1)
+                #fieldname = model.dam_dict[keys[k]]['name']
+                #fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=None,comm_fwd=None,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
+                #fsuff = '%s_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],theta_2d_abbs[i][0],theta_2d_abbs[i][1])
+                #fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
+                #plt.close(fig)
+                for j in range(min(2,self.num_moments)):
                     # A->B
                     if phase_flags['ab']:
                         comm_bwd = self.dam_moments[keys[k]]['ax'][0]
@@ -1869,14 +1871,6 @@ class TPT:
                         fsuff = 'cast_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
-                        # Now plot divided by time
-                        if j == 1 and keys[k] != 'one':
-                            fieldname = r"$E_x[%s|A\to B]/E_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
-                            field = field/(self.dam_moments['one']['ab'][1])
-                            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
-                            fsuff = 'castpertime_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                            fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
-                            plt.close(fig)
                     # ---------------------------------
                     # B->A
                     if phase_flags['ba']:
@@ -1905,14 +1899,6 @@ class TPT:
                         fsuff = 'cast_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
-                        # Now plot divided by time
-                        if j == 1 and keys[k] != 'one':
-                            fieldname = r"$E_x[%s|B\to A]/E_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
-                            field = field/(self.dam_moments['one']['ba'][1])
-                            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
-                            fsuff = 'castpertime_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
-                            fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
-                            plt.close(fig)
                     # x->B
                     if phase_flags['xb']:
                         comm_fwd = self.dam_moments[keys[k]]['xb'][0]
@@ -3696,7 +3682,13 @@ class TPT:
         #plt.close(fig)
         return fig,ax
     def plot_transition_states_ensttend(self,model,data,xlim_flag=True,lap_flag=True):
-        # Plot the enstrophy tendency according to (1) deterministic model, (2) steady-state current, (3) reactive current
+        # ----- Determine what to compute and plot ---------
+        compute_lap_flag =                  0
+        compute_transdict_flag =            0
+        plot_profile_transdict_flag =       1
+        plot_timeseries_transdict_flag =    0
+        plot_analysis_transdict_flag =      1
+        # -----------------------------------------------
         # Take a subset
         ss = np.random.choice(np.arange(data.X.shape[0]),size=30000,replace=False)
         #ss = np.arange(data.X.shape[0])
@@ -3723,18 +3715,12 @@ class TPT:
             idx_qi = np.where(np.abs(comm_fwd - qp_levels[qi]) < qp_tol)[0]
             qlevel_idx += [idx_qi]
         funlib = model.observable_function_library()
-        #keys = ["grpvsq_enstproj_angle","grpvsq","grpvsq_relax","grpvsq_plus_enstrophy","relaxproj","dqdyproj","vqproj","enstproj","U","dissproj","dqdyproj_vqproj","vTint"]
-        keys = ["grpvsq_plus_enstrophy","grpvsq","enstproj","grpvsq_relax","dqdyproj_vqproj","dissproj"]
+        #keys = ["gramps_enstproj_angle","gramps","gramps_relax_times_dqdy","gramps_plus_enstrophy","relaxproj","dqdyproj","vqproj","enstproj","U","dissproj","dqdyproj_vqproj","vTint"]
+        keys = ["gramps_plus_enstrophy","gramps","enstproj","gramps_relax_times_dqdy","dqdyproj_vqproj","dissproj"]
         #dirns = ["aa","ab","ba","bb","??"]
         dirn_index = {"aa": 0, "ab": 1, "ba": 2, "bb": 3, "??": 4}
         dirn_colors = {"aa": "dodgerblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
         dirn_labels = {"aa": r"$A\to A$","ab": r"$A\to B$","ba": r"$B\to A$","bb": r"$B\to B$","??": r"Average"}
-        # ----- Determine what to compute and plot ---------
-        compute_lap_flag = False 
-        compute_transdict_flag = False 
-        plot_profile_transdict_flag = False
-        plot_timeseries_transdict_flag = False
-        plot_analysis_transdict_flag = True
         # ----------------- Compute least-action tendencies at each committor level ----------------------
         if not (compute_lap_flag):
             lap = pickle.load(open(join(self.savefolder,"trans_lap"),"rb"))
@@ -3778,11 +3764,12 @@ class TPT:
         # --------------------------------------------
         # -------------- Compute stochastic and deterministic tendencies ---------------
         z = model.q['z_d'][1:-1]/1000
-        quantile_midranges = np.array([])
         if (not compute_transdict_flag):
             transdict = pickle.load(open(join(self.savefolder,"transdict"),"rb"))
+            quantile_midranges = transdict["quantile_midranges"]
         else:
-            transdict = dict({})
+            quantile_midranges = np.array([0.25,0.5,0.9])
+            transdict = dict({"quantile_midranges": quantile_midranges})
             for key in keys:
                 print(f"---------Starting tendency calculations for {key}------------")
                 L,theta_x,ti0 = self.tendency_during_transition(model,data,X,funlib[key]["fun"],comm_bwd,comm_fwd,dirns)
@@ -3927,67 +3914,73 @@ class TPT:
             # 1. Enstrophy + GRPVSQ vs. time; its tendency; contributions to its tendency from dissipation and relaxation
             for dirn in ["ab"]:
                 fig,ax = plt.subplots(nrows=2, ncols=3, figsize=(18,12), sharex=True, sharey="row")
-                # Column 0: plot the enstrophy + grpvsq 
-                y0 = transdict["grpvsq_plus_enstrophy"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["grpvsq_plus_enstrophy"]["units"]
-                Ly0 = transdict["grpvsq_plus_enstrophy"]["tendency"]["stochastic"][dirn][:,q['zi']]*funlib["grpvsq_plus_enstrophy"]["units"]/q["time"]
-                y0dot = transdict["grpvsq_plus_enstrophy"]["tendency"]["deterministic"][dirn][:,q['zi']]*funlib["grpvsq_plus_enstrophy"]["units"]/q["time"]
-                y1 = transdict["grpvsq_relax"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["grpvsq_relax"]["units"]
+                # Column 0: plot the enstrophy + gramps 
+                y0 = transdict["gramps_plus_enstrophy"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["gramps_plus_enstrophy"]["units"]
+                Ly0 = transdict["gramps_plus_enstrophy"]["tendency"]["stochastic"][dirn][:,q['zi']]*funlib["gramps_plus_enstrophy"]["units"]/q["time"]
+                y0dot = transdict["gramps_plus_enstrophy"]["tendency"]["deterministic"][dirn][:,q['zi']]*funlib["gramps_plus_enstrophy"]["units"]/q["time"]
+                y1 = transdict["gramps_relax_times_dqdy"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["gramps_relax_times_dqdy"]["units"]
                 y2 = transdict["dissproj"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["dissproj"]["units"]
-                handles = []
-                h, = ax[0,0].plot(qp_levels, y0, color='orange', label=funlib["grpvsq_plus_enstrophy"]["name"])
-                handles += [h]
-                ax[1,0].plot(qp_levels, Ly0, color='orange', linestyle='-')
-                ax[1,0].plot(qp_levels, y0dot, color='orange', linestyle='--')
-                h, = ax[1,0].plot(qp_levels, y1, color="purple", label=funlib["grpvsq_relax"]["name"]) 
-                handles += [h]
-                h, = ax[1,0].plot(qp_levels, y2, color='red', linestyle='-', label=r"$D$")
+                h_y0, = ax[0,0].plot(qp_levels, y0, color='darkorange', label=funlib["gramps_plus_enstrophy"]["name"])
+                for k in range(len(quantile_midranges)):
+                    ylohi = transdict["gramps_plus_enstrophy"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,q['zi']] * funlib["gramps_plus_enstrophy"]["units"]
+                    ax[0,0].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
+                h_Ly0, = ax[1,0].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}$[%s] (stochastic)"%(funlib["gramps_plus_enstrophy"]["name"]))
+                h_y0dot, = ax[1,0].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s] (deterministic)"%(funlib["gramps_plus_enstrophy"]["name"]))
+                h_y1, = ax[1,0].plot(qp_levels, y1, color="purple", label=funlib["gramps_relax_times_dqdy"]["name"]) 
+                h_y2, = ax[1,0].plot(qp_levels, y2, color='red', linestyle='-', label=funlib["dissproj"]["name"])
                 ax[1,0].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
-                handles += [h]
-                ax[0,0].legend(handles=handles)
-                ax[0,0].set_title(r"%s"%(funlib["grpvsq_plus_enstrophy"]["name"]))
-                # Column 1: plot the grpvsq
-                handles = []
-                y0 = transdict["grpvsq"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["grpvsq"]["units"]
-                Ly0 = transdict["grpvsq"]["tendency"]["stochastic"][dirn][:,q['zi']]*funlib["grpvsq"]["units"]/q["time"]
-                y0dot = transdict["grpvsq"]["tendency"]["deterministic"][dirn][:,q['zi']]*funlib["grpvsq"]["units"]/q["time"]
-                y1 = transdict["grpvsq_relax"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["grpvsq_relax"]["units"]
+                ax[0,0].legend(handles=[h_y0])
+                ax[1,0].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2])
+                ax[0,0].set_title(r"%s"%(funlib["gramps_plus_enstrophy"]["name_english"]))
+                ax[1,0].set_title(r"%s tendency"%(funlib["gramps_plus_enstrophy"]["name_english"]))
+                # Column 1: plot the gramps
+                y0 = transdict["gramps"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["gramps"]["units"]
+                Ly0 = transdict["gramps"]["tendency"]["stochastic"][dirn][:,q['zi']]*funlib["gramps"]["units"]/q["time"]
+                y0dot = transdict["gramps"]["tendency"]["deterministic"][dirn][:,q['zi']]*funlib["gramps"]["units"]/q["time"]
+                y1 = transdict["gramps_relax_times_dqdy"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["gramps_relax_times_dqdy"]["units"]
                 y2 = transdict["dqdyproj_vqproj"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["dqdyproj_vqproj"]["units"]
-                h, = ax[0,1].plot(qp_levels, y0, color='orange', label=r"$\frac{\Gamma^2}{\epsilon^2\ell^2}$")
-                handles += [h]
-                ax[1,1].plot(qp_levels, Ly0, color='orange', linestyle='-')
-                ax[1,1].plot(qp_levels, y0dot, color='orange', linestyle='--')
-                h, = ax[1,1].plot(qp_levels, y1, color="purple", label=funlib["grpvsq_relax"]["name"]) 
-                handles += [h]
-                h, = ax[1,1].plot(qp_levels, y2, color='cyan', linestyle='-', label=r"$F\Gamma$")
-                handles += [h]
+                h_y0, = ax[0,1].plot(qp_levels, y0, color='darkorange', label=funlib["gramps"]["name"])
+                for k in range(len(quantile_midranges)):
+                    ylohi = transdict["gramps"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,q['zi']] * funlib["gramps"]["units"]
+                    ax[0,1].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
+                h_Ly0, = ax[1,1].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}$[%s] (stochastic)"%(funlib["gramps"]["name"]))
+                h_y0dot, = ax[1,1].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s] (deterministic)"%(funlib["gramps"]["name"]))
+                h_y1, = ax[1,1].plot(qp_levels, y1, color="purple", label=funlib["gramps_relax_times_dqdy"]["name"]) 
+                h_y2, = ax[1,1].plot(qp_levels, y2, color='cyan', linestyle='-', label=funlib["dqdyproj_vqproj"]["name"])
                 ax[1,1].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
-                ax[0,1].legend(handles=handles)
-                ax[0,1].set_title(r"%s"%(funlib["grpvsq"]["name"]))
+                ax[0,1].legend(handles=[h_y0])
+                ax[1,1].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2])
+                ax[0,1].set_title(r"%s"%(funlib["gramps"]["name_english"]))
+                ax[1,1].set_title(r"%s tendency"%(funlib["gramps"]["name_english"]))
                 # Column 2: plot the enstrophy 
-                handles = []
                 y0 = transdict["enstproj"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["enstproj"]["units"]
                 Ly0 = transdict["enstproj"]["tendency"]["stochastic"][dirn][:,q['zi']]*funlib["enstproj"]["units"]/q["time"]
                 y0dot = transdict["enstproj"]["tendency"]["deterministic"][dirn][:,q['zi']]*funlib["enstproj"]["units"]/q["time"]
                 y1 = transdict["dissproj"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["dissproj"]["units"]
                 y2 = -transdict["dqdyproj_vqproj"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["dqdyproj_vqproj"]["units"]
-                h, = ax[0,2].plot(qp_levels, y0, color='orange', label=r"$\Omega$")
-                handles += [h]
-                ax[1,2].plot(qp_levels, Ly0, color='orange', linestyle='-')
-                ax[1,2].plot(qp_levels, y0dot, color='orange', linestyle='--')
-                h, = ax[1,2].plot(qp_levels, y1, color='red', linestyle='-', label=r"$D$")
-                handles += [h]
-                h, = ax[1,2].plot(qp_levels, y2, color='cyan', linestyle='-', label=r"$-F\Gamma$")
-                handles += [h]
+                h_y0, = ax[0,2].plot(qp_levels, y0, color='darkorange', label=funlib["enstproj"]["name"])
+                for k in range(len(quantile_midranges)):
+                    ylohi = transdict["enstproj"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,q['zi']] * funlib["enstproj"]["units"]
+                    ax[0,2].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
+                h_Ly0, = ax[1,2].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}$[%s] (stochastic)"%(funlib["enstproj"]["name"]))
+                h_y0dot, = ax[1,2].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s] (deterministic)"%(funlib["enstproj"]["name"]))
+                h_y1, = ax[1,2].plot(qp_levels, y1, color='red', linestyle='-', label=funlib["dissproj"]["name"])
+                h_y2, = ax[1,2].plot(qp_levels, y2, color='cyan', linestyle='-', label=r"$-$%s"%(funlib["dqdyproj_vqproj"]["name"]))
                 ax[1,2].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
 
-                ax[0,2].legend(handles=handles)
-                ax[0,2].set_title(r"%s"%(funlib["enstproj"]["name"]))
+                ax[0,2].legend(handles=[h_y0])
+                ax[1,2].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2])
+                ax[0,2].set_title(r"%s"%(funlib["enstproj"]["name_english"]))
+                ax[1,2].set_title(r"%s tendency"%(funlib["enstproj"]["name_english"]))
                 # Labels
                 for c in range(ax.shape[1]):
                     ax[1,c].set_xlabel(r"$q_B^+$")
-                    ax[1,c].set_title(r"Tendency")
                 ax[0,0].set_ylabel(r"[%s]"%(funlib["enstproj"]["unit_symbol"]))
                 ax[1,0].set_ylabel(r"[%s s$^{-1}$]"%(funlib["enstproj"]["unit_symbol"]))
+                for r in range(ax.shape[0]):
+                    ylim = ax[r,0].get_ylim()
+                    fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+                    ax[r,0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
                 # Save 
                 fig.savefig(join(self.savefolder,f"trans_state_analysis_{dirn}"))
                 plt.close(fig)
