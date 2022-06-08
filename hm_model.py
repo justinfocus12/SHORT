@@ -782,7 +782,7 @@ class HoltonMassModel(Model):
         dqdy_dot = (funlib["dqdyproj"]["fun"](x + dt*xdot) - funlib["dqdyproj"]["fun"](x - dt*xdot))/(2*dt) #* q["time"] #* funlib["dqdyproj"]["units"]
         net = 2/(q['eps']*q['l'])**2 * dqdy_dot - 2/(q['eps']*q['l']**2) * relax - vq
         return dqdy_dot,relax,vq,net
-    def test_grpvsq(self,x,dt=None):
+    def test_gramps(self,x,dt=None):
         q = self.q
         Nx = len(x)
         n = q['Nz']-1
@@ -793,9 +793,9 @@ class HoltonMassModel(Model):
         diss = funlib["dissproj"]["fun"](x)
         dqdy = funlib["dqdyproj"]["fun"](x)
         enst_dot = (funlib["enstproj"]["fun"](x + dt*xdot) - funlib["enstproj"]["fun"](x - dt*xdot))/(2*dt)
-        grpvsq_dot = (funlib["grpvsq"]["fun"](x + dt*xdot) - funlib["grpvsq"]["fun"](x - dt*xdot))/(2*dt)
-        net = enst_dot + grpvsq_dot - 2/(q['eps']*q['l']**2)*relax*dqdy - diss
-        return enst_dot,grpvsq_dot,relax,dqdy,diss,net
+        gramps_dot = (funlib["gramps"]["fun"](x + dt*xdot) - funlib["gramps"]["fun"](x - dt*xdot))/(2*dt)
+        net = enst_dot + gramps_dot - 2/(q['eps']*q['l']**2)*relax*dqdy - diss
+        return enst_dot,gramps_dot,relax,dqdy,diss,net
     def test_enstrophy_equation(self,x,lat=60,dt=None):
         # Compute the left-hand side of Eq. 2-11 of Yoden 1987 to check if it's zero. 
         # The time derivative of enstrophy will have to be approximated as a finite difference. 
@@ -1140,7 +1140,7 @@ class HoltonMassModel(Model):
                  },
                 "dqdyproj": {
                         "fun": lambda X: self.background_pv_gradient_projected(X),
-                        "name": r"$\partial_y\overline{q}$",
+                        "name": r"$\beta_e$", #r"$\partial_y\overline{q}$",
                         "units": 1/q["Gsq"]*1/(q['length']*q['time']),
                         "unit_symbol": "m$^{-1}$s$^{-1}$",
                         "name_english": "Mean PV gradient",
@@ -1171,7 +1171,7 @@ class HoltonMassModel(Model):
                  },
                 "vqproj": {
                         "fun": lambda X: self.meridional_pv_flux_projected(X),
-                        "name": r"$\overline{v'q'}$",
+                        "name": r"$F_q$", #r"$\overline{v'q'}$",
                         "units": 1/q["Gsq"]*q["length"]/q["time"]**2,
                         "unit_symbol": r"m s$^{-2}$",
                         "name_english": "Eddy PV flux",
@@ -1184,7 +1184,7 @@ class HoltonMassModel(Model):
                  },
                 "enstproj": {
                         "fun": lambda X: self.eddy_enstrophy_projected(X),
-                        "name": r"$\frac{1}{2}\overline{q'^2}$",
+                        "name": r"$\mathcal{E}$", #$\frac{1}{2}\overline{q'^2}$",
                         "units": 1/q["Gsq"]**2*1/q['time']**2,
                         "unit_symbol": r"s$^{-2}$",
                         "name_english": "Eddy enstrophy",
@@ -1203,21 +1203,21 @@ class HoltonMassModel(Model):
                  },
                 "dissproj": {
                         "fun": lambda X: self.dissipation_projected(X),
-                        "name": r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
+                        "name": r"$D_{\mathcal{E}}$", #r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
                         "units": 1/q["Gsq"]**2*1/q["time"]**3,
                         "unit_symbol": "s$^{-3}$",
-                        "name_english": "Dissipation",
+                        "name_english": "Eddy enstrophy dissipation",
                  },
                 "ensttend": {
                         "fun": lambda X: self.dissipation_projected(X) - self.meridional_pv_flux_projected(X)*self.background_pv_gradient_projected(X),
-                        "name": r"$\frac{1}{2}\partial_t\overline{q'^2}$ inferred",
+                        "name": r"$\frac{1}{2}\partial_t$%s inferred"%(funs["enstproj"]["name"]),
                         "units": 1/q["Gsq"]**2*1/q["time"]**3,
                         "unit_symbol": r"s$^{-3}$",
                         "name_english": r"Inferred enstrophy tendency"
                         },
                 "relaxproj": {
                         "fun": lambda X: self.wind_relaxation_projected(X),
-                        "name": r"$\rho^{-1}\partial_z[\rho\alpha(U - U^R)_z]$",
+                        "name": r"$D_{\beta_e}$", #r"$\rho^{-1}\partial_z[\rho\alpha(U - U^R)_z]$",
                         "units": 1/q["Gsq"]*1/(q['length']*q['time']**2),
                         "unit_symbol": r"m$^{-1}$s$^{-2}$",
                         "name_english": r"Thermal damping",
@@ -1238,61 +1238,61 @@ class HoltonMassModel(Model):
                 "unit_symbol": "m/s",
                 "name_english": "Wave activity",
                 }
-        funs["grpvsq"] = {
+        funs["gramps"] = {
                 "fun": lambda X: funs["dqdyproj"]["fun"](X)**2/(q['eps']*q['l'])**2, 
-                "name": r"$\beta_e^2$",
+                "name": r"$(\epsilon\ell)^{-2}$%s$^2$"%(funs["dqdyproj"]["name"]),
                 "units": 1/q["Gsq"]**2 * 1/q["time"]**2, 
                 "unit_symbol": r"s$^{-2}$",
-                "name_english": "GRPVSQ",
+                "name_english": "GRAMPS",
                 }
-        funs["grpvsq_relax"] = {
+        funs["gramps_relax"] = {
                 "fun": lambda X: funs["relaxproj"]["fun"](X)*funs["dqdyproj"]["fun"](X)*2/(q['eps']*q['l']**2),
-                "name": r"$2RG/(\epsilon\ell^2)$",
+                "name": r"$2\epsilon^{-1}\ell^{-2}$%s%s"%(funs["relaxproj"]["name"],funs["dqdyproj"]["name"]),
                 "units": q["length"]**2*funs["relaxproj"]["units"]*funs["dqdyproj"]["units"],
                 "unit_symbol": "s$^{-3}$",
-                "name_english": "RG",
+                "name_english": "GRAMPS relaxation",
                 }
-        funs["grpvsq_plus_enstrophy"] = {
-                "fun": lambda X: funs["grpvsq"]["fun"](X) + funs["enstproj"]["fun"](X),
-                "name": "%s$+$%s"%(funs["grpvsq"]["name"],funs["enstproj"]["name"]),
+        funs["gramps_plus_enstrophy"] = {
+                "fun": lambda X: funs["gramps"]["fun"](X) + funs["enstproj"]["fun"](X),
+                "name": "%s$+$%s"%(funs["gramps"]["name"],funs["enstproj"]["name"]),
                 "units": funs["enstproj"]["units"],
                 "unit_symbol": "s$^{-2}$",
-                "name_english": "Enstrophy + GRPVSQ",
+                "name_english": "Enstrophy + GRAMPS",
                 }
-        funs["grpvsq_plus_enstrophy_ref"] = {
-                "fun": lambda X: (funs["grpvsq"]["fun"](X)[:,q['zi']] + funs["enstproj"]["fun"](X)[:,q['zi']]),
-                "name": "%s$+$%s (30 km)"%(funs["grpvsq"]["name"],funs["enstproj"]["name"]),
+        funs["gramps_plus_enstrophy_ref"] = {
+                "fun": lambda X: (funs["gramps"]["fun"](X)[:,q['zi']] + funs["enstproj"]["fun"](X)[:,q['zi']]),
+                "name": "%s$+$%s (30 km)"%(funs["gramps"]["name"],funs["enstproj"]["name"]),
                 "units": funs["enstproj"]["units"],
                 "unit_symbol": "s$^{-2}$",
-                "name_english": "Enstrophy + GRPVSQ at $z=30$ km",
+                "name_english": "Enstrophy + GRAMPS at $z=30$ km",
                 }
         # --------- GRPVSQ stuff -------------
-        funs["grpvsq_sqrt"] = {
-                "fun": lambda X: np.sqrt(funs["grpvsq"]["fun"](X)),
-                "name": r"$\beta_e$",
-                "units": np.sqrt(funs["grpvsq"]["units"]),
+        funs["gramps_sqrt"] = {
+                "fun": lambda X: np.sqrt(funs["gramps"]["fun"](X)),
+                "name": r"$(\epsilon\ell)^{-1}\beta_e$",
+                "units": np.sqrt(funs["gramps"]["units"]),
                 "unit_symbol": r"s$^{-1}$",
                 "name_english": "PV grad. mag.",
                 }
-        funs["grpvsq_ref"] = {
-                "fun": lambda X: funs["grpvsq"]["fun"](X)[:,q['zi']],
-                "name": "%s (30 km)"%(funs["grpvsq"]["name"]),
-                "units": funs["grpvsq"]["units"],
-                "unit_symbol": funs["grpvsq"]["unit_symbol"],
-                "name_english": "%s ($z=30$km)"%(funs["grpvsq"]["name_english"]),
+        funs["gramps_ref"] = {
+                "fun": lambda X: funs["gramps"]["fun"](X)[:,q['zi']],
+                "name": "%s (30 km)"%(funs["gramps"]["name"]),
+                "units": funs["gramps"]["units"],
+                "unit_symbol": funs["gramps"]["unit_symbol"],
+                "name_english": "%s ($z=30$km)"%(funs["gramps"]["name_english"]),
                 }
-        funs["grpvsq_ref_sqrt"] = {
-                "fun": lambda X: np.sqrt(funs["grpvsq"]["fun"](X)[:,q['zi']]),
-                "name": "%s (30 km)"%(funs["grpvsq_sqrt"]["name"]),
-                "units": np.sqrt(funs["grpvsq"]["units"]),
-                "unit_symbol": funs["grpvsq_sqrt"]["unit_symbol"],
-                "name_english": "%s ($z=30$km)"%(funs["grpvsq_sqrt"]["name_english"]),
+        funs["gramps_ref_sqrt"] = {
+                "fun": lambda X: np.sqrt(funs["gramps"]["fun"](X)[:,q['zi']]),
+                "name": "%s (30 km)"%(funs["gramps_sqrt"]["name"]),
+                "units": np.sqrt(funs["gramps"]["units"]),
+                "unit_symbol": funs["gramps_sqrt"]["unit_symbol"],
+                "name_english": "%s ($z=30$km)"%(funs["gramps_sqrt"]["name_english"]),
                 }
-        funs["grpvsq_int"] = {
-                "fun": lambda X: self.weighted_vertical_integral(funs["grpvsq"]["fun"](X)),
-                "name": r"$\int e^{-z/H}$%s$dz$"%(funs["grpvsq"]["name"]),
-                "units": funs["grpvsq"]["units"]*q["H"],
-                "unit_symbol": "%s m"%(funs["grpvsq"]["unit_symbol"]),
+        funs["gramps_int"] = {
+                "fun": lambda X: self.weighted_vertical_integral(funs["gramps"]["fun"](X)),
+                "name": r"$\int e^{-z/H}$%s$dz$"%(funs["gramps"]["name"]),
+                "units": funs["gramps"]["units"]*q["H"],
+                "unit_symbol": "%s m"%(funs["gramps"]["unit_symbol"]),
                 "name_english": "Integrated GPRVSQ",
                 }
         # --------- Enstrophy stuff -------------
@@ -1325,16 +1325,16 @@ class HoltonMassModel(Model):
                 "name_english": "Integrated enstrophy",
                 }
         # ---------- Action-angle stuff -----------
-        funs["grpvsq_enstproj_angle"] = {
-                "fun": lambda X: np.arctan2(funs["enstproj_sqrt"]["fun"](X), funs["grpvsq_sqrt"]["fun"](X)),
-                "name": r"ang(%s,%s) (30 km)"%(funs["grpvsq_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
+        funs["gramps_enstproj_angle"] = {
+                "fun": lambda X: np.arctan2(funs["enstproj_sqrt"]["fun"](X), funs["gramps_sqrt"]["fun"](X)),
+                "name": r"ang(%s,%s) (30 km)"%(funs["gramps_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
                 "units": 1.0, 
                 "unit_symbol": "radians",
                 "name_english": "Enstrophy-GRPVSQ angle",
                 }
-        funs["grpvsq_enstproj_angle_ref"] = {
-                "fun": lambda X: np.arctan2(funs["enstproj_ref_sqrt"]["fun"](X), funs["grpvsq_ref_sqrt"]["fun"](X)),
-                "name": r"ang(%s,%s) (30 km)"%(funs["grpvsq_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
+        funs["gramps_enstproj_angle_ref"] = {
+                "fun": lambda X: np.arctan2(funs["enstproj_ref_sqrt"]["fun"](X), funs["gramps_ref_sqrt"]["fun"](X)),
+                "name": r"ang(%s,%s) (30 km)"%(funs["gramps_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
                 "units": 1.0, 
                 "unit_symbol": "radians",
                 "name_english": "Enstrophy-GRPVSQ angle (30 km)",
