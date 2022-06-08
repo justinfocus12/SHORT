@@ -125,6 +125,54 @@ fig.savefig(join(savedir,"tendency_test_rearranged"))
 plt.close(fig)
 # ---------------------------------------------------------------------
 
+# Do the same thing for GRPVSQ
+enst_dot,grpvsq_dot,relax,dqdy,diss,net = model.test_grpvsq(x,dt=0.00001)
+for i in range(len(x)):
+    fig,ax = plt.subplots(ncols=1,nrows=4,figsize=(6,24))
+    # PV gradient tendency
+    ax[0].plot(z,enst_dot[i]+grpvsq_dot[i],color='springgreen')
+    ax[0].set_title(r"dot(ENST + GRPVSQ)")
+    # PV flux
+    ax[1].plot(z,relax[i]*dqdy[i],color='orange')
+    ax[1].set_title(r"relax * dqdy")
+    # Relaxation
+    ax[2].plot(z,diss[i],color='red')
+    ax[2].set_title(r"dissipation")
+    # Everything together
+    ax[3].plot(z,grpvsq_dot[i]+enst_dot[i],color='springgreen')
+    ax[3].plot(z,-relax[i]*dqdy[i]*2/(q['eps']*q['l']**2),color='orange')
+    ax[3].plot(z,-diss[i],color='red')
+    ax[3].plot(z,net[i],color='gray',linestyle='--')
+    # Invert the horizontal axis 
+    for r in range(len(ax)):
+        ax[r].invert_xaxis()
+    fig.savefig(join(savedir,f"balance_grpvsq_{i}"))
+    plt.close(fig)
+# Do the same thing for PV gradient calculation
+dqdy_dot,relax,vq,net = model.test_pvgrad_equation(x,dt=0.00001)
+for i in range(len(x)):
+    fig,ax = plt.subplots(ncols=1,nrows=4,figsize=(6,24))
+    # PV gradient tendency
+    ax[0].plot(z,dqdy_dot[i],color='springgreen')
+    ax[0].set_title(r"dqdy dot")
+    # PV flux
+    ax[1].plot(z,vq[i],color='orange')
+    ax[1].set_title(r"$\overline{v'q'}$")
+    # Relaxation
+    ax[2].plot(z,relax[i],color='red')
+    ax[2].set_title(r"damping")
+    # Everything together
+    ax[3].plot(z,dqdy_dot[i]*2/(q['eps']*q['l'])**2,color='springgreen')
+    ax[3].plot(z,-relax[i]*2/(q['eps']*q['l']**2),color='red')
+    ax[3].plot(z,-vq[i],color='orange')
+    ax[3].plot(z,net[i],color='gray',linestyle='--')
+    # Invert the horizontal axis 
+    for r in range(len(ax)):
+        ax[r].invert_xaxis()
+    fig.savefig(join(savedir,f"balance_pvgrad_{i}"))
+    plt.close(fig)
+    
+
 
 enstrophy_tendency,pvflux,pvgrad,diss,lhs = model.test_enstrophy_equation(x,lat=60,dt=0.00001)
 #enstrophy_tendency *= ez
@@ -175,3 +223,5 @@ for i in range(len(x)):
     fig.savefig(join(savedir,f"balance_{i}"))
     plt.close(fig)
     
+
+

@@ -57,8 +57,10 @@ class HoltonMassModel(Model):
         x0_list = self.approximate_fixed_points()
         if xst is None:
             self.find_fixed_points(tmax=600)
+            print(f"self.xst.shape = {self.xst.shape}")
         else:
             self.xst = xst
+            print(f"self.xst.shape = {self.xst.shape}")
         self.tpt_obs_xst = self.tpt_observables(self.xst)
         return
     def initialize_params(self,q):
@@ -642,6 +644,15 @@ class HoltonMassModel(Model):
         heat_flux *= (x[:,:n]*Yz - x[:,n:2*n]*Xz)
         heat_flux *= np.exp(-q['z'][1:-1])
         return heat_flux
+    def weighted_vertical_integral(self,fz):
+        # for a field f(z), integrate it vertically weighted by density. 
+        q = self.q
+        Nx,n = fz.shape
+        if n != q['Nz'] - 1:
+            raise Exception(f"You gave me a field of shape {fz.shape}, but dim 1 must have size {n}")
+        weight = np.exp(-q['z'][1:-1])
+        F = np.sum(fz*weight, axis=1)*q['dz']
+        return F
     def integrated_meridional_heat_flux(self,x):
         q = self.q
         n = q['Nz']-1
@@ -759,6 +770,32 @@ class HoltonMassModel(Model):
             phase0 = phase[:,i]
         ang_disp_mag = -phase/(q['sx'])
         return ang_disp_mag
+    def test_pvgrad_equation(self,x,dt=None):
+        q = self.q
+        Nx = len(x)
+        n = q['Nz']-1
+        if dt is None: dt = self.dt_sim
+        xdot = self.drift_fun(x)
+        funlib = self.observable_function_library()
+        relax = funlib["relaxproj"]["fun"](x) #*funlib["relaxproj"]["units"]
+        vq = funlib["vqproj"]["fun"](x) #*funlib["vqproj"]["units"]
+        dqdy_dot = (funlib["dqdyproj"]["fun"](x + dt*xdot) - funlib["dqdyproj"]["fun"](x - dt*xdot))/(2*dt) #* q["time"] #* funlib["dqdyproj"]["units"]
+        net = 2/(q['eps']*q['l'])**2 * dqdy_dot - 2/(q['eps']*q['l']**2) * relax - vq
+        return dqdy_dot,relax,vq,net
+    def test_grpvsq(self,x,dt=None):
+        q = self.q
+        Nx = len(x)
+        n = q['Nz']-1
+        if dt is None: dt = self.dt_sim
+        xdot = self.drift_fun(x)
+        funlib = self.observable_function_library()
+        relax = funlib["relaxproj"]["fun"](x) 
+        diss = funlib["dissproj"]["fun"](x)
+        dqdy = funlib["dqdyproj"]["fun"](x)
+        enst_dot = (funlib["enstproj"]["fun"](x + dt*xdot) - funlib["enstproj"]["fun"](x - dt*xdot))/(2*dt)
+        grpvsq_dot = (funlib["grpvsq"]["fun"](x + dt*xdot) - funlib["grpvsq"]["fun"](x - dt*xdot))/(2*dt)
+        net = enst_dot + grpvsq_dot - 2/(q['eps']*q['l']**2)*relax*dqdy - diss
+        return enst_dot,grpvsq_dot,relax,dqdy,diss,net
     def test_enstrophy_equation(self,x,lat=60,dt=None):
         # Compute the left-hand side of Eq. 2-11 of Yoden 1987 to check if it's zero. 
         # The time derivative of enstrophy will have to be approximated as a finite difference. 
@@ -1180,7 +1217,7 @@ class HoltonMassModel(Model):
                         },
                 "relaxproj": {
                         "fun": lambda X: self.wind_relaxation_projected(X),
-                        "name": r"$\rho^{-1}\partial_z[\rho\alpha(U^R-U)_z]$",
+                        "name": r"$\rho^{-1}\partial_z[\rho\alpha(U - U^R)_z]$",
                         "units": 1/q["Gsq"]*1/(q['length']*q['time']**2),
                         "unit_symbol": r"m$^{-1}$s$^{-2}$",
                         "name_english": r"Thermal damping",
@@ -1200,6 +1237,107 @@ class HoltonMassModel(Model):
                 "units": funs["enstproj"]["units"]/funs["dqdyproj"]["units"],
                 "unit_symbol": "m/s",
                 "name_english": "Wave activity",
+                }
+        funs["grpvsq"] = {
+                "fun": lambda X: funs["dqdyproj"]["fun"](X)**2/(q['eps']*q['l'])**2, 
+                "name": r"$\beta_e^2$",
+                "units": 1/q["Gsq"]**2 * 1/q["time"]**2, 
+                "unit_symbol": r"s$^{-2}$",
+                "name_english": "GRPVSQ",
+                }
+        funs["grpvsq_relax"] = {
+                "fun": lambda X: funs["relaxproj"]["fun"](X)*funs["dqdyproj"]["fun"](X)*2/(q['eps']*q['l']**2),
+                "name": r"$2RG/(\epsilon\ell^2)$",
+                "units": q["length"]**2*funs["relaxproj"]["units"]*funs["dqdyproj"]["units"],
+                "unit_symbol": "s$^{-3}$",
+                "name_english": "RG",
+                }
+        funs["grpvsq_plus_enstrophy"] = {
+                "fun": lambda X: funs["grpvsq"]["fun"](X) + funs["enstproj"]["fun"](X),
+                "name": "%s$+$%s"%(funs["grpvsq"]["name"],funs["enstproj"]["name"]),
+                "units": funs["enstproj"]["units"],
+                "unit_symbol": "s$^{-2}$",
+                "name_english": "Enstrophy + GRPVSQ",
+                }
+        funs["grpvsq_plus_enstrophy_ref"] = {
+                "fun": lambda X: (funs["grpvsq"]["fun"](X)[:,q['zi']] + funs["enstproj"]["fun"](X)[:,q['zi']]),
+                "name": "%s$+$%s (30 km)"%(funs["grpvsq"]["name"],funs["enstproj"]["name"]),
+                "units": funs["enstproj"]["units"],
+                "unit_symbol": "s$^{-2}$",
+                "name_english": "Enstrophy + GRPVSQ at $z=30$ km",
+                }
+        # --------- GRPVSQ stuff -------------
+        funs["grpvsq_sqrt"] = {
+                "fun": lambda X: np.sqrt(funs["grpvsq"]["fun"](X)),
+                "name": r"$\beta_e$",
+                "units": np.sqrt(funs["grpvsq"]["units"]),
+                "unit_symbol": r"s$^{-1}$",
+                "name_english": "PV grad. mag.",
+                }
+        funs["grpvsq_ref"] = {
+                "fun": lambda X: funs["grpvsq"]["fun"](X)[:,q['zi']],
+                "name": "%s (30 km)"%(funs["grpvsq"]["name"]),
+                "units": funs["grpvsq"]["units"],
+                "unit_symbol": funs["grpvsq"]["unit_symbol"],
+                "name_english": "%s ($z=30$km)"%(funs["grpvsq"]["name_english"]),
+                }
+        funs["grpvsq_ref_sqrt"] = {
+                "fun": lambda X: np.sqrt(funs["grpvsq"]["fun"](X)[:,q['zi']]),
+                "name": "%s (30 km)"%(funs["grpvsq_sqrt"]["name"]),
+                "units": np.sqrt(funs["grpvsq"]["units"]),
+                "unit_symbol": funs["grpvsq_sqrt"]["unit_symbol"],
+                "name_english": "%s ($z=30$km)"%(funs["grpvsq_sqrt"]["name_english"]),
+                }
+        funs["grpvsq_int"] = {
+                "fun": lambda X: self.weighted_vertical_integral(funs["grpvsq"]["fun"](X)),
+                "name": r"$\int e^{-z/H}$%s$dz$"%(funs["grpvsq"]["name"]),
+                "units": funs["grpvsq"]["units"]*q["H"],
+                "unit_symbol": "%s m"%(funs["grpvsq"]["unit_symbol"]),
+                "name_english": "Integrated GPRVSQ",
+                }
+        # --------- Enstrophy stuff -------------
+        funs["enstproj_sqrt"] = {
+                "fun": lambda X: np.sqrt(funs["enstproj"]["fun"](X)),
+                "name": r"$\sqrt{\overline{q'^2}/2}$",
+                "units": np.sqrt(funs["enstproj"]["units"]),
+                "unit_symbol": r"s$^{-1}$",
+                "name_english": "Enstrophy$^{1/2}$",
+                }
+        funs["enstproj_ref"] = {
+                "fun": lambda X: funs["enstproj"]["fun"](X)[:,q['zi']],
+                "name": "%s (30 km)"%(funs["enstproj"]["name"]),
+                "units": funs["enstproj"]["units"],
+                "unit_symbol": funs["enstproj"]["unit_symbol"],
+                "name_english": "%s ($z=30$km)"%(funs["enstproj"]["name_english"]),
+                }
+        funs["enstproj_ref_sqrt"] = {
+                "fun": lambda X: np.sqrt(funs["enstproj"]["fun"](X)[:,q['zi']]),
+                "name": "%s (30 km)"%(funs["enstproj_sqrt"]["name"]),
+                "units": funs["enstproj_sqrt"]["units"],
+                "unit_symbol": r"s$^{-1}$",
+                "name_english": "%s$^{1/2}$ ($z=30$km)"%(funs["enstproj"]["name_english"]),
+                }
+        funs["enstproj_int"] = {
+                "fun": lambda X: self.weighted_vertical_integral(funs["enstproj"]["fun"](X)),
+                "name": r"$\int e^{-z/H}$%s$dz$"%(funs["enstproj"]["name"]),
+                "units": funs["enstproj"]["units"]*q["H"],
+                "unit_symbol": "%s m"%(funs["enstproj"]["unit_symbol"]),
+                "name_english": "Integrated enstrophy",
+                }
+        # ---------- Action-angle stuff -----------
+        funs["grpvsq_enstproj_angle"] = {
+                "fun": lambda X: np.arctan2(funs["enstproj_sqrt"]["fun"](X), funs["grpvsq_sqrt"]["fun"](X)),
+                "name": r"ang(%s,%s) (30 km)"%(funs["grpvsq_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
+                "units": 1.0, 
+                "unit_symbol": "radians",
+                "name_english": "Enstrophy-GRPVSQ angle",
+                }
+        funs["grpvsq_enstproj_angle_ref"] = {
+                "fun": lambda X: np.arctan2(funs["enstproj_ref_sqrt"]["fun"](X), funs["grpvsq_ref_sqrt"]["fun"](X)),
+                "name": r"ang(%s,%s) (30 km)"%(funs["grpvsq_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
+                "units": 1.0, 
+                "unit_symbol": "radians",
+                "name_english": "Enstrophy-GRPVSQ angle (30 km)",
                 }
         return funs
     def plot_snapshot(self,xt,suffix=""):

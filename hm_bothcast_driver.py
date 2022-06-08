@@ -53,12 +53,12 @@ compute_tpt_flag =      0
 plot_trans_2d_flag =    0
 plot_long_2d_flag =     0
 display_cast_flag =     0
-display_current_flag =  0
+display_current_flag =  1
 lifecycle_flag =        0
 gen_rates_flag =        0
 plot_long_1d_flag =     0
 trans_state_flag =      0
-trans_state_enst_flag = 1
+trans_state_enst_flag = 0
 flux_dist_flag =        0
 regression_flag =       0
 proj_1d_flag =          0
@@ -175,7 +175,7 @@ if plot_long_2d_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["dqdyref","Uref"],["vTintref","dqdyref"],["vTintref","Uref"],["vTint21p5","U21p5"]][2:] #,["magref","Uref"]]
+    theta_2d_abbs = [["grpvsq_ref","enstproj_ref"],["grpvsq_ref_sqrt","enstproj_ref_sqrt"],["grpvsq_plus_enstrophy_ref","grpvsq_enstproj_angle_ref"],][2:] #,["vTintref","Uref"],]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:
@@ -199,6 +199,14 @@ if gen_rates_flag:
 
 # ----------- Plot long trajectory in 1d ---------------
 if plot_long_1d_flag:
+    field_fun = funlib["grpvsq_plus_enstrophy_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"grpvsq_plus_enstrophy_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field_fun = funlib["grpvsq_enstproj_angle_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"grpvsq_enstproj_angle_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field_fun = funlib["grpvsq_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"grpvsq_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field_fun = funlib["enstproj_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"enstproj_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     field_fun = funlib["Uref"]
     tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"Uref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     #field = tpt.dam_moments['one']['xb'][0,:,0]

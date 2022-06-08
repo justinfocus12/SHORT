@@ -548,11 +548,12 @@ class TPT:
         #ax.yaxis.set_major_locator(ticker.NullLocator())
         # Now plot the densities in y
         if density_1d_flag:
+            print(f"field_abb = {field_abb}")
             self.display_1d_densities(model,data,[field_abb],'vertical',fig=fig,ax=ax[1],phases=phases)
             ax[1].yaxis.set_visible(False)
             ax[1].set_xlabel("Probability density",fontdict=bigfont)
             ax[1].tick_params(axis='both',labelsize=25)
-        fig.savefig(join(self.savefolder,"{}_long".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
+        fig.savefig(join(self.savefolder,"long_{}".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
         plt.close(fig)
         print("Done plotting field long")
         # ------------ Next: plot only some transitions on their own plot --------------
@@ -1675,7 +1676,7 @@ class TPT:
         del x_long
         # If I substitute in F- and F+ for q- and q+, I guess we'll see where pathways accumulate the most of whatever damage function it's measuring
         Nx,Nt,xdim = data.X.shape
-        ss = np.random.choice(np.arange(Nx),10000,replace=False)
+        ss = np.random.choice(np.arange(Nx),100000,replace=False)
         keys = list(model.dam_dict.keys())
         num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
         theta_xst = theta_2d_fun(model.tpt_obs_xst) # Possibly to be used as theta_ab
@@ -1798,6 +1799,7 @@ class TPT:
     def display_casts_abba(self,model,data,theta_2d_abbs):
         funlib = model.observable_function_library()
         Nx,Nt,xdim = data.X.shape
+        ss = np.random.choice(np.arange(Nx), size=100000, replace=False)
         keys = list(model.dam_dict.keys())
         num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
         phase_flags = {'ab': True, 'ba': False, 'xa': False, 'xb': True, 'ax': True, 'bx': False}
@@ -1806,11 +1808,6 @@ class TPT:
             fun0 = funlib[theta_2d_abbs[i][0]]
             fun1 = funlib[theta_2d_abbs[i][1]]
             theta_2d_fun = lambda x: np.array([fun0["fun"](x).flatten(),fun1["fun"](x).flatten()]).T
-            #def theta_2d_fun(x):
-            #    th = np.zeros((len(x),2))
-            #    th[:,0] = fun0["fun"](x).flatten()
-            #    th[:,1] = fun1["fun"](x).flatten()
-            #    return th
             theta_xst = theta_2d_fun(model.tpt_obs_xst) # Possibly to be used as theta_ab
             theta_2d_names = [fun0["name"],fun1["name"]] #[r"$|\Psi(30 km)|$",r"$U(30 km)$"]
             theta_2d_units = np.array([fun0["units"],fun1["units"]])
@@ -1841,7 +1838,7 @@ class TPT:
                 # Plot the actual function first
                 field = field_units*model.dam_dict[keys[k]]['pay'](data.X[:,0]).reshape(-1,1)
                 fieldname = model.dam_dict[keys[k]]['name']
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=None,comm_fwd=None,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=None,comm_fwd=None,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
                 fsuff = '%s_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                 fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                 plt.close(fig)
@@ -1868,7 +1865,7 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
                         fsuff = 'cast_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
@@ -1876,7 +1873,7 @@ class TPT:
                         if j == 1 and keys[k] != 'one':
                             fieldname = r"$E_x[%s|A\to B]/E_x[%s|A\to B]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
                             field = field/(self.dam_moments['one']['ab'][1])
-                            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
                             fsuff = 'castpertime_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                             fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
                             plt.close(fig)
@@ -1904,7 +1901,7 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
                         fsuff = 'cast_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
@@ -1912,7 +1909,7 @@ class TPT:
                         if j == 1 and keys[k] != 'one':
                             fieldname = r"$E_x[%s|B\to A]/E_x[%s|B\to A]$"%(model.dam_dict[keys[k]]['name_full'],model.dam_dict['one']['name_full'])
                             field = field/(self.dam_moments['one']['ba'][1])
-                            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
                             fsuff = 'castpertime_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                             fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0)
                             plt.close(fig)
@@ -1941,10 +1938,10 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
                         if keys[k] == 'one' and j == 1:
                             print("I got onto the one and j if statement")
-                            _,_ = self.plot_field_2d(model,data,comm_fwd,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,contourf_flag=False,contour_notf_flag=True,contour_notf_levels=np.array([0.1,0.2,0.5,0.8,0.9]),fig=fig,ax=ax)
+                            _,_ = self.plot_field_2d(model,data,comm_fwd,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,contourf_flag=False,contour_notf_flag=True,contour_notf_levels=np.array([0.1,0.2,0.5,0.8,0.9]),fig=fig,ax=ax,ss=ss)
                         fsuff = 'cast_%s%d_xb_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
@@ -1972,7 +1969,7 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
                         fsuff = 'cast_%s%d_xa_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
@@ -2033,7 +2030,7 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
                         fsuff = 'cast_%s%d_ax_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
@@ -2643,6 +2640,9 @@ class TPT:
             def theta_1d_fun(x):
                 th = fun0["fun"](x).reshape((len(x),1))
                 return th
+            print(f"model.xst.shape = {model.xst.shape}")
+            rhs = theta_1d_fun(model.xst).flatten()
+            print(f"rhs.shape = {rhs.shape}")
             theta_a,theta_b = theta_1d_fun(model.xst).flatten()
             theta_1d_name = fun0["name"]
             theta_1d_units = fun0["units"]
@@ -2921,8 +2921,8 @@ class TPT:
             Jmag = np.sqrt(J0**2 + J1**2)
             print("Jmag range = ({},{})".format(np.nanmin(Jmag),np.nanmax(Jmag)))
             print("J0.shape = {}".format(J0.shape))
-            dsmin,dsmax = 0*np.max(current_shp)/40,np.max(current_shp)/20 # lengths if arrows in grid box units
-            coeff1 = 10.0/maxmag
+            dsmin,dsmax = 0*np.max(current_shp)/40,np.max(current_shp)/20 # lengths of arrows in grid box units
+            coeff1 = 20.0/maxmag #10.0/maxmag
             coeff0 = dsmax / (np.exp(-coeff1 * maxmag) - 1)
             ds = coeff0 * (np.exp(-coeff1 * Jmag) - 1)
             #ds = dsmin + (dsmax - dsmin)*(Jmag - minmag)/(maxmag - minmag)
@@ -3707,7 +3707,8 @@ class TPT:
         chom = self.chom[ss]
         ramp = comm_fwd.reshape((Nx,Nt,1))
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        qp_min,qp_max = 0.0,0.5
+        dirns = ["aa","ab"]
+        qp_min,qp_max = 0.0,1.0
         qp_step = 0.05
         qp_levels = np.linspace(qp_min, qp_max, int((qp_max-qp_min)/qp_step)+1)
         qp_tol_list = 0.1*np.ones(len(qp_levels))
@@ -3721,10 +3722,9 @@ class TPT:
             idx_qi = np.where(np.abs(comm_fwd - qp_levels[qi]) < qp_tol)[0]
             qlevel_idx += [idx_qi]
         funlib = model.observable_function_library()
-        keys = ["relaxproj","dqdyproj","vqproj","enstproj","U","dissproj","dqdyproj_vqproj","vTint"]
+        keys = ["grpvsq_enstproj_angle","grpvsq","grpvsq_relax","grpvsq_plus_enstrophy","relaxproj","dqdyproj","vqproj","enstproj","U","dissproj","dqdyproj_vqproj","vTint"]
         #keys = ["ensttend","enstproj","U","dqdyproj","dissproj","vqproj","dqdyproj_vqproj","vT"]
         #dirns = ["aa","ab","ba","bb","??"]
-        dirns = ["aa","ab"]
         dirn_index = {"aa": 0, "ab": 1, "ba": 2, "bb": 3, "??": 4}
         dirn_colors = {"aa": "dodgerblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
         dirn_labels = {"aa": r"$A\to A$","ab": r"$A\to B$","ba": r"$B\to A$","bb": r"$B\to B$","??": r"Average"}
