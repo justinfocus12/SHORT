@@ -1224,9 +1224,16 @@ class HoltonMassModel(Model):
                         },
 
             }
+        funs["dissproj_ref"] = {
+                "fun": lambda X: funs["dissproj"]["fun"](X)[:,q['zi']],
+                "name": r"%s (30 km)"%(funs["dissproj"]["name"]),
+                "units": funs["dissproj"]["units"],
+                "unit_symbol": funs["dissproj"]["unit_symbol"],
+                "name_english": funs["dissproj"]["name_english"],
+                }
         funs["dqdyproj_vqproj"] = {
                 "fun": lambda X: funs["dqdyproj"]["fun"](X)*funs["vqproj"]["fun"](X),
-                "name": r"(%s)(%s)"%(funs["dqdyproj"]["name"],funs["vqproj"]["name"]),
+                "name": r"%s%s"%(funs["dqdyproj"]["name"],funs["vqproj"]["name"]),
                 "units": funs["dqdyproj"]["units"]*funs["vqproj"]["units"],
                 "unit_symbol": "s$^{-3}$",
                 "name_english": "Meridional PV advection",
@@ -1258,6 +1265,13 @@ class HoltonMassModel(Model):
                 "units": q["length"]**2*funs["relaxproj"]["units"]*funs["dqdyproj"]["units"],
                 "unit_symbol": "s$^{-3}$",
                 "name_english": "GRAMPS relaxation",
+                }
+        funs["gramps_relax_times_dqdy_ref"] = {
+                "fun": lambda X: funs["gramps_relax_times_dqdy"]["fun"](X)[:,q['zi']], 
+                "name": r"%s (30 km)"%(funs["gramps_relax_times_dqdy"]["name"]),
+                "units": funs["gramps_relax_times_dqdy"]["units"],
+                "unit_symbol": funs["gramps_relax_times_dqdy"]["unit_symbol"],
+                "name_english": r"%s (30 km)"%(funs["gramps_relax_times_dqdy"]["name_english"]),
                 }
         funs["gramps_plus_enstrophy"] = {
                 "fun": lambda X: funs["gramps"]["fun"](X) + funs["enstproj"]["fun"](X),
@@ -1354,6 +1368,20 @@ class HoltonMassModel(Model):
                 "unit_symbol": "radians",
                 "name_english": "Enstrophy-GRAMPS angle",
                 }
+        funs["gramps_enstrophy_area"] = {
+                "fun": lambda X: np.arctan2(ang_const*funs["enstproj_sqrt"]["fun"](X), funs["gramps_sqrt"]["fun"](X))*funs["gramps_plus_enstrophy_sqrt"]["fun"](X),
+                "name": r"A(%s,%s)"%(funs["gramps"]["name"],funs["enstproj"]["name"]),
+                "units": funs["gramps_plus_enstrophy_sqrt"]["units"],
+                "unit_symbol": funs["gramps_plus_enstrophy_sqrt"]["unit_symbol"],
+                "name_english": "Enstrophy-GRAMPS area",
+                }
+        funs["gramps_enstrophy_area_ref"] = {
+                "fun": lambda X: funs["gramps_enstrophy_area"]["fun"](X)[:,q['zi']],
+                "name": r"%s (30 km)"%(funs["gramps_enstrophy_area"]["name"]),
+                "units": funs["gramps_enstrophy_area"]["units"],
+                "unit_symbol": funs["gramps_enstrophy_area"]["unit_symbol"],
+                "name_english": r"%s (30 km)"%(funs["gramps_enstrophy_area"]),
+                }
         funs["gramps_enstproj_angle_ref"] = {
                 "fun": lambda X: funs["gramps_enstproj_angle"]["fun"](X)[:,q['zi']], 
                 "name": r"%s (30 km)"%(funs["gramps_enstproj_angle"]["name"]),
@@ -1362,6 +1390,15 @@ class HoltonMassModel(Model):
                 "name_english": "Enstrophy-GRAMPS angle (30 km)",
                 }
         return funs
+    def plot_cooling_profile(self):
+        q = self.q
+        fig,ax = plt.subplots()
+        ax.plot(q['alpha_d'],q['z_d']/1000,color='black')
+        ax.set_xlabel(r"$\alpha(z)$ [s$^{-1}$]", fontdict=font)
+        ax.set_ylabel(r"$z$ [km]", fontdict=font)
+        ax.set_title(r"Newtonian cooling")
+        ax.axvline(x=0, linestyle='--', color='black')
+        return fig,ax
     def plot_snapshot(self,xt,suffix=""):
         q = self.q
         # Plot a latitude-height section of zonal wind and streamfunction phase. 
@@ -1395,7 +1432,7 @@ class HoltonMassModel(Model):
         n = q['Nz']-1
         def fmt(num,pos):
             return '{:.1f}'.format(num)
-        fig,ax = plt.subplots(ncols=2,figsize=(12,6))
+        fig,ax = plt.subplots(ncols=3,figsize=(18,6),sharey=True)
         z = q['z_d'][1:-1]/1000
         handles = []
         handle, = ax[0].plot(xt0[2*n:3*n]*q['length']/q['time'],z,color='skyblue',linewidth=1.5,label=suffix0)
@@ -1430,8 +1467,13 @@ class HoltonMassModel(Model):
         base_x = 90.0
         base_y = 20.0
         xlim,ylim = ax[1].get_xlim(),ax[1].get_ylim()
-        ax[1].xaxis.set_major_locator(plt.FixedLocator(np.arange(xlim[0]//base_x,xlim[-1]//base_x+1,1)*base_x))
-        ax[1].yaxis.set_major_locator(plt.NullLocator()) #plt.FixedLocator(np.arange(ylim[0]//base_y,ylim[-1]//base_y+1,1)*base_y))
+        #ax[1].xaxis.set_major_locator(plt.FixedLocator(np.arange(xlim[0]//base_x,xlim[-1]//base_x+1,1)*base_x))
+        #ax[1].yaxis.set_major_locator(plt.NullLocator()) #plt.FixedLocator(np.arange(ylim[0]//base_y,ylim[-1]//base_y+1,1)*base_y))
+        ax[2].plot(q['alpha_d'][1:-1], z, color='black')
+        ax[2].set_xlabel(r"$\alpha(z)$ [s$^{-1}$]",fontdict=ffont)
+        ax[2].set_title("Cooling coefficient",fontdict=ffont)
+        ax[2].axvline(x=0, linestyle='--', color='black')
+        ax[2].tick_params(axis='both', which='major', labelsize=20)
         return fig,ax
     def plot_sparse_regression_zslices(self,coeffs,scores,savefolder,suffix=""):
         # Plot the correlation as a function of altitude, where the regression has been done for each altitude separately

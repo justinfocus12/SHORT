@@ -52,13 +52,13 @@ compute_tpt_flag =      0
 
 plot_trans_2d_flag =    0
 plot_long_2d_flag =     0
-display_cast_flag =     0
-display_current_flag =  0
+display_cast_flag =     1
+display_current_flag =  1
 lifecycle_flag =        0
 gen_rates_flag =        0
-plot_long_1d_flag =     0
+plot_long_1d_flag =     1
 trans_state_flag =      0
-trans_state_enst_flag = 1
+trans_state_enst_flag = 0
 flux_dist_flag =        0
 regression_flag =       0
 proj_1d_flag =          0
@@ -93,6 +93,9 @@ fig,ax = model.plot_two_snapshots(model.xst[0],model.xst[1],asymb,bsymb)
 fig.savefig(join(savefolder,"snapshots_AB"))
 plt.close(fig)
 print("Done plotting snapshots")
+fig,ax = model.plot_cooling_profile()
+fig.savefig(join(savefolder,"cooling_profile"))
+plt.close(fig)
 # -------------------------------------------
 
 # ---------- 2. Find the least action pathway ----------
@@ -190,7 +193,7 @@ if plot_long_2d_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["gramps_ref","enstproj_ref"],["gramps_ref_sqrt","enstproj_ref_sqrt"],["gramps_plus_enstrophy_sqrt_ref","gramps_enstproj_angle_ref"],][2:] #,["vTintref","Uref"],]
+    theta_2d_abbs = [["gramps_plus_enstrophy_sqrt_ref","gramps_enstrophy_area_ref"],["gramps_ref_sqrt","enstproj_ref_sqrt"],["gramps_plus_enstrophy_sqrt_ref","gramps_enstproj_angle_ref"],][:1]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:
@@ -214,6 +217,12 @@ if gen_rates_flag:
 
 # ----------- Plot long trajectory in 1d ---------------
 if plot_long_1d_flag:
+    field_fun = funlib["gramps_enstrophy_area_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_enstrophy_area_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field_fun = funlib["dissproj_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"dissproj_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field_fun = funlib["gramps_relax_times_dqdy_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_relax_times_dqdy_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     field_fun = funlib["dqdyproj_vqproj_ref"]
     tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"dqdyproj_vqproj_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     field_fun = funlib["gramps_enstproj_angle_ref"]
