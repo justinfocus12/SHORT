@@ -52,8 +52,8 @@ compute_tpt_flag =      0
 
 plot_trans_2d_flag =    0
 plot_long_2d_flag =     0
-display_cast_flag =     1
-display_current_flag =  1
+display_cast_flag =     0
+display_current_flag =  0
 lifecycle_flag =        0
 gen_rates_flag =        0
 plot_long_1d_flag =     0
@@ -156,7 +156,22 @@ funlib = model.observable_function_library()
 # ------------- Plot long trajectory in 2D -----------
 if plot_trans_2d_flag:
     tpt.plot_trans_2d_driver(model,data)
+
 if plot_long_2d_flag:
+    field_abbs = ["gramps_plus_enstrophy_sqrt_ref","gramps_enstproj_angle_ref"]
+    print(f"About to plot 2d in field_abbs {field_abbs}")
+    fieldnames = [funlib[f]["name"] for f in field_abbs]
+    field_funs = [funlib[f]["fun"] for f in field_abbs]
+    field_units = [funlib[f]["units"] for f in field_abbs]
+    field_unit_symbols = [funlib[f]["unit_symbol"] for f in field_abbs]
+    tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
+    field_abbs = ["gramps_ref_sqrt","enstproj_ref_sqrt"]
+    print(f"About to plot 2d in field_abbs {field_abbs}")
+    fieldnames = [funlib[f]["name"] for f in field_abbs]
+    field_funs = [funlib[f]["fun"] for f in field_abbs]
+    field_units = [funlib[f]["units"] for f in field_abbs]
+    field_unit_symbols = [funlib[f]["unit_symbol"] for f in field_abbs]
+    tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
     field_abbs = ["magref","Uref"]
     print(f"About to plot 2d in field_abbs {field_abbs}")
     fieldnames = [funlib[f]["name"] for f in field_abbs]
@@ -175,7 +190,7 @@ if plot_long_2d_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["gramps_ref","enstproj_ref"],["gramps_ref_sqrt","enstproj_ref_sqrt"],["gramps_plus_enstrophy_ref","gramps_enstproj_angle_ref"],][1:2] #,["vTintref","Uref"],]
+    theta_2d_abbs = [["gramps_ref","enstproj_ref"],["gramps_ref_sqrt","enstproj_ref_sqrt"],["gramps_plus_enstrophy_sqrt_ref","gramps_enstproj_angle_ref"],][2:] #,["vTintref","Uref"],]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:
@@ -199,12 +214,14 @@ if gen_rates_flag:
 
 # ----------- Plot long trajectory in 1d ---------------
 if plot_long_1d_flag:
-    field_fun = funlib["grpvsq_plus_enstrophy_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"grpvsq_plus_enstrophy_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["grpvsq_enstproj_angle_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"grpvsq_enstproj_angle_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["grpvsq_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"grpvsq_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field_fun = funlib["dqdyproj_vqproj_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"dqdyproj_vqproj_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field_fun = funlib["gramps_enstproj_angle_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_enstproj_angle_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field_fun = funlib["gramps_plus_enstrophy_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_plus_enstrophy_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field_fun = funlib["gramps_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     field_fun = funlib["enstproj_ref"]
     tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"enstproj_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     field_fun = funlib["Uref"]

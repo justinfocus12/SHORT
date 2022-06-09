@@ -1231,6 +1231,13 @@ class HoltonMassModel(Model):
                 "unit_symbol": "s$^{-3}$",
                 "name_english": "Meridional PV advection",
                }
+        funs["dqdyproj_vqproj_ref"] = {
+            "fun": lambda X: funs["dqdyproj"]["fun"](X)[:,q['zi']]*funs["vqproj"]["fun"](X)[:,q['zi']],
+                "name": r"%s%s (30 km)"%(funs["dqdyproj"]["name"],funs["vqproj"]["name"]),
+                "units": funs["dqdyproj"]["units"]*funs["vqproj"]["units"],
+                "unit_symbol": "s$^{-3}$",
+                "name_english": "Meridional PV advection at 30 km",
+               }
         funs["waveactproj"] = {
                 "fun": lambda X: self.wave_activity_projected(X),
                 "name": r"$\overline{q'^2}/(2\partial_y\overline{q})$",
@@ -1265,6 +1272,20 @@ class HoltonMassModel(Model):
                 "units": funs["enstproj"]["units"],
                 "unit_symbol": "s$^{-2}$",
                 "name_english": "Enstrophy + GRAMPS at $z=30$ km",
+                }
+        funs["gramps_plus_enstrophy_sqrt"] = {
+                "fun": lambda X: np.sqrt(funs["gramps"]["fun"](X) + funs["enstproj"]["fun"](X)),
+                "name": r"(%s$+$%s)$^{1/2}$"%(funs["gramps"]["name"],funs["enstproj"]["name"]),
+                "units": np.sqrt(funs["enstproj"]["units"]),
+                "unit_symbol": "s$^{-1}$",
+                "name_english": "(%s + %s)$^{1/2}$"%(funs["gramps"]["name_english"],funs["enstproj"]["name_english"]),
+                }
+        funs["gramps_plus_enstrophy_sqrt_ref"] = {
+                "fun": lambda X: funs["gramps_plus_enstrophy_sqrt"]["fun"](X)[:,q['zi']],
+                "name": r"%s (30 km)"%(funs["gramps_plus_enstrophy_sqrt"]["name"]),
+                "units": funs["gramps_plus_enstrophy_sqrt"]["units"],
+                "unit_symbol": funs["gramps_plus_enstrophy_sqrt"]["unit_symbol"],
+                "name_english": r"%s (30 km)"%(funs["gramps_plus_enstrophy_sqrt"]["name_english"]),
                 }
         # --------- GRAMPS stuff -------------
         funs["gramps_sqrt"] = {
@@ -1325,16 +1346,17 @@ class HoltonMassModel(Model):
                 "name_english": "Integrated enstrophy",
                 }
         # ---------- Action-angle stuff -----------
+        ang_const = 3.0
         funs["gramps_enstproj_angle"] = {
-                "fun": lambda X: np.arctan2(funs["enstproj_sqrt"]["fun"](X), funs["gramps_sqrt"]["fun"](X)),
-                "name": r"ang(%s,%s) (30 km)"%(funs["gramps_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
+                "fun": lambda X: np.arctan2(ang_const*funs["enstproj_sqrt"]["fun"](X), funs["gramps_sqrt"]["fun"](X)),
+                "name": r"$\tan^{-1}$(%i%s/%s)"%(ang_const,funs["gramps_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
                 "units": 1.0, 
                 "unit_symbol": "radians",
                 "name_english": "Enstrophy-GRAMPS angle",
                 }
         funs["gramps_enstproj_angle_ref"] = {
-                "fun": lambda X: np.arctan2(funs["enstproj_ref_sqrt"]["fun"](X), funs["gramps_ref_sqrt"]["fun"](X)),
-                "name": r"ang(%s,%s) (30 km)"%(funs["gramps_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
+                "fun": lambda X: funs["gramps_enstproj_angle"]["fun"](X)[:,q['zi']], 
+                "name": r"%s (30 km)"%(funs["gramps_enstproj_angle"]["name"]),
                 "units": 1.0, 
                 "unit_symbol": "radians",
                 "name_english": "Enstrophy-GRAMPS angle (30 km)",

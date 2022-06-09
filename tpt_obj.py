@@ -1676,7 +1676,7 @@ class TPT:
         del x_long
         # If I substitute in F- and F+ for q- and q+, I guess we'll see where pathways accumulate the most of whatever damage function it's measuring
         Nx,Nt,xdim = data.X.shape
-        ss = np.random.choice(np.arange(Nx),100000,replace=False)
+        ss = np.random.choice(np.arange(Nx),300000,replace=False)
         keys = list(model.dam_dict.keys())
         num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
         theta_xst = theta_2d_fun(model.tpt_obs_xst) # Possibly to be used as theta_ab
@@ -1799,7 +1799,7 @@ class TPT:
     def display_casts_abba(self,model,data,theta_2d_abbs):
         funlib = model.observable_function_library()
         Nx,Nt,xdim = data.X.shape
-        ss = np.random.choice(np.arange(Nx), size=100000, replace=False)
+        ss = np.random.choice(np.arange(Nx), size=300000, replace=False)
         keys = ["one"] #list(model.dam_dict.keys())
         if keys[0] not in model.dam_dict.keys():
             raise Exception(f"You asked for keys {keys}, but you have to choose from {model.dam_dict.keys()}")
@@ -3686,7 +3686,7 @@ class TPT:
         compute_lap_flag =                  0
         compute_transdict_flag =            0
         plot_profile_transdict_flag =       1
-        plot_timeseries_transdict_flag =    0
+        plot_timeseries_transdict_flag =    1
         plot_analysis_transdict_flag =      1
         # -----------------------------------------------
         # Take a subset
@@ -3700,7 +3700,7 @@ class TPT:
         chom = self.chom[ss]
         ramp = comm_fwd.reshape((Nx,Nt,1))
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        dirns = ["aa","ab"]
+        dirns = ["ab"]
         qp_min,qp_max = 0.0,1.0
         qp_step = 0.05
         qp_levels = np.linspace(qp_min, qp_max, int((qp_max-qp_min)/qp_step)+1)
@@ -3720,6 +3720,7 @@ class TPT:
         #dirns = ["aa","ab","ba","bb","??"]
         dirn_index = {"aa": 0, "ab": 1, "ba": 2, "bb": 3, "??": 4}
         dirn_colors = {"aa": "dodgerblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
+        dirn_cmaps = {"ab": plt.cm.binary}
         dirn_labels = {"aa": r"$A\to A$","ab": r"$A\to B$","ba": r"$B\to A$","bb": r"$B\to B$","??": r"Average"}
         # ----------------- Compute least-action tendencies at each committor level ----------------------
         if not (compute_lap_flag):
@@ -3840,7 +3841,7 @@ class TPT:
                     for dirn in dirns:
                         # Snapshots (with percentile ranges)
                         for k in range(len(quantile_midranges)):
-                            ax[0].fill_betweenx(z, transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k]*funlib[key]["units"], x2=transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k+1]*funlib[key]["units"], color=dirn_colors[dirn], alpha=0.5*(1-k/len(quantile_midranges)), zorder=-1-k, edgecolor=None)
+                            ax[0].fill_betweenx(z, transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k]*funlib[key]["units"], x2=transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k+1]*funlib[key]["units"], color=dirn_cmaps[dirn](0.75*(1-k/len(quantile_midranges))), zorder=-1-k, edgecolor=None)
                         h, = ax[0].plot(transdict[key]["snapshot"]["stochastic"][dirn][qi,-1]*funlib[key]["units"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
                         handles["snapshot"] += [h]
                         # Tendencies 
@@ -3862,11 +3863,11 @@ class TPT:
                     ax[1].axvline(0,linestyle=(0, (1,1)),color='gray')
                     ax[0].legend(handles=handles["snapshot"])
                     ax[0].set_xlabel(r"%s [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
-                    ax[1].set_xlabel(r"$E\partial_t$(%s) [%s s$^{-1}$]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
+                    ax[1].set_xlabel(r"$\mathcal{L}$[(%s)] [%s s$^{-1}$]"%(funlib[key]['name'],funlib[key]['unit_symbol']))
                     ax[0].set_ylabel(r"$z$ [km]")
                     ax[1].set_ylabel(r"$z$ [km]")
-                    ax[0].set_title(r"%s at %s"%(funlib[key]['name_english'],labels[qi]))
-                    ax[1].set_title(r"%s tendencies at %s"%(funlib[key]['name_english'],labels[qi]))
+                    ax[0].set_title(r"%s at %s"%(funlib[key]['name'],labels[qi]))
+                    ax[1].set_title(r"%s tendencies at %s"%(funlib[key]['name'],labels[qi]))
                     dirn_combo = np.sort([dirn_index[dirn] for dirn in dirns])
                     dirn_combo_str = "".join([str(index) for index in dirn_combo])
                     for i in range(2):
@@ -3929,8 +3930,8 @@ class TPT:
                 h_y1, = ax[1,0].plot(qp_levels, y1, color="purple", label=funlib["gramps_relax_times_dqdy"]["name"]) 
                 h_y2, = ax[1,0].plot(qp_levels, y2, color='red', linestyle='-', label=funlib["dissproj"]["name"])
                 ax[1,0].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
-                ax[0,0].legend(handles=[h_y0])
-                ax[1,0].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2])
+                ax[0,0].legend(handles=[h_y0],prop={'size':16})
+                ax[1,0].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
                 ax[0,0].set_title(r"%s"%(funlib["gramps_plus_enstrophy"]["name_english"]))
                 ax[1,0].set_title(r"%s tendency"%(funlib["gramps_plus_enstrophy"]["name_english"]))
                 # Column 1: plot the gramps
@@ -3948,8 +3949,8 @@ class TPT:
                 h_y1, = ax[1,1].plot(qp_levels, y1, color="purple", label=funlib["gramps_relax_times_dqdy"]["name"]) 
                 h_y2, = ax[1,1].plot(qp_levels, y2, color='cyan', linestyle='-', label=funlib["dqdyproj_vqproj"]["name"])
                 ax[1,1].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
-                ax[0,1].legend(handles=[h_y0])
-                ax[1,1].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2])
+                ax[0,1].legend(handles=[h_y0],prop={'size':16})
+                ax[1,1].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
                 ax[0,1].set_title(r"%s"%(funlib["gramps"]["name_english"]))
                 ax[1,1].set_title(r"%s tendency"%(funlib["gramps"]["name_english"]))
                 # Column 2: plot the enstrophy 
@@ -3968,15 +3969,15 @@ class TPT:
                 h_y2, = ax[1,2].plot(qp_levels, y2, color='cyan', linestyle='-', label=r"$-$%s"%(funlib["dqdyproj_vqproj"]["name"]))
                 ax[1,2].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
 
-                ax[0,2].legend(handles=[h_y0])
-                ax[1,2].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2])
+                ax[0,2].legend(handles=[h_y0],prop={'size':16})
+                ax[1,2].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
                 ax[0,2].set_title(r"%s"%(funlib["enstproj"]["name_english"]))
                 ax[1,2].set_title(r"%s tendency"%(funlib["enstproj"]["name_english"]))
                 # Labels
                 for c in range(ax.shape[1]):
-                    ax[1,c].set_xlabel(r"$q_B^+$")
-                ax[0,0].set_ylabel(r"[%s]"%(funlib["enstproj"]["unit_symbol"]))
-                ax[1,0].set_ylabel(r"[%s s$^{-1}$]"%(funlib["enstproj"]["unit_symbol"]))
+                    ax[1,c].set_xlabel(r"$q_B^+$",fontdict=ffont)
+                ax[0,0].set_ylabel(r"[%s]"%(funlib["enstproj"]["unit_symbol"]),fontdict=ffont)
+                ax[1,0].set_ylabel(r"[%s s$^{-1}$]"%(funlib["enstproj"]["unit_symbol"]),fontdict=ffont)
                 for r in range(ax.shape[0]):
                     ylim = ax[r,0].get_ylim()
                     fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
