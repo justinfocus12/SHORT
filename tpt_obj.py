@@ -1,5 +1,6 @@
 # This file collects stuff specific to TPT and the Holton-Mass model
 import numpy as np
+import time as timelib
 from numpy import save,load
 import scipy
 from scipy.stats import describe
@@ -1683,7 +1684,11 @@ class TPT:
         eps = 0.001
         adist = model.adist(data.X.reshape((Nx*Nt,xdim)))
         bdist = model.bdist(data.X.reshape((Nx*Nt,xdim)))
+        print(f"In current-plotting function, about to compute theta_x on data.X with shape {data.X.shape}")
+        t0 = timelib.time()
         theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim)))
+        duration = timelib.time() - t0
+        print(f"In current-plotting function, finished computing theta_x with shape {theta_x.shape}. It took {duration} seconds")
         interior_idx = np.where((adist>eps)*(bdist>eps))[0]
         thmin,thmax = np.min(theta_x[interior_idx,:],axis=0),np.max(theta_x[interior_idx,:],axis=0)
         theta_x = theta_x.reshape((Nx,Nt,2))
@@ -1760,7 +1765,7 @@ class TPT:
             fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
             field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True,ss=ss)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1796,7 +1801,7 @@ class TPT:
             fieldname = r"$B\to A$"  #r"$\pi_{AB},J_{AB}$"
             field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
             field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=True)
+            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False)
             if horz_lines > 0:
                 print("---------------Drawing in some horizontal lines for flux distributions")
                 # Draw in lines for reactive flux densities
@@ -1823,13 +1828,23 @@ class TPT:
             print("Starting view (%s,%s)"%(theta_2d_abbs[i][0],theta_2d_abbs[i][1]))
             fun0 = funlib[theta_2d_abbs[i][0]]
             fun1 = funlib[theta_2d_abbs[i][1]]
-            theta_2d_fun = lambda x: np.array([fun0["fun"](x).flatten(),fun1["fun"](x).flatten()]).T
+            #theta_2d_fun = lambda x: np.array([fun0["fun"](x).flatten(),fun1["fun"](x).flatten()]).T
+            def theta_2d_fun(x):
+                th = np.zeros((len(x),2))
+                th[:,0] = fun0["fun"](x).flatten()
+                th[:,1] = fun1["fun"](x).flatten()
+                return th
             theta_xst = theta_2d_fun(model.tpt_obs_xst) # Possibly to be used as theta_ab
+            print(f"Just computed theta_xst, whose shape is {theta_xst.shape}")
             theta_2d_names = [fun0["name"],fun1["name"]] #[r"$|\Psi(30 km)|$",r"$U(30 km)$"]
             theta_2d_units = np.array([fun0["units"],fun1["units"]])
             theta_2d_unit_symbols = [fun0["unit_symbol"],fun1["unit_symbol"]]
             weight = self.chom
+            print(f"About to compute theta_x on data.X with shape {data.X.shape}")
+            t0 = timelib.time()
             theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
+            duration = timelib.time() - t0
+            print(f"Just computed theta_x, whose shape is {theta_x.shape}. It took {duration} seconds")
             ## Plot unconditional MFPT
             #fig,ax = self.plot_field_2d(model,data,self.mfpt_b,weight,theta_x,shp=[20,20],fieldname=r"$E_x[\tau_B^+]$",fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
             #fsuff = 'mfpt_xb_th0%s_th1%s'%(theta_2d_abbs[i][0],theta_2d_abbs[i][1])
@@ -1841,6 +1856,7 @@ class TPT:
             #plt.close(fig)
 
 
+            print(f"keys = {keys}")
             for k in range(len(keys)):
                 print("\tStarting damage function %s"%(keys[k]))
                 field_units = model.dam_dict[keys[k]]['units']
@@ -1858,8 +1874,10 @@ class TPT:
                 #fsuff = '%s_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                 #fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                 #plt.close(fig)
-                for j in range(min(2,self.num_moments)):
+                for j in range(min(2,num_moments)):
+                    print(f" =============== STARTING MOMENT {j} ===============")
                     # A->B
+                    print(f"---------------In display_casts, starting A->B stuff---------")
                     if phase_flags['ab']:
                         comm_bwd = self.dam_moments[keys[k]]['ax'][0]
                         comm_fwd = self.dam_moments[keys[k]]['xb'][0]
@@ -1881,12 +1899,16 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                        print(f"Beginning plotting field 2d")
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
+                        print(f"Done plotting field 2d")
                         fsuff = 'cast_%s%d_ab_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
+                        print(f"Done saving fig")
                     # ---------------------------------
                     # B->A
+                    print(f"---------------In display_casts, starting B->A stuff---------")
                     if phase_flags['ba']:
                         comm_bwd = self.dam_moments[keys[k]]['bx'][0]
                         comm_fwd = self.dam_moments[keys[k]]['xa'][0]
@@ -1909,12 +1931,16 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                        print(f"Beginning plotting field 2d")
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
+                        print(f"Done plotting field 2d")
                         fsuff = 'cast_%s%d_ba_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
-                    # x->B
+                        print(f"Done saving fig")
+                    # ----------- x->B -----------------
                     if phase_flags['xb']:
+                        print(f"---------------In display_casts, starting x->B stuff---------")
                         comm_fwd = self.dam_moments[keys[k]]['xb'][0]
                         comm_bwd = self.dam_moments[keys[k]]['ax'][0]
                         if j == 0: 
@@ -1938,16 +1964,21 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                        print(f"Beginning plotting field 2d")
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
+                        print(f"Made the base figure")
                         if keys[k] == 'one' and j == 1:
                             print("I got onto the one and j if statement")
                             _,_ = self.plot_field_2d(model,data,comm_fwd,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,contourf_flag=False,contour_notf_flag=True,contour_notf_levels=np.array([0.1,0.2,0.5,0.8,0.9]),fig=fig,ax=ax,ss=ss)
+                            print(f"Made the contours")
                         fsuff = 'cast_%s%d_xb_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
+                        print(f"Done saving fig")
                     # ---------------------------------
                     # x->A
                     if phase_flags['xa']:
+                        print(f"---------------In display_casts, starting x->A stuff---------")
                         comm_fwd = self.dam_moments[keys[k]]['xa'][0]
                         comm_bwd = self.dam_moments[keys[k]]['bx'][0]
                         if j == 0: 
@@ -1969,13 +2000,17 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                        print(f"Beginning plotting field 2d")
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
+                        print(f"Done plotting field 2d")
                         fsuff = 'cast_%s%d_xa_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
+                        print(f"Done saving fig")
                     # --------------------------
                     # B->x
                     if phase_flags['bx']:
+                        print(f"---------------In display_casts, starting B->x stuff---------")
                         comm_bwd = self.dam_moments[keys[k]]['bx'][0]
                         comm_fwd = self.dam_moments[keys[k]]['xa'][0]
                         if j == 0: 
@@ -1999,13 +2034,17 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                        print(f"Beginning plotting field 2d")
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None)
+                        print(f"Done plotting field 2d")
                         fsuff = 'cast_%s%d_bx_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
+                        print(f"Done saving fig")
                     # ---------------------------------
                     # A->x
                     if phase_flags['ax']:
+                        print(f"---------------In display_casts, starting A->x stuff---------")
                         comm_bwd = self.dam_moments[keys[k]]['ax'][0]
                         comm_fwd = self.dam_moments[keys[k]]['xb'][0]
                         if j == 0: 
@@ -2030,10 +2069,13 @@ class TPT:
                             field[np.where(field > vmax**j)[0]] = np.nan
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
+                        print(f"Beginning plotting field 2d")
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
+                        print(f"Done plotting field 2d")
                         fsuff = 'cast_%s%d_ax_th0%s_th1%s'%(model.dam_dict[keys[k]]['abb_full'],j,theta_2d_abbs[i][0],theta_2d_abbs[i][1])
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
+                        print(f"Done saving fig")
         return
     def compute_naive_time(self,model,data,theta_fun,theta_name,theta_units,theta_unit_symbol):
         # For a given coordinate, compute the total expected running time to achieve 
@@ -3697,8 +3739,8 @@ class TPT:
         return fig,ax
     def plot_transition_states_ensttend(self,model,data,xlim_flag=True,lap_flag=True):
         # ----- Determine what to compute and plot ---------
-        compute_lap_flag =                  0
-        compute_transdict_flag =            0
+        compute_lap_flag =                  1
+        compute_transdict_flag =            1
         plot_profile_transdict_flag =       1
         plot_timeseries_transdict_flag =    1
         plot_analysis_transdict_flag =      1
@@ -3730,7 +3772,7 @@ class TPT:
             qlevel_idx += [idx_qi]
         funlib = model.observable_function_library()
         #keys = ["gramps_enstproj_angle","gramps","gramps_relax_times_dqdy","gramps_plus_enstrophy","relaxproj","dqdyproj","vqproj","enstproj","U","dissproj","dqdyproj_vqproj","vTint"]
-        keys = ["gramps_enstrophy_area","gramps_plus_enstrophy","gramps","enstproj","gramps_relax_times_dqdy","dqdyproj_vqproj","dissproj","gramps_enstproj_angle"]
+        keys = ["gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstproj","gramps_relax_times_dqdy","dqdyproj_vqproj","dissproj",]
         #dirns = ["aa","ab","ba","bb","??"]
         dirn_index = {"aa": 0, "ab": 1, "ba": 2, "bb": 3, "??": 4}
         dirn_colors = {"aa": "dodgerblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}

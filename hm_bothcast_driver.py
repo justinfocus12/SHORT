@@ -58,7 +58,7 @@ lifecycle_flag =        0
 gen_rates_flag =        0
 plot_long_1d_flag =     1
 trans_state_flag =      0
-trans_state_enst_flag = 0
+trans_state_enst_flag = 1
 flux_dist_flag =        0
 regression_flag =       0
 proj_1d_flag =          0
@@ -193,13 +193,14 @@ if plot_long_2d_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["gramps_plus_enstrophy_sqrt_ref","gramps_enstrophy_area_ref"],["gramps_ref_sqrt","enstproj_ref_sqrt"],["gramps_plus_enstrophy_sqrt_ref","gramps_enstproj_angle_ref"],][:1]
+    theta_2d_abbs = [["gramps_plus_enstrophy_sqrt_ref","gramps_enstrophy_arclength_ref"],["gramps_ref_sqrt","enstproj_ref_sqrt"],["gramps_plus_enstrophy_sqrt_ref","gramps_enstproj_angle_ref"],][:1]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:
             tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
         if display_current_flag:
             tpt.display_2d_currents(model,data,theta_2d_abbs[i:i+1])
+        sys.exit()
 # --------------------------------------------------------
 
 # ----------- Display lifecycle correlations -----------
@@ -217,8 +218,8 @@ if gen_rates_flag:
 
 # ----------- Plot long trajectory in 1d ---------------
 if plot_long_1d_flag:
-    field_fun = funlib["gramps_enstrophy_area_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_enstrophy_area_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+    field_fun = funlib["gramps_enstrophy_arclength_ref"]
+    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_enstrophy_arclength_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     field_fun = funlib["dissproj_ref"]
     tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"dissproj_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
     field_fun = funlib["gramps_relax_times_dqdy_ref"]

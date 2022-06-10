@@ -1360,7 +1360,7 @@ class HoltonMassModel(Model):
                 "name_english": "Integrated enstrophy",
                 }
         # ---------- Action-angle stuff -----------
-        ang_const = 3.0
+        ang_const = 1.0
         funs["gramps_enstproj_angle"] = {
                 "fun": lambda X: np.arctan2(ang_const*funs["enstproj_sqrt"]["fun"](X), funs["gramps_sqrt"]["fun"](X)),
                 "name": r"$\tan^{-1}$(%i%s/%s)"%(ang_const,funs["gramps_sqrt"]["name"],funs["enstproj_sqrt"]["name"]),
@@ -1368,19 +1368,19 @@ class HoltonMassModel(Model):
                 "unit_symbol": "radians",
                 "name_english": "Enstrophy-GRAMPS angle",
                 }
-        funs["gramps_enstrophy_area"] = {
+        funs["gramps_enstrophy_arclength"] = {
                 "fun": lambda X: np.arctan2(ang_const*funs["enstproj_sqrt"]["fun"](X), funs["gramps_sqrt"]["fun"](X))*funs["gramps_plus_enstrophy_sqrt"]["fun"](X),
                 "name": r"A(%s,%s)"%(funs["gramps"]["name"],funs["enstproj"]["name"]),
                 "units": funs["gramps_plus_enstrophy_sqrt"]["units"],
                 "unit_symbol": funs["gramps_plus_enstrophy_sqrt"]["unit_symbol"],
-                "name_english": "Enstrophy-GRAMPS area",
+                "name_english": "Enstrophy-GRAMPS arclength",
                 }
-        funs["gramps_enstrophy_area_ref"] = {
-                "fun": lambda X: funs["gramps_enstrophy_area"]["fun"](X)[:,q['zi']],
-                "name": r"%s (30 km)"%(funs["gramps_enstrophy_area"]["name"]),
-                "units": funs["gramps_enstrophy_area"]["units"],
-                "unit_symbol": funs["gramps_enstrophy_area"]["unit_symbol"],
-                "name_english": r"%s (30 km)"%(funs["gramps_enstrophy_area"]),
+        funs["gramps_enstrophy_arclength_ref"] = {
+                "fun": lambda X: funs["gramps_enstrophy_arclength"]["fun"](X)[:,q['zi']],
+                "name": r"%s (30 km)"%(funs["gramps_enstrophy_arclength"]["name"]),
+                "units": funs["gramps_enstrophy_arclength"]["units"],
+                "unit_symbol": funs["gramps_enstrophy_arclength"]["unit_symbol"],
+                "name_english": r"%s (30 km)"%(funs["gramps_enstrophy_arclength"]),
                 }
         funs["gramps_enstproj_angle_ref"] = {
                 "fun": lambda X: funs["gramps_enstproj_angle"]["fun"](X)[:,q['zi']], 
