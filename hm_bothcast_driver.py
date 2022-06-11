@@ -52,13 +52,13 @@ compute_tpt_flag =      0
 
 plot_trans_2d_flag =    0
 plot_long_2d_flag =     0
+plot_long_1d_flag =     0
+trans_state_flag =      0
+trans_state_enst_flag = 0
 display_cast_flag =     1
 display_current_flag =  1
 lifecycle_flag =        0
 gen_rates_flag =        0
-plot_long_1d_flag =     1
-trans_state_flag =      0
-trans_state_enst_flag = 1
 flux_dist_flag =        0
 regression_flag =       0
 proj_1d_flag =          0
@@ -161,14 +161,14 @@ if plot_trans_2d_flag:
     tpt.plot_trans_2d_driver(model,data)
 
 if plot_long_2d_flag:
-    field_abbs = ["gramps_plus_enstrophy_sqrt_ref","gramps_enstproj_angle_ref"]
+    field_abbs = ["gramps_plus_enstrophy_sqrt_ref","gramps_enstrophy_angle_ref"]
     print(f"About to plot 2d in field_abbs {field_abbs}")
     fieldnames = [funlib[f]["name"] for f in field_abbs]
     field_funs = [funlib[f]["fun"] for f in field_abbs]
     field_units = [funlib[f]["units"] for f in field_abbs]
     field_unit_symbols = [funlib[f]["unit_symbol"] for f in field_abbs]
     tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
-    field_abbs = ["gramps_ref_sqrt","enstproj_ref_sqrt"]
+    field_abbs = ["gramps_ref_sqrt","enstrophy_ref_sqrt"]
     print(f"About to plot 2d in field_abbs {field_abbs}")
     fieldnames = [funlib[f]["name"] for f in field_abbs]
     field_funs = [funlib[f]["fun"] for f in field_abbs]
@@ -191,16 +191,45 @@ if plot_long_2d_flag:
     tpt.plot_field_long_2d(model,data,fieldnames,field_funs,field_abbs,units=field_units,tmax=3000,field_unit_symbols=field_unit_symbols)
 # ----------------------------------------------------
 
+# ----------- Plot long trajectory in 1d ---------------
+if plot_long_1d_flag:
+    keys2plot = [
+            "gramps_enstrophy_arclength_ref",
+            "diss_ref",
+            "gramps_relax_ref",
+            "dqdy_times_vq_ref",
+            "gramps_enstrophy_angle_ref",
+            "gramps_plus_enstrophy_ref",
+            "gramps_ref",
+            "enstrophy_ref",
+            "Uref",
+            ]
+    for key in keys2plot:
+        field_fun = funlib[key]
+        tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),key,field_fun["name"],field_fun["abbrv"],field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
+
+# ------------------------------------------------------
+# ---------- Plot dominant transition states-----------
+if trans_state_flag:
+    tpt.plot_transition_states_new(model,data)
+if trans_state_enst_flag:
+    tpt.plot_transition_states_ensttend(model,data,lap_flag=False)
+    #tpt.plot_transition_states_all(model,data,collect_flag=True)
+# -------------------------------------------------
+
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [["gramps_plus_enstrophy_sqrt_ref","gramps_enstrophy_arclength_ref"],["gramps_ref_sqrt","enstproj_ref_sqrt"],["gramps_plus_enstrophy_sqrt_ref","gramps_enstproj_angle_ref"],][:1]
+    theta_2d_abbs = [
+            ["gramps_int_sqrt","enstrophy_int_sqrt"],
+            ["gramps_plus_enstrophy_sqrt_ref","gramps_enstrophy_arclength_ref"],
+            ["gramps_ref_sqrt","enstrophy_ref_sqrt"],
+            ][:1]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:
             tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
         if display_current_flag:
             tpt.display_2d_currents(model,data,theta_2d_abbs[i:i+1])
-        sys.exit()
 # --------------------------------------------------------
 
 # ----------- Display lifecycle correlations -----------
@@ -216,43 +245,7 @@ if gen_rates_flag:
     tpt.write_compare_generalized_rates(model,data)
 # --------------------------------------------------------------
 
-# ----------- Plot long trajectory in 1d ---------------
-if plot_long_1d_flag:
-    field_fun = funlib["gramps_enstrophy_arclength_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_enstrophy_arclength_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["dissproj_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"dissproj_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["gramps_relax_times_dqdy_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_relax_times_dqdy_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["dqdyproj_vqproj_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"dqdyproj_vqproj_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["gramps_enstproj_angle_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_enstproj_angle_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["gramps_plus_enstrophy_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_plus_enstrophy_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["gramps_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"gramps_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["enstproj_ref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"enstproj_ref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    field_fun = funlib["Uref"]
-    tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"Uref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    #field = tpt.dam_moments['one']['xb'][0,:,0]
-    #tpt.plot_field_long(model,data,field,r"$q_B^+$","qp",field_fun=None,units=1.0,tmax=3000,time_unit_symbol="days",field_unit_symbol=None,density_1d_flag=False)
-    #field_fun = funlib["vTintref"]
-    #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"vTintref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    #field_fun = funlib["vTref"]
-    #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"vTref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-    #field_fun = funlib["magref"]
-    #tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),field_fun["name"],"magref",field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
-# ------------------------------------------------------
 
-# ---------- Plot dominant transition states-----------
-if trans_state_flag:
-    tpt.plot_transition_states_new(model,data)
-if trans_state_enst_flag:
-    tpt.plot_transition_states_ensttend(model,data,lap_flag=False)
-    #tpt.plot_transition_states_all(model,data,collect_flag=True)
-# -------------------------------------------------
 # ---------- Plot flux distributions -----------
 if flux_dist_flag:
     print("Entering plot_flux_distributions_1d_driver")
