@@ -2865,8 +2865,8 @@ class TPT:
             qm_dn = comm_bwd_dn*(dirn[0]=='a') + (1-comm_bwd_dn)*(dirn[0]=='b') + np.ones(Nx)*(dirn[0]=='?')
             qp_0 = comm_fwd_0*(dirn[1]=='b') + (1-comm_fwd_0)*(dirn[1]=='a') + np.ones(Nx)*(dirn[1]=='?')
             qp_up = comm_fwd_up*(dirn[1]=='b') + (1-comm_fwd_up)*(dirn[1]=='a') + np.ones(Nx)*(dirn[1]=='?')
-            L_up = ((theta_x[np.arange(Nx),tiup].T * qp_up - theta_x[:,ti0].T * qp_0) * qm_0 / dt_up).T
-            L_dn = ((theta_x[np.arange(Nx),tidn].T * qm_dn - theta_x[:,ti0].T * qm_0) * qp_0 / dt_dn).T
+            L_up = ((theta_x[np.arange(Nx),tiup].T * qp_up - theta_x[:,ti0].T * qp_up) * qm_0 / dt_up).T
+            L_dn = ((theta_x[np.arange(Nx),tidn].T * qm_dn - theta_x[:,ti0].T * qm_dn) * qp_0 / dt_dn).T
             L[dirn] = 0.5*(L_up - L_dn)
         # Also compute the deterministic tendency
         xdot = model.drift_fun(X[:,ti0])
@@ -3741,8 +3741,8 @@ class TPT:
         return fig,ax
     def plot_transition_states_ensttend(self,model,data,xlim_flag=True,lap_flag=True):
         # ----- Determine what to compute and plot ---------
-        compute_lap_flag =                  0
-        compute_transdict_flag =            0
+        compute_lap_flag =                  1
+        compute_transdict_flag =            1
         plot_profile_transdict_flag =       1
         plot_timeseries_transdict_flag =    1
         plot_analysis_transdict_flag =      1
