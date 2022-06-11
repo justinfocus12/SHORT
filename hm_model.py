@@ -644,14 +644,23 @@ class HoltonMassModel(Model):
         heat_flux *= (x[:,:n]*Yz - x[:,n:2*n]*Xz)
         heat_flux *= np.exp(-q['z'][1:-1])
         return heat_flux
-    def weighted_vertical_integral(self,fz):
+    def unweighted_vertical_average(self,fz):
+        # for a field f(z), integrate it vertically with no weighting
+        q = self.q
+        Nx,n = fz.shape
+        if n != q['Nz'] - 1:
+            raise Exception(f"You gave me a field of shape {fz.shape}, but dim 1 must have size {n}")
+        weight = np.ones(n) #np.exp(-q['z'][1:-1])
+        F = np.sum(fz*weight, axis=1) / np.sum(weight)
+        return F
+    def weighted_vertical_average(self,fz):
         # for a field f(z), integrate it vertically weighted by density. 
         q = self.q
         Nx,n = fz.shape
         if n != q['Nz'] - 1:
             raise Exception(f"You gave me a field of shape {fz.shape}, but dim 1 must have size {n}")
         weight = np.exp(-q['z'][1:-1])
-        F = np.sum(fz*weight, axis=1)*q['dz']
+        F = np.sum(fz*weight, axis=1) / np.sum(weight)
         return F
     def integrated_meridional_heat_flux(self,x):
         q = self.q
@@ -1305,18 +1314,18 @@ class HoltonMassModel(Model):
                 "abbrv": "G30sqrt",
                 }
         funs["gramps_int"] = {
-                "fun": lambda X: self.weighted_vertical_integral(funs["gramps"]["fun"](X)),
-                "name": r"$\int e^{-z/H}$%s$dz$"%(funs["gramps"]["name"]),
-                "units": funs["gramps"]["units"]*q["H"],
-                "unit_symbol": "%s m"%(funs["gramps"]["unit_symbol"]),
-                "name_english": "Integrated GRAMPS",
+                "fun": lambda X: self.unweighted_vertical_average(funs["gramps"]["fun"](X)),
+                "name": r"$\frac{1}{\Delta z}\int$%s$dz$"%(funs["gramps"]["name"]),
+                "units": funs["gramps"]["units"],
+                "unit_symbol": "%s"%(funs["gramps"]["unit_symbol"]),
+                "name_english": "GRAMPS ($z$-mean)",
                 "abbrv": "GI",
                 }
         funs["gramps_int_sqrt"] = {
                 "fun": lambda X: np.sqrt(funs["gramps_int"]["fun"](X)),
                 "name": "(%s)$^{1/2}$"%(funs["gramps_int"]["name"]),
                 "units": np.sqrt(funs["gramps_int"]["units"]),
-                "unit_symbol": "%s m"%(funs["gramps_sqrt"]["unit_symbol"]),
+                "unit_symbol": "(%s)$^{1/2}$"%(funs["gramps_int"]["unit_symbol"]),
                 "name_english": "(%s)$^{1/2}$"%(funs["gramps_int"]["name_english"]),
                 "abbrv": "GIsqrt",
                 }
@@ -1346,17 +1355,17 @@ class HoltonMassModel(Model):
                 "abbrv": "E30sqrt",
                 }
         funs["enstrophy_int"] = {
-                "fun": lambda X: self.weighted_vertical_integral(funs["enstrophy"]["fun"](X)),
-                "name": r"$\int e^{-z/H}$%s$dz$"%(funs["enstrophy"]["name"]),
-                "units": funs["enstrophy"]["units"]*q["H"],
-                "unit_symbol": "%s m"%(funs["enstrophy"]["unit_symbol"]),
-                "name_english": "Integrated enstrophy",
+                "fun": lambda X: self.unweighted_vertical_average(funs["enstrophy"]["fun"](X)),
+                "name": r"$\frac{1}{\Delta z}\int$%s$dz$"%(funs["enstrophy"]["name"]),
+                "units": funs["enstrophy"]["units"],
+                "unit_symbol": "(%s)$^{1/2}$"%(funs["enstrophy"]["unit_symbol"]),
+                "name_english": "Enstrophy ($z$-mean)",
                 }
         funs["enstrophy_int_sqrt"] = {
                 "fun": lambda X: np.sqrt(funs["enstrophy_int"]["fun"](X)),
                 "name": "(%s)$^{1/2}$"%(funs["enstrophy_int"]["name"]),
                 "units": np.sqrt(funs["enstrophy_int"]["units"]),
-                "unit_symbol": "%s m"%(funs["enstrophy_sqrt"]["unit_symbol"]),
+                "unit_symbol": "(%s)$^{1/2}$"%(funs["enstrophy_int"]["unit_symbol"]),
                 "name_english": "%s$^{1/2}$"%(funs["enstrophy_int"]["name_english"]),
                 "abbrv": "EIsqrt",
                 }
@@ -1401,6 +1410,17 @@ class HoltonMassModel(Model):
                 "unit_symbol": funs["gramps_enstrophy_arclength"]["unit_symbol"],
                 "name_english": r"%s (30 km)"%(funs["gramps_enstrophy_arclength"]),
                 "abbrv": "GEARC30",
+                }
+        funs["gramps_enstrophy_arclength_int"] = {
+                "fun": lambda X: self.unweighted_vertical_average(funs["gramps_enstrophy_arclength"]["fun"](X)),
+                "name": r"$\frac{1}{\Delta z}\int$%s$dz$"%(funs["gramps_enstrophy_arclength"]["name"]),
+                "units": funs["gramps_enstrophy_arclength"]["units"],
+                "unit_symbol": funs["gramps_enstrophy_arclength"]["unit_symbol"],
+                "name_english": "%s ($z$-mean)"%(funs["gramps_enstrophy_arclength"]["name_english"]),
+                "abbrv": "GEARCI",
+                }
+        funs["gramps_enstrophy_int_arclength"] = {
+                "fun": lambda X: # TODO
                 }
         funs["gramps_enstrophy_angle_ref"] = {
                 "fun": lambda X: funs["gramps_enstrophy_angle"]["fun"](X)[:,q['zi']], 
