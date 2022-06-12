@@ -3924,7 +3924,7 @@ class TPT:
                     ax[1].axvline(0,linestyle=(0, (1,1)),color='gray')
                     ax[0].legend(handles=handles["snapshot"])
                     ax[0].set_xlabel(r"%s [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
-                    ax[1].set_xlabel(r"$\mathcal{L}$[(%s)] [%s s$^{-1}$]"%(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
+                    ax[1].set_xlabel(r"$\mathcal{J}_{AB}\cdot\nabla$[%s] [%s s$^{-1}$]"%(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
                     ax[0].set_ylabel(r"$z$ [km]",fontdict=font)
                     ax[1].set_ylabel(r"$z$ [km]",fontdict=font)
                     ax[0].set_title(r"%s at %s"%(funlib[key]['name'],labels[qi]),fontdict=font)
@@ -3940,12 +3940,12 @@ class TPT:
                     # ---------------------------------------------------------------------
         # -------------- Plot the same thing as a timeseries at 30 km --------------
         if plot_timeseries_transdict_flag:
-            for key in keys_prof:
+            for key in keys_scal:
                 abbrv = funlib[key]["abbrv"]
                 fig,ax = plt.subplots(nrows=2, figsize=(6,12), sharex=True)
                 handles = []
                 altitude = 30
-                zi = np.argmin(np.abs(model.q['z_d'][1:-1]/1000 - altitude))
+                zi = 0 #np.argmin(np.abs(model.q['z_d'][1:-1]/1000 - altitude))
                 for dirn in dirns:
                     # Stochastic 
                     h, = ax[0].plot(qp_levels,transdict[key]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib[key]["units"], color=dirn_colors[dirn], linestyle='-', marker='.', label=dirn_labels[dirn])
@@ -3968,7 +3968,7 @@ class TPT:
                         fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
                         ax[i].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
                     ax[0].legend(handles=handles)
-                    fig.savefig(join(self.savefolder,f"trans_state_timeseries_qp{qp_levels[0]}-{qp_levels[-1]}_{dirn_combo_str}_{abbrv}_z{altitude}_Nx{Nx}").replace(".","p"))
+                    fig.savefig(join(self.savefolder,f"trans_state_timeseries_qp{qp_levels[0]}-{qp_levels[-1]}_{dirn_combo_str}_{abbrv}_Nx{Nx}").replace(".","p"))
                     plt.close(fig)
                 # ------------------------------------------------------------------------
         # ----------------------- Plot timeseries of a few select quantities ----------

@@ -1347,7 +1347,7 @@ class HoltonMassModel(Model):
                 }
         funs["gramps_int_sqrt"] = {
                 "fun": lambda X: np.sqrt(funs["gramps_int"]["fun"](X)),
-                "name": "%s$^{1/2}$"%(funs["gramps_int"]["name"]),
+                "name": "(%s)$^{1/2}$"%(funs["gramps_int"]["name"]),
                 "units": np.sqrt(funs["gramps_int"]["units"]),
                 "unit_symbol": "s$^{-1}$",
                 "name_english": "(%s)$^{1/2}$"%(funs["gramps_int"]["name_english"]),
