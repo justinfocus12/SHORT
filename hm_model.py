@@ -1200,6 +1200,14 @@ class HoltonMassModel(Model):
                 "name_english": funs["diss"]["name_english"],
                 "abbrv": "D30",
                 }
+        funs["diss_int"] = {
+                "fun": lambda X: self.unweighted_vertical_average(funs["diss"]["fun"](X)),
+                "name": r"$\overline{D}$",
+                "units": funs["diss"]["units"],
+                "unit_symbol": funs["diss"]["unit_symbol"],
+                "name_english": r"Integrated %s"%(funs["diss"]["name_english"]),
+                "abbrv": "DI",
+                }
         funs["dqdy_times_vq"] = {
                 "fun": lambda X: funs["dqdy"]["fun"](X)*funs["vq"]["fun"](X),
                 "name": r"%s%s"%(funs["dqdy"]["name"],funs["vq"]["name"]),
@@ -1209,12 +1217,20 @@ class HoltonMassModel(Model):
                 "abbrv": "BeVQ",
                }
         funs["dqdy_times_vq_ref"] = {
-            "fun": lambda X: funs["dqdy"]["fun"](X)[:,q['zi']]*funs["vq"]["fun"](X)[:,q['zi']],
+                "fun": lambda X: funs["dqdy"]["fun"](X)[:,q['zi']]*funs["vq"]["fun"](X)[:,q['zi']],
                 "name": r"%s%s (30 km)"%(funs["dqdy"]["name"],funs["vq"]["name"]),
                 "units": funs["dqdy"]["units"]*funs["vq"]["units"],
                 "unit_symbol": "s$^{-3}$",
                 "name_english": "Meridional PV advection at 30 km",
                 "abbrv": "BeVQ30",
+               }
+        funs["dqdy_times_vq_int"] = {
+                "fun": lambda X: self.unweighted_vertical_average(funs["dqdy"]["fun"](X)*funs["vq"]["fun"](X)),
+                "name": r"$\overline{F_q\beta_e}$",
+                "units": funs["dqdy"]["units"]*funs["vq"]["units"],
+                "unit_symbol": "s$^{-3}$",
+                "name_english": "$z$-averaged Meridional PV advection",
+                "abbrv": "BeVQI",
                }
         funs["waveactproj"] = {
                 "fun": lambda X: self.wave_activity_projected(X),
@@ -1255,6 +1271,14 @@ class HoltonMassModel(Model):
                 "unit_symbol": funs["gramps_relax"]["unit_symbol"],
                 "name_english": r"%s (30 km)"%(funs["gramps_relax"]["name_english"]),
                 "abbrv": "RBe30",
+                }
+        funs["gramps_relax_int"] = {
+                "fun": lambda X: self.unweighted_vertical_average(funs["gramps_relax"]["fun"](X)),
+                "name": r"$\overline{R\beta_e}$",
+                "units": funs["gramps_relax"]["units"],
+                "unit_symbol": funs["gramps_relax"]["unit_symbol"],
+                "name_english": r"$z$-averaged %s"%(funs["gramps_relax"]["name_english"]),
+                "abbrv": "RBeI",
                 }
         funs["gramps_plus_enstrophy"] = {
                 "fun": lambda X: funs["gramps"]["fun"](X) + funs["enstrophy"]["fun"](X),
@@ -1315,7 +1339,7 @@ class HoltonMassModel(Model):
                 }
         funs["gramps_int"] = {
                 "fun": lambda X: self.unweighted_vertical_average(funs["gramps"]["fun"](X)),
-                "name": r"$\frac{1}{\Delta z}\int$%s$dz$"%(funs["gramps"]["name"]),
+                "name": r"$\overline{\Gamma}$",
                 "units": funs["gramps"]["units"],
                 "unit_symbol": "%s"%(funs["gramps"]["unit_symbol"]),
                 "name_english": "GRAMPS ($z$-mean)",
@@ -1323,9 +1347,9 @@ class HoltonMassModel(Model):
                 }
         funs["gramps_int_sqrt"] = {
                 "fun": lambda X: np.sqrt(funs["gramps_int"]["fun"](X)),
-                "name": "(%s)$^{1/2}$"%(funs["gramps_int"]["name"]),
+                "name": "%s$^{1/2}$"%(funs["gramps_int"]["name"]),
                 "units": np.sqrt(funs["gramps_int"]["units"]),
-                "unit_symbol": "(%s)$^{1/2}$"%(funs["gramps_int"]["unit_symbol"]),
+                "unit_symbol": "s$^{-1}$",
                 "name_english": "(%s)$^{1/2}$"%(funs["gramps_int"]["name_english"]),
                 "abbrv": "GIsqrt",
                 }
@@ -1356,17 +1380,18 @@ class HoltonMassModel(Model):
                 }
         funs["enstrophy_int"] = {
                 "fun": lambda X: self.unweighted_vertical_average(funs["enstrophy"]["fun"](X)),
-                "name": r"$\frac{1}{\Delta z}\int$%s$dz$"%(funs["enstrophy"]["name"]),
+                "name": r"$\overline{\mathcal{E}}$",
                 "units": funs["enstrophy"]["units"],
-                "unit_symbol": "(%s)$^{1/2}$"%(funs["enstrophy"]["unit_symbol"]),
+                "unit_symbol": funs["enstrophy"]["unit_symbol"],
                 "name_english": "Enstrophy ($z$-mean)",
+                "abbrv": "EI",
                 }
         funs["enstrophy_int_sqrt"] = {
                 "fun": lambda X: np.sqrt(funs["enstrophy_int"]["fun"](X)),
                 "name": "(%s)$^{1/2}$"%(funs["enstrophy_int"]["name"]),
                 "units": np.sqrt(funs["enstrophy_int"]["units"]),
-                "unit_symbol": "(%s)$^{1/2}$"%(funs["enstrophy_int"]["unit_symbol"]),
-                "name_english": "%s$^{1/2}$"%(funs["enstrophy_int"]["name_english"]),
+                "unit_symbol": "s$^{-1}$",
+                "name_english": "(%s)$^{1/2}$"%(funs["enstrophy_int"]["name_english"]),
                 "abbrv": "EIsqrt",
                 }
         # ---------- Action-angle stuff -----------
@@ -1411,16 +1436,47 @@ class HoltonMassModel(Model):
                 "name_english": r"%s (30 km)"%(funs["gramps_enstrophy_arclength"]),
                 "abbrv": "GEARC30",
                 }
+        # Vertical integrals of nonlinear action-angle coordinates
+        funs["gramps_plus_enstrophy_sqrt_int"] = {
+                "fun": lambda X: self.unweighted_vertical_average(funs["gramps_plus_enstrophy_sqrt"]["fun"](X)),
+                "name": r"$\overline{(\Gamma+\mathcal{E})^{1/2}}$",
+                "units": np.sqrt(funs["gramps_plus_enstrophy"]["units"]),
+                "unit_symbol": r"s$^{-1}$",
+                "name_english": r"(%s)$^{1/2}$ ($z$-mean)"%(funs["gramps_plus_enstrophy"]["name_english"]),
+                "abbrv": "GEsqrtI",
+                }
         funs["gramps_enstrophy_arclength_int"] = {
                 "fun": lambda X: self.unweighted_vertical_average(funs["gramps_enstrophy_arclength"]["fun"](X)),
-                "name": r"$\frac{1}{\Delta z}\int$%s$dz$"%(funs["gramps_enstrophy_arclength"]["name"]),
+                "name": r"$\overline{\mathrm{Arc}(\Gamma,\mathcal{E})}$",
                 "units": funs["gramps_enstrophy_arclength"]["units"],
                 "unit_symbol": funs["gramps_enstrophy_arclength"]["unit_symbol"],
-                "name_english": "%s ($z$-mean)"%(funs["gramps_enstrophy_arclength"]["name_english"]),
+                "name_english": r"%s ($z$-mean)"%(funs["gramps_enstrophy_arclength"]["name_english"]),
                 "abbrv": "GEARCI",
                 }
+        # Action-angle coordinates of vertical integrals
+        funs["gramps_plus_enstrophy_int"] = {
+                "fun": lambda X: funs["gramps_int"]["fun"](X) + funs["enstrophy_int"]["fun"](X),
+                "name": r"$\overline{\Gamma}+\overline{\mathcal{E}}$",
+                "units": funs["gramps_int"]["units"],
+                "unit_symbol": r"s$^{-2}$",
+                "name_english": r"GRAMPS + Enstrophy ($z$-mean)",
+                "abbrv": "GEI",
+                }
+        funs["gramps_plus_enstrophy_int_sqrt"] = {
+                "fun": lambda X: np.sqrt(funs["gramps_int"]["fun"](X) + funs["enstrophy_int"]["fun"](X)),
+                "name": r"$(\overline{\Gamma}+\overline{\mathcal{E}})^{1/2}$",
+                "units": np.sqrt(funs["gramps_int"]["units"]),
+                "unit_symbol": r"s$^{-1}$",
+                "name_english": r"(GRAMPS + Enstrophy $z$-mean)$^{1/2}$",
+                "abbrv": "GEIsqrt",
+                }
         funs["gramps_enstrophy_int_arclength"] = {
-                "fun": lambda X: # TODO
+                "fun": lambda X: funs["gramps_plus_enstrophy_int_sqrt"]["fun"](X) * np.arctan2(funs["enstrophy_int_sqrt"]["fun"](X), funs["gramps_int_sqrt"]["fun"](X)),
+                "units": funs["gramps_plus_enstrophy_int_sqrt"]["units"],
+                "unit_symbol": funs["gramps_plus_enstrophy_int_sqrt"]["unit_symbol"],
+                "name": r"Arc($\overline{\Gamma},\overline{\mathcal{E}}$)",
+                "name_english": "Arclength of integral",
+                "abbrv": "GEIARC",
                 }
         funs["gramps_enstrophy_angle_ref"] = {
                 "fun": lambda X: funs["gramps_enstrophy_angle"]["fun"](X)[:,q['zi']], 

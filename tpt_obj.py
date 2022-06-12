@@ -3741,8 +3741,8 @@ class TPT:
         return fig,ax
     def plot_transition_states_ensttend(self,model,data,xlim_flag=True,lap_flag=True):
         # ----- Determine what to compute and plot ---------
-        compute_lap_flag =                  1
-        compute_transdict_flag =            1
+        compute_lap_flag =                  0
+        compute_transdict_flag =            0
         plot_profile_transdict_flag =       1
         plot_timeseries_transdict_flag =    1
         plot_analysis_transdict_flag =      1
@@ -3773,7 +3773,8 @@ class TPT:
             idx_qi = np.where(np.abs(comm_fwd - qp_levels[qi]) < qp_tol)[0]
             qlevel_idx += [idx_qi]
         funlib = model.observable_function_library()
-        keys = ["enstrophy_gramps_ratio","gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstrophy","gramps_relax","dqdy_times_vq","diss",]
+        keys_prof = ["gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstrophy","gramps_relax","dqdy_times_vq","diss",]
+        keys_scal = ["gramps_plus_enstrophy_int","gramps_int","enstrophy_int","diss_int","gramps_relax_int","dqdy_times_vq_int"]
         #dirns = ["aa","ab","ba","bb","??"]
         dirn_index = {"aa": 0, "ab": 1, "ba": 2, "bb": 3, "??": 4}
         dirn_colors = {"aa": "dodgerblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
@@ -3807,7 +3808,7 @@ class TPT:
                     idx_qi = np.where(np.abs(lap[dirn]["comm_fwd"] - qp_levels[qi]) < qp_tol)[0]
                     qlevel_idx_lap += [idx_qi]
                 lap[dirn]["qlevel_idx"] = qlevel_idx_lap
-                for key in keys:
+                for key in list(keys_prof) + list(keys_scal):
                     abbrv = funlib[key]["abbrv"]
                     theta_lap = funlib[key]["fun"](lap[dirn]["x"])
                     print(f"For key {key}, theta_lap.shape = {theta_lap.shape}")
@@ -3829,18 +3830,19 @@ class TPT:
         else:
             quantile_midranges = np.array([0.25,0.5,0.9])
             transdict = dict({"quantile_midranges": quantile_midranges})
-            for key in keys:
+            for key in list(keys_prof) + list(keys_scal):
                 abbrv = funlib[key]["abbrv"]
                 print(f"---------Starting tendency calculations for {key}------------")
                 L,theta_x,ti0 = self.tendency_during_transition(model,data,X,funlib[key]["fun"],comm_bwd,comm_fwd,dirns)
                 print(f"theta_x.shape = {theta_x.shape}")
+                thdim = theta_x.shape[-1]
                 transdict[key] = dict({})
                 transdict[key]["snapshot"] = dict({"stochastic": dict(), "xlim": np.zeros(2)})
                 transdict[key]["tendency"] = dict({"stochastic": dict(), "deterministic": dict(), "xlim": np.zeros(2)})
                 for dirn in dirns:
-                    transdict[key]["snapshot"]["stochastic"][dirn] = np.zeros((len(qp_levels),1+2*len(quantile_midranges),n))
-                    transdict[key]["tendency"]["stochastic"][dirn] = np.zeros((len(qp_levels),n))
-                    transdict[key]["tendency"]["deterministic"][dirn] = np.zeros((len(qp_levels),n))
+                    transdict[key]["snapshot"]["stochastic"][dirn] = np.zeros((len(qp_levels),1+2*len(quantile_midranges),thdim))
+                    transdict[key]["tendency"]["stochastic"][dirn] = np.zeros((len(qp_levels),thdim))
+                    transdict[key]["tendency"]["deterministic"][dirn] = np.zeros((len(qp_levels),thdim))
                 for qi in range(len(qp_levels)):
                     idx = np.array(qlevel_idx[qi]) 
                     # Get the average for tendencies 
@@ -3849,14 +3851,13 @@ class TPT:
                         qp = comm_fwd[idx,ti0]*(dirn[1]=='b') + (1-comm_fwd[idx,ti0])*(dirn[1]=='a') + np.ones(len(idx))*(dirn[1]=='?')
                         # Snapshot, stochastic
                         weights = chom[idx]*qm*qp/np.sum(chom[idx]*qm*qp)
-                        for zi in range(n):
-                            order = np.argsort(theta_x[idx,ti0,zi])
+                        for d in range(thdim):
+                            order = np.argsort(theta_x[idx,ti0,d])
                             cdf = np.cumsum(weights[order])
                             for k in range(len(quantile_midranges)):
                                 alpha = (1 - quantile_midranges[k])/2
-                                transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k,zi] = theta_x[idx[order[np.where(cdf >= alpha)[0][0]]],ti0,zi]
-                                transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k+1,zi] = theta_x[idx[order[np.where(cdf >= 1-alpha)[0][0]]],ti0,zi]
-                            #transdict[key]["snapshot"]["stochastic"][dirn][qi,-1,zi] = theta_x[idx[order[np.where(cdf >= 0.5)[0][0]]],ti0,zi]
+                                transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k,d] = theta_x[idx[order[np.where(cdf >= alpha)[0][0]]],ti0,d]
+                                transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k+1,d] = theta_x[idx[order[np.where(cdf >= 1-alpha)[0][0]]],ti0,d]
                         transdict[key]["snapshot"]["stochastic"][dirn][qi,-1] = np.nansum((theta_x[idx,ti0].T * weights).T, axis=0) 
                         # Tendency, stochastic
                         weights = chom[idx]/np.sum(chom[idx]*qm*qp) 
@@ -3892,7 +3893,7 @@ class TPT:
             # Save the transdict file 
             pickle.dump(transdict, open(join(self.savefolder,"transdict"),"wb"))
         if plot_profile_transdict_flag:
-            for key in keys:
+            for key in keys_prof:
                 abbrv = funlib[key]["abbrv"]
                 #  ---------------------- Plot the snapshots and tendencies ---------------
                 for qi in range(len(qp_levels)):
@@ -3939,7 +3940,7 @@ class TPT:
                     # ---------------------------------------------------------------------
         # -------------- Plot the same thing as a timeseries at 30 km --------------
         if plot_timeseries_transdict_flag:
-            for key in keys:
+            for key in keys_prof:
                 abbrv = funlib[key]["abbrv"]
                 fig,ax = plt.subplots(nrows=2, figsize=(6,12), sharex=True)
                 handles = []
@@ -3977,68 +3978,68 @@ class TPT:
             for dirn in ["ab"]:
                 fig,ax = plt.subplots(nrows=2, ncols=3, figsize=(18,12), sharex=True, sharey="row")
                 # Column 0: plot the enstrophy + gramps 
-                y0 = transdict["gramps_plus_enstrophy"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["gramps_plus_enstrophy"]["units"]
-                Ly0 = transdict["gramps_plus_enstrophy"]["tendency"]["stochastic"][dirn][:,q['zi']]*funlib["gramps_plus_enstrophy"]["units"]/q["time"]
-                y0dot = transdict["gramps_plus_enstrophy"]["tendency"]["deterministic"][dirn][:,q['zi']]*funlib["gramps_plus_enstrophy"]["units"]/q["time"]
-                y1 = transdict["gramps_relax"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["gramps_relax"]["units"]
-                y2 = transdict["diss"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["diss"]["units"]
-                h_y0, = ax[0,0].plot(qp_levels, y0, color='darkorange', label=funlib["gramps_plus_enstrophy"]["name"])
+                y0 = transdict["gramps_plus_enstrophy_int"]["snapshot"]["stochastic"][dirn][:,-1,0]*funlib["gramps_plus_enstrophy_int"]["units"]
+                Ly0 = transdict["gramps_plus_enstrophy_int"]["tendency"]["stochastic"][dirn][:,0]*funlib["gramps_plus_enstrophy_int"]["units"]/q["time"]
+                y0dot = transdict["gramps_plus_enstrophy_int"]["tendency"]["deterministic"][dirn][:,0]*funlib["gramps_plus_enstrophy_int"]["units"]/q["time"]
+                y1 = transdict["gramps_relax_int"]["snapshot"]["stochastic"][dirn][:,-1,0]*funlib["gramps_relax_int"]["units"]
+                y2 = transdict["diss_int"]["snapshot"]["stochastic"][dirn][:,-1,0]*funlib["diss_int"]["units"]
+                h_y0, = ax[0,0].plot(qp_levels, y0, color='darkorange', label=funlib["gramps_plus_enstrophy_int"]["name"])
                 for k in range(len(quantile_midranges)):
-                    ylohi = transdict["gramps_plus_enstrophy"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,q['zi']] * funlib["gramps_plus_enstrophy"]["units"]
+                    ylohi = transdict["gramps_plus_enstrophy_int"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,0] * funlib["gramps_plus_enstrophy_int"]["units"]
                     ax[0,0].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
-                h_Ly0, = ax[1,0].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}$[%s]"%(funlib["gramps_plus_enstrophy"]["name"]))
-                h_y0dot, = ax[1,0].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["gramps_plus_enstrophy"]["name"]))
-                h_y1, = ax[1,0].plot(qp_levels, y1, color="purple", label=funlib["gramps_relax"]["name"]) 
-                h_y2, = ax[1,0].plot(qp_levels, y2, color='red', linestyle='-', label=funlib["diss"]["name"])
+                h_Ly0, = ax[1,0].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{J}_{AB}\cdot\nabla$[%s]"%(funlib["gramps_plus_enstrophy_int"]["name"]))
+                h_y0dot, = ax[1,0].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["gramps_plus_enstrophy_int"]["name"]))
+                h_y1, = ax[1,0].plot(qp_levels, y1, color="purple", label=funlib["gramps_relax_int"]["name"]) 
+                h_y2, = ax[1,0].plot(qp_levels, y2, color='red', linestyle='-', label=funlib["diss_int"]["name"])
                 ax[1,0].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
                 ax[0,0].legend(handles=[h_y0],prop={'size':16})
                 ax[1,0].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
-                ax[0,0].set_title(r"%s"%(funlib["gramps_plus_enstrophy"]["name_english"]),fontdict=ffont)
+                ax[0,0].set_title(r"%s"%(funlib["gramps_plus_enstrophy_int"]["name_english"]),fontdict=ffont)
                 ax[1,0].set_title(r"tendency",fontdict=ffont)
                 # Column 1: plot the gramps
-                y0 = transdict["gramps"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["gramps"]["units"]
-                Ly0 = transdict["gramps"]["tendency"]["stochastic"][dirn][:,q['zi']]*funlib["gramps"]["units"]/q["time"]
-                y0dot = transdict["gramps"]["tendency"]["deterministic"][dirn][:,q['zi']]*funlib["gramps"]["units"]/q["time"]
-                y1 = transdict["gramps_relax"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["gramps_relax"]["units"]
-                y2 = transdict["dqdy_times_vq"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["dqdy_times_vq"]["units"]
-                h_y0, = ax[0,1].plot(qp_levels, y0, color='darkorange', label=funlib["gramps"]["name"])
+                y0 = transdict["gramps_int"]["snapshot"]["stochastic"][dirn][:,-1,0]*funlib["gramps_int"]["units"]
+                Ly0 = transdict["gramps_int"]["tendency"]["stochastic"][dirn][:,0]*funlib["gramps_int"]["units"]/q["time"]
+                y0dot = transdict["gramps_int"]["tendency"]["deterministic"][dirn][:,0]*funlib["gramps_int"]["units"]/q["time"]
+                y1 = transdict["gramps_relax_int"]["snapshot"]["stochastic"][dirn][:,-1,0]*funlib["gramps_relax_int"]["units"]
+                y2 = transdict["dqdy_times_vq_int"]["snapshot"]["stochastic"][dirn][:,-1,0]*funlib["dqdy_times_vq_int"]["units"]
+                h_y0, = ax[0,1].plot(qp_levels, y0, color='darkorange', label=funlib["gramps_int"]["name"])
                 for k in range(len(quantile_midranges)):
-                    ylohi = transdict["gramps"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,q['zi']] * funlib["gramps"]["units"]
+                    ylohi = transdict["gramps_int"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,0] * funlib["gramps_int"]["units"]
                     ax[0,1].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
-                h_Ly0, = ax[1,1].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}$[%s]"%(funlib["gramps"]["name"]))
-                h_y0dot, = ax[1,1].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["gramps"]["name"]))
-                h_y1, = ax[1,1].plot(qp_levels, y1, color="purple", label=funlib["gramps_relax"]["name"]) 
-                h_y2, = ax[1,1].plot(qp_levels, y2, color='cyan', linestyle='-', label=funlib["dqdy_times_vq"]["name"])
+                h_Ly0, = ax[1,1].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{J}_{AB}\cdot\nabla$[%s]"%(funlib["gramps_int"]["name"]))
+                h_y0dot, = ax[1,1].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["gramps_int"]["name"]))
+                h_y1, = ax[1,1].plot(qp_levels, y1, color="purple", label=funlib["gramps_relax_int"]["name"]) 
+                h_y2, = ax[1,1].plot(qp_levels, y2, color='cyan', linestyle='-', label=funlib["dqdy_times_vq_int"]["name"])
                 ax[1,1].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
                 ax[0,1].legend(handles=[h_y0],prop={'size':16})
                 ax[1,1].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
-                ax[0,1].set_title(r"%s"%(funlib["gramps"]["name_english"]),fontdict=ffont)
+                ax[0,1].set_title(r"%s"%(funlib["gramps_int"]["name_english"]),fontdict=ffont)
                 ax[1,1].set_title(r"tendency",fontdict=ffont)
                 # Column 2: plot the enstrophy 
-                y0 = transdict["enstrophy"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["enstrophy"]["units"]
-                Ly0 = transdict["enstrophy"]["tendency"]["stochastic"][dirn][:,q['zi']]*funlib["enstrophy"]["units"]/q["time"]
-                y0dot = transdict["enstrophy"]["tendency"]["deterministic"][dirn][:,q['zi']]*funlib["enstrophy"]["units"]/q["time"]
-                y1 = transdict["diss"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["diss"]["units"]
-                y2 = -transdict["dqdy_times_vq"]["snapshot"]["stochastic"][dirn][:,-1,q['zi']]*funlib["dqdy_times_vq"]["units"]
-                h_y0, = ax[0,2].plot(qp_levels, y0, color='darkorange', label=funlib["enstrophy"]["name"])
+                y0 = transdict["enstrophy_int"]["snapshot"]["stochastic"][dirn][:,-1,0]*funlib["enstrophy_int"]["units"]
+                Ly0 = transdict["enstrophy_int"]["tendency"]["stochastic"][dirn][:,0]*funlib["enstrophy_int"]["units"]/q["time"]
+                y0dot = transdict["enstrophy_int"]["tendency"]["deterministic"][dirn][:,0]*funlib["enstrophy_int"]["units"]/q["time"]
+                y1 = transdict["diss_int"]["snapshot"]["stochastic"][dirn][:,-1,0]*funlib["diss"]["units"]
+                y2 = -transdict["dqdy_times_vq_int"]["snapshot"]["stochastic"][dirn][:,-1,0]*funlib["dqdy_times_vq_int"]["units"]
+                h_y0, = ax[0,2].plot(qp_levels, y0, color='darkorange', label=funlib["enstrophy_int"]["name"])
                 for k in range(len(quantile_midranges)):
-                    ylohi = transdict["enstrophy"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,q['zi']] * funlib["enstrophy"]["units"]
+                    ylohi = transdict["enstrophy_int"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,0] * funlib["enstrophy_int"]["units"]
                     ax[0,2].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
-                h_Ly0, = ax[1,2].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}$[%s]"%(funlib["enstrophy"]["name"]))
-                h_y0dot, = ax[1,2].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["enstrophy"]["name"]))
+                h_Ly0, = ax[1,2].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{J}_{AB}\cdot\nabla$[%s]"%(funlib["enstrophy_int"]["name"]))
+                h_y0dot, = ax[1,2].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["enstrophy_int"]["name"]))
                 h_y1, = ax[1,2].plot(qp_levels, y1, color='red', linestyle='-', label=funlib["diss"]["name"])
-                h_y2, = ax[1,2].plot(qp_levels, y2, color='cyan', linestyle='-', label=r"$-$%s"%(funlib["dqdy_times_vq"]["name"]))
+                h_y2, = ax[1,2].plot(qp_levels, y2, color='cyan', linestyle='-', label=r"$-$%s"%(funlib["dqdy_times_vq_int"]["name"]))
                 ax[1,2].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
 
                 ax[0,2].legend(handles=[h_y0],prop={'size':16})
                 ax[1,2].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
-                ax[0,2].set_title(r"%s"%(funlib["enstrophy"]["name_english"]),fontdict=ffont)
+                ax[0,2].set_title(r"%s"%(funlib["enstrophy_int"]["name_english"]),fontdict=ffont)
                 ax[1,2].set_title(r"tendency",fontdict=ffont)
                 # Labels
                 for c in range(ax.shape[1]):
                     ax[1,c].set_xlabel(r"$q_B^+$",fontdict=ffont)
-                ax[0,0].set_ylabel(r"[%s]"%(funlib["enstrophy"]["unit_symbol"]),fontdict=ffont)
-                ax[1,0].set_ylabel(r"[%s s$^{-1}$]"%(funlib["enstrophy"]["unit_symbol"]),fontdict=ffont)
+                ax[0,0].set_ylabel(r"[%s]"%(funlib["enstrophy_int"]["unit_symbol"]),fontdict=ffont)
+                ax[1,0].set_ylabel(r"[s$^{-3}$]",fontdict=ffont)
                 for r in range(ax.shape[0]):
                     ylim = ax[r,0].get_ylim()
                     fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])

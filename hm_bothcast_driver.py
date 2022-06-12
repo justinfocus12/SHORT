@@ -54,7 +54,7 @@ plot_trans_2d_flag =    0
 plot_long_2d_flag =     0
 plot_long_1d_flag =     0
 trans_state_flag =      0
-trans_state_enst_flag = 0
+trans_state_enst_flag = 1
 display_cast_flag =     1
 display_current_flag =  1
 lifecycle_flag =        0
@@ -194,6 +194,13 @@ if plot_long_2d_flag:
 # ----------- Plot long trajectory in 1d ---------------
 if plot_long_1d_flag:
     keys2plot = [
+            "gramps_plus_enstrophy_int_sqrt",
+            "diss_int",
+            "gramps_relax_int",
+            "dqdy_times_vq_int",
+            "gramps_enstrophy_int_arclength",
+            "gramps_plus_enstrophy_sqrt_int",
+            "gramps_enstrophy_arclength_int",
             "gramps_enstrophy_arclength_ref",
             "diss_ref",
             "gramps_relax_ref",
@@ -203,7 +210,7 @@ if plot_long_1d_flag:
             "gramps_ref",
             "enstrophy_ref",
             "Uref",
-            ]
+            ][:4]
     for key in keys2plot:
         field_fun = funlib[key]
         tpt.plot_field_long(model,data,field_fun["fun"](data.X[:,0]),key,field_fun["name"],field_fun["abbrv"],field_fun=field_fun["fun"],units=field_fun["units"],tmax=3000,time_unit_symbol="days",field_unit_symbol=field_fun["unit_symbol"])
@@ -220,10 +227,11 @@ if trans_state_enst_flag:
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
     theta_2d_abbs = [
+            ["gramps_plus_enstrophy_int_sqrt","gramps_enstrophy_int_arclength"],
             ["gramps_int_sqrt","enstrophy_int_sqrt"],
             ["gramps_plus_enstrophy_sqrt_ref","gramps_enstrophy_arclength_ref"],
             ["gramps_ref_sqrt","enstrophy_ref_sqrt"],
-            ][:1]
+            ][:2]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:
