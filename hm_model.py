@@ -899,14 +899,6 @@ class HoltonMassModel(Model):
         zlevel = lambda z: np.argmin(np.abs(q['z_d'][1:-1]/1000-z))
         n = q['Nz'] - 1
         funs = {
-                "U": {
-                    "fun": lambda X: X[:,2*n:3*n],
-                    "name":r"$U$",
-                    "units": q['length']/q['time'],
-                    "unit_symbol": r"m/s",
-                    "name_english": "Zonal wind",
-                    "abbrv": "U",
-                 },
                 "Uref":
                 {"fun": lambda X: X[:,2*n+q['zi']],
                  "name":r"$U$(%.0f km)"%self.ref_alt,
@@ -1124,14 +1116,6 @@ class HoltonMassModel(Model):
                  "units": q['H']*q['f0_d']/(2*q['length']*q['ideal_gas_constant'])*q['length']**4/(q['H']*q['time']**2),
                  "unit_symbol": r"$\mathrm{K}\cdot\mathrm{m/s}$",
                  },
-                "dqdy": {
-                        "fun": lambda X: self.background_pv_gradient_projected(X),
-                        "name": r"$\beta_e$", #r"$\partial_y\overline{q}$",
-                        "units": 1/q["Gsq"]*1/(q['length']*q['time']),
-                        "unit_symbol": "m$^{-1}$s$^{-1}$",
-                        "name_english": "Mean PV gradient",
-                        "abbrv": "Be",
-                        },
                 "dqdymean":
                 {"fun": lambda X: np.mean(self.background_pv_gradient(X),1),
                  "name": r"$\partial_y\overline{q}$ (z-mean)",
@@ -1150,11 +1134,31 @@ class HoltonMassModel(Model):
                  "units": q['length']**3/(q['H']**2*q['time']**2),
                  "unit_symbol": r"s$^{-1}$",
                  },
+                # ---------------- Observables pertaining to GRAMPS and enstrophy -----------------
+                "U": {
+                        "fun": lambda X: X[:,2*n:3*n],
+                        "name":r"$U$",
+                        "units": q['length']/q['time'],
+                        "unit_symbol": r"m s$^{-1}$",
+                        "tendency_unit_symbol": r"m s$^{-2}$",
+                        "name_english": "Zonal wind",
+                        "abbrv": "U",
+                 },
+                "dqdy": {
+                        "fun": lambda X: self.background_pv_gradient_projected(X),
+                        "name": r"$\beta_e$", #r"$\partial_y\overline{q}$",
+                        "units": 1/q["Gsq"]*1/(q['length']*q['time']),
+                        "unit_symbol": "m$^{-1}$s$^{-1}$",
+                        "tendency_unit_symbol": "m$^{-1}$s$^{-2}$",
+                        "name_english": "Mean PV gradient",
+                        "abbrv": "Be",
+                        },
                 "vq": {
                         "fun": lambda X: self.meridional_pv_flux_projected(X),
                         "name": r"$F_q$", #r"$\overline{v'q'}$",
                         "units": 1/q["Gsq"]*q["length"]/q["time"]**2,
                         "unit_symbol": r"m s$^{-2}$",
+                        "tendency_unit_symbol": r"m s$^{-3}$",
                         "name_english": "Eddy PV flux",
                         "abbrv": "VQ",
                         },
@@ -1178,13 +1182,14 @@ class HoltonMassModel(Model):
                  },
                 "ensttend": {
                         "fun": lambda X: self.dissipation_projected(X) - self.meridional_pv_flux_projected(X)*self.background_pv_gradient_projected(X),
-                        "name": r"$\partial_t\mathcal{E}$ inferred",
+                        "name": r"$D-F_q\beta_e$",
                         "units": 1/q["Gsq"]**2*1/q["time"]**3,
                         "unit_symbol": r"s$^{-3}$",
+                        "tendency_unit_symbol": r"s$^{-4}$",
                         "name_english": r"Inferred enstrophy tendency",
                         "abbrv": "ET",
                         },
-                "dqdyrelax": {
+                "dqdyrelax": { # The thing that relaxes Be 
                         "fun": lambda X: self.dqdy_relaxation_projected(X),
                         "name": r"$\frac{\epsilon\ell^2}{2}R$", #r"$\rho^{-1}\partial_z[\rho\alpha(U - U^R)_z]$",
                         "units": 1/q["Gsq"]*1/(q['length']*q['time']**2),
@@ -1194,47 +1199,8 @@ class HoltonMassModel(Model):
                         },
 
             }
-        funs["diss_ref"] = {
-                "fun": lambda X: funs["diss"]["fun"](X)[:,q['zi']],
-                "name": r"%s (30 km)"%(funs["diss"]["name"]),
-                "units": funs["diss"]["units"],
-                "unit_symbol": funs["diss"]["unit_symbol"],
-                "name_english": funs["diss"]["name_english"],
-                "abbrv": "D30",
-                }
-        funs["diss_int"] = {
-                "fun": lambda X: self.unweighted_vertical_average(funs["diss"]["fun"](X)),
-                "name": r"$\overline{D}$",
-                "units": funs["diss"]["units"],
-                "unit_symbol": funs["diss"]["unit_symbol"],
-                "name_english": r"Integrated %s"%(funs["diss"]["name_english"]),
-                "abbrv": "DI",
-                }
-        funs["dqdy_times_vq"] = {
-                "fun": lambda X: funs["dqdy"]["fun"](X)*funs["vq"]["fun"](X),
-                "name": r"%s%s"%(funs["dqdy"]["name"],funs["vq"]["name"]),
-                "units": funs["dqdy"]["units"]*funs["vq"]["units"],
-                "unit_symbol": "s$^{-3}$",
-                "tendency_unit_symbol": r"s$^{-4}$",
-                "name_english": "Meridional PV advection",
-                "abbrv": "BeVQ",
-               }
-        funs["dqdy_times_vq_ref"] = {
-                "fun": lambda X: funs["dqdy"]["fun"](X)[:,q['zi']]*funs["vq"]["fun"](X)[:,q['zi']],
-                "name": r"%s%s (30 km)"%(funs["dqdy"]["name"],funs["vq"]["name"]),
-                "units": funs["dqdy"]["units"]*funs["vq"]["units"],
-                "unit_symbol": "s$^{-3}$",
-                "name_english": "Meridional PV advection at 30 km",
-                "abbrv": "BeVQ30",
-               }
-        funs["dqdy_times_vq_int"] = {
-                "fun": lambda X: self.unweighted_vertical_average(funs["dqdy"]["fun"](X)*funs["vq"]["fun"](X)),
-                "name": r"$\overline{F_q\beta_e}$",
-                "units": funs["dqdy"]["units"]*funs["vq"]["units"],
-                "unit_symbol": "s$^{-3}$",
-                "name_english": "$z$-averaged Meridional PV advection",
-                "abbrv": "BeVQI",
-               }
+        # ----------------- Derived functions pertaining to GRAMPS and enstrophy -------------------
+        # 1.  ==== Functions at all altitudes ====
         funs["waveactproj"] = {
                 "fun": lambda X: self.wave_activity_projected(X),
                 "name": r"$\overline{q'^2}/(2\partial_y\overline{q})$",
@@ -1252,6 +1218,15 @@ class HoltonMassModel(Model):
                 "name_english": "GRAMPS",
                 "abbrv": "G",
                 }
+        funs["dqdy_times_vq"] = {
+                "fun": lambda X: funs["dqdy"]["fun"](X)*funs["vq"]["fun"](X),
+                "name": r"%s%s"%(funs["dqdy"]["name"],funs["vq"]["name"]),
+                "units": funs["dqdy"]["units"]*funs["vq"]["units"],
+                "unit_symbol": "s$^{-3}$",
+                "tendency_unit_symbol": r"s$^{-4}$",
+                "name_english": "Meridional PV advection",
+                "abbrv": "BeVQ",
+               }
         funs["gramps_relax_coeff"] = {
                 "fun": lambda X: funs["dqdyrelax"]["fun"](X)*2/(q['eps']*q['l']**2),
                 "name": r"R",
@@ -1269,78 +1244,88 @@ class HoltonMassModel(Model):
                 "name_english": "GRAMPS relaxation",
                 "abbrv": "RBe",
                 }
-        funs["gramps_relax_ref"] = {
-                "fun": lambda X: funs["gramps_relax"]["fun"](X)[:,q['zi']], 
-                "name": r"%s (30 km)"%(funs["gramps_relax"]["name"]),
-                "units": funs["gramps_relax"]["units"],
-                "unit_symbol": funs["gramps_relax"]["unit_symbol"],
-                "name_english": r"%s (30 km)"%(funs["gramps_relax"]["name_english"]),
-                "abbrv": "RBe30",
-                }
-        funs["gramps_relax_int"] = {
-                "fun": lambda X: self.unweighted_vertical_average(funs["gramps_relax"]["fun"](X)),
-                "name": r"$\overline{R\beta_e}$",
-                "units": funs["gramps_relax"]["units"],
-                "unit_symbol": funs["gramps_relax"]["unit_symbol"],
-                "name_english": r"$z$-averaged %s"%(funs["gramps_relax"]["name_english"]),
-                "abbrv": "RBeI",
-                }
         funs["gramps_plus_enstrophy"] = {
                 "fun": lambda X: funs["gramps"]["fun"](X) + funs["enstrophy"]["fun"](X),
                 "name": "%s$+$%s"%(funs["gramps"]["name"],funs["enstrophy"]["name"]),
                 "units": funs["enstrophy"]["units"],
                 "unit_symbol": "s$^{-2}$",
+                "tendency_unit_symbol": "s$^{-3}$",
                 "name_english": "%s + %s"%(funs["gramps"]["name_english"],funs["enstrophy"]["name_english"]),
                 "abbrv": "G+E",
                 }
-        funs["gramps_plus_enstrophy_ref"] = {
-                "fun": lambda X: (funs["gramps"]["fun"](X)[:,q['zi']] + funs["enstrophy"]["fun"](X)[:,q['zi']]),
-                "name": "%s$+$%s (30 km)"%(funs["gramps"]["name"],funs["enstrophy"]["name"]),
-                "units": funs["enstrophy"]["units"],
-                "unit_symbol": "s$^{-2}$",
-                "name_english": "Enstrophy + GRAMPS at $z=30$ km",
-                "abbrv": "G+E30",
+        funs["gramps_sqrt"] = {
+                "fun": lambda X: np.sqrt(funs["gramps"]["fun"](X)),
+                "name": r"%s$^{1/2}$"%(funs["gramps"]["name"]),
+                "units": np.sqrt(funs["gramps"]["units"]),
+                "unit_symbol": r"s$^{-1}$",
+                "tendency_unit_symbol": r"s$^{-2}$",
+                "name_english": "%s$^{1/2}$"%(funs["gramps"]["name_english"]),
+                "abbrv": "Gsqrt",
+                }
+        funs["enstrophy_sqrt"] = {
+                "fun": lambda X: np.sqrt(funs["enstrophy"]["fun"](X)),
+                "name": r"%s$^{1/2}$"%(funs["enstrophy"]["name"]),
+                "units": np.sqrt(funs["enstrophy"]["units"]),
+                "unit_symbol": r"s$^{-1}$",
+                "tendency_unit_symbol": r"s$^{-2}$",
+                "name_english": "Enstrophy$^{1/2}$",
+                "abbrv": "Esqrt",
                 }
         funs["gramps_plus_enstrophy_sqrt"] = {
                 "fun": lambda X: np.sqrt(funs["gramps"]["fun"](X) + funs["enstrophy"]["fun"](X)),
                 "name": r"(%s$+$%s)$^{1/2}$"%(funs["gramps"]["name"],funs["enstrophy"]["name"]),
                 "units": np.sqrt(funs["enstrophy"]["units"]),
                 "unit_symbol": "s$^{-1}$",
+                "tendency_unit_symbol": "s$^{-2}$",
                 "name_english": "(%s + %s)$^{1/2}$"%(funs["gramps"]["name_english"],funs["enstrophy"]["name_english"]),
                 "abbrv": "G+Esqrt",
                 }
-        funs["gramps_plus_enstrophy_sqrt_ref"] = {
-                "fun": lambda X: funs["gramps_plus_enstrophy_sqrt"]["fun"](X)[:,q['zi']],
-                "name": r"%s (30 km)"%(funs["gramps_plus_enstrophy_sqrt"]["name"]),
+        funs["gramps_enstrophy_arclength"] = {
+                "fun": lambda X: np.arctan2(funs["enstrophy_sqrt"]["fun"](X), funs["gramps_sqrt"]["fun"](X))*funs["gramps_plus_enstrophy_sqrt"]["fun"](X),
+                "name": r"Arc(%s,%s)"%(funs["gramps"]["name"],funs["enstrophy"]["name"]),
                 "units": funs["gramps_plus_enstrophy_sqrt"]["units"],
                 "unit_symbol": funs["gramps_plus_enstrophy_sqrt"]["unit_symbol"],
-                "name_english": r"%s (30 km)"%(funs["gramps_plus_enstrophy_sqrt"]["name_english"]),
-                "abbrv": "G+E30sqrt"
+                "tendency_unit_symbol": funs["gramps_plus_enstrophy_sqrt"]["tendency_unit_symbol"],
+                "name_english": "Enstrophy-GRAMPS arclength",
+                "abbrv": "GEARC",
                 }
-        # --------- GRAMPS stuff -------------
-        funs["gramps_sqrt"] = {
-                "fun": lambda X: np.sqrt(funs["gramps"]["fun"](X)),
-                "name": r"%s$^{1/2}$"%(funs["gramps"]["name"]),
-                "units": np.sqrt(funs["gramps"]["units"]),
-                "unit_symbol": r"s$^{-1}$",
-                "name_english": "%s$^{1/2}$"%(funs["gramps"]["name_english"]),
-                "abbrv": "Gsqrt",
+        funs["enstrophy_gramps_ratio"] = {
+                "fun": lambda X: funs["enstrophy_sqrt"]["fun"](X)/funs["gramps_sqrt"]["fun"](X),
+                "name": "%s/%s"%(funs["enstrophy_sqrt"]["name"],funs["gramps_sqrt"]["name"]),
+                "units": 1.0, 
+                "unit_symbol": "",
+                "tendency_unit_symbol": "s$^{-1}$",
+                "name_english": "Enstrophy/GRAMPS",
+                "abbrv": "EoG",
                 }
-        funs["gramps_ref"] = {
-                "fun": lambda X: funs["gramps"]["fun"](X)[:,q['zi']],
-                "name": "%s (30 km)"%(funs["gramps"]["name"]),
-                "units": funs["gramps"]["units"],
-                "unit_symbol": funs["gramps"]["unit_symbol"],
-                "name_english": "%s ($z=30$km)"%(funs["gramps"]["name_english"]),
-                "abbrv": "G30",
+
+        # 2. =======  Functions integrated over altitudes  ======
+        funs["diss_int"] = {
+                "fun": lambda X: self.unweighted_vertical_average(funs["diss"]["fun"](X)),
+                "name": r"$\overline{D}$",
+                "units": funs["diss"]["units"],
+                "unit_symbol": r"s$^{-3}$",
+                "tendency_unit_symbol": r"s$^{-4}$",
+                "name_english": r"%s ($z$-mean)"%(funs["diss"]["name_english"]),
+                "abbrv": "DI",
                 }
-        funs["gramps_ref_sqrt"] = {
-                "fun": lambda X: np.sqrt(funs["gramps"]["fun"](X)[:,q['zi']]),
-                "name": "%s (30 km)"%(funs["gramps_sqrt"]["name"]),
-                "units": np.sqrt(funs["gramps"]["units"]),
-                "unit_symbol": funs["gramps_sqrt"]["unit_symbol"],
-                "name_english": "%s ($z=30$km)"%(funs["gramps_sqrt"]["name_english"]),
-                "abbrv": "G30sqrt",
+        funs["dqdy_times_vq_int"] = {
+                "fun": lambda X: self.unweighted_vertical_average(funs["dqdy"]["fun"](X)*funs["vq"]["fun"](X)),
+                "name": r"$\overline{F_q\beta_e}$",
+                "units": funs["dqdy"]["units"]*funs["vq"]["units"],
+                "unit_symbol": "s$^{-3}$",
+                "tendency_unit_symbol": "s$^{-4}$",
+                "name_english": "$z$-averaged Meridional PV advection",
+                "abbrv": "BeVQI",
+               }
+        funs["gramps_relax_int"] = {
+                "fun": lambda X: self.unweighted_vertical_average(funs["gramps_relax"]["fun"](X)),
+                "name": r"$\overline{R\beta_e}$",
+                "units": funs["gramps_relax"]["units"],
+                "unit_symbol": r"s$^{-3}$",
+                "tendency_unit_symbol": r"s$^{-4}$",
+                "name_english": r"$z$-averaged %s"%(funs["gramps_relax"]["name_english"]),
+                "abbrv": "RBeI",
                 }
         funs["gramps_int"] = {
                 "fun": lambda X: self.unweighted_vertical_average(funs["gramps"]["fun"](X)),
@@ -1356,39 +1341,16 @@ class HoltonMassModel(Model):
                 "name": "(%s)$^{1/2}$"%(funs["gramps_int"]["name"]),
                 "units": np.sqrt(funs["gramps_int"]["units"]),
                 "unit_symbol": "s$^{-1}$",
+                "tendency_unit_symbol": "s$^{-2}$",
                 "name_english": "(%s)$^{1/2}$"%(funs["gramps_int"]["name_english"]),
                 "abbrv": "GIsqrt",
-                }
-        # --------- Enstrophy stuff -------------
-        funs["enstrophy_sqrt"] = {
-                "fun": lambda X: np.sqrt(funs["enstrophy"]["fun"](X)),
-                "name": r"%s$^{1/2}$"%(funs["enstrophy"]["name"]),
-                "units": np.sqrt(funs["enstrophy"]["units"]),
-                "unit_symbol": r"s$^{-1}$",
-                "name_english": "Enstrophy$^{1/2}$",
-                "abbrv": "Esqrt",
-                }
-        funs["enstrophy_ref"] = {
-                "fun": lambda X: funs["enstrophy"]["fun"](X)[:,q['zi']],
-                "name": "%s (30 km)"%(funs["enstrophy"]["name"]),
-                "units": funs["enstrophy"]["units"],
-                "unit_symbol": funs["enstrophy"]["unit_symbol"],
-                "name_english": "%s ($z=30$km)"%(funs["enstrophy"]["name_english"]),
-                "abbrv": "E30",
-                }
-        funs["enstrophy_ref_sqrt"] = {
-                "fun": lambda X: np.sqrt(funs["enstrophy"]["fun"](X)[:,q['zi']]),
-                "name": "%s (30 km)"%(funs["enstrophy_sqrt"]["name"]),
-                "units": funs["enstrophy_sqrt"]["units"],
-                "unit_symbol": r"s$^{-1}$",
-                "name_english": "%s$^{1/2}$ ($z=30$km)"%(funs["enstrophy"]["name_english"]),
-                "abbrv": "E30sqrt",
                 }
         funs["enstrophy_int"] = {
                 "fun": lambda X: self.unweighted_vertical_average(funs["enstrophy"]["fun"](X)),
                 "name": r"$\overline{\mathcal{E}}$",
                 "units": funs["enstrophy"]["units"],
-                "unit_symbol": funs["enstrophy"]["unit_symbol"],
+                "unit_symbol": r"s$^{-2}$",
+                "tendency_unit_symbol": r"s$^{-3}$",
                 "name_english": "Enstrophy ($z$-mean)",
                 "abbrv": "EI",
                 }
@@ -1397,57 +1359,25 @@ class HoltonMassModel(Model):
                 "name": "(%s)$^{1/2}$"%(funs["enstrophy_int"]["name"]),
                 "units": np.sqrt(funs["enstrophy_int"]["units"]),
                 "unit_symbol": "s$^{-1}$",
+                "tendency_unit_symbol": "s$^{-2}$",
                 "name_english": "(%s)$^{1/2}$"%(funs["enstrophy_int"]["name_english"]),
                 "abbrv": "EIsqrt",
                 }
-        # ---------- Action-angle stuff -----------
-        ang_const = 1.0
-        funs["gramps_enstrophy_angle"] = {
-                "fun": lambda X: np.arctan2(ang_const*funs["enstrophy_sqrt"]["fun"](X), funs["gramps_sqrt"]["fun"](X)),
-                "name": r"$\tan^{-1}$(%i%s/%s)"%(ang_const,funs["gramps_sqrt"]["name"],funs["enstrophy_sqrt"]["name"]),
-                "units": 1.0, 
-                "unit_symbol": "radians",
-                "name_english": "Enstrophy-GRAMPS angle",
-                "abbrv": "GEANG",
+        funs["gramps_plus_enstrophy_int"] = {
+                "fun": lambda X: funs["gramps_int"]["fun"](X) + funs["enstrophy_int"]["fun"](X),
+                "name": r"$\overline{\Gamma}+\overline{\mathcal{E}}$",
+                "units": funs["gramps_int"]["units"],
+                "unit_symbol": r"s$^{-2}$",
+                "tendency_unit_symbol": r"s$^{-3}$",
+                "name_english": r"GRAMPS + Enstrophy ($z$-mean)",
+                "abbrv": "GEI",
                 }
-        funs["enstrophy_gramps_ratio"] = {
-                "fun": lambda X: funs["enstrophy_sqrt"]["fun"](X)/funs["gramps_sqrt"]["fun"](X),
-                "name": "%s/%s"%(funs["enstrophy_sqrt"]["name"],funs["gramps_sqrt"]["name"]),
-                "units": 1.0, 
-                "unit_symbol": "",
-                "name_english": "Enstrophy/GRAMPS",
-                "abbrv": "EoG",
-                }
-        funs["enstrophy_gramps_ratio_ref"] = {
-                "fun": lambda X: funs["enstrophy_gramps_ratio"]["fun"](X)[:,q['zi']],
-                "name": r"%s (30 km)"%(funs["enstrophy_gramps_ratio"]["name"]),
-                "units": funs["enstrophy_gramps_ratio"]["units"],
-                "unit_symbol": funs["enstrophy_gramps_ratio"]["unit_symbol"],
-                "name_english": r"%s (30 km)"%(funs["enstrophy_gramps_ratio"]),
-                "abbrv": "%s30"%(funs["enstrophy_gramps_ratio"]["abbrv"]),
-                }
-        funs["gramps_enstrophy_arclength"] = {
-                "fun": lambda X: np.arctan2(ang_const*funs["enstrophy_sqrt"]["fun"](X), funs["gramps_sqrt"]["fun"](X))*funs["gramps_plus_enstrophy_sqrt"]["fun"](X),
-                "name": r"Arc(%s,%s)"%(funs["gramps"]["name"],funs["enstrophy"]["name"]),
-                "units": funs["gramps_plus_enstrophy_sqrt"]["units"],
-                "unit_symbol": funs["gramps_plus_enstrophy_sqrt"]["unit_symbol"],
-                "name_english": "Enstrophy-GRAMPS arclength",
-                "abbrv": "GEARC",
-                }
-        funs["gramps_enstrophy_arclength_ref"] = {
-                "fun": lambda X: funs["gramps_enstrophy_arclength"]["fun"](X)[:,q['zi']],
-                "name": r"%s (30 km)"%(funs["gramps_enstrophy_arclength"]["name"]),
-                "units": funs["gramps_enstrophy_arclength"]["units"],
-                "unit_symbol": funs["gramps_enstrophy_arclength"]["unit_symbol"],
-                "name_english": r"%s (30 km)"%(funs["gramps_enstrophy_arclength"]),
-                "abbrv": "GEARC30",
-                }
-        # Vertical integrals of nonlinear action-angle coordinates
         funs["gramps_plus_enstrophy_sqrt_int"] = {
                 "fun": lambda X: self.unweighted_vertical_average(funs["gramps_plus_enstrophy_sqrt"]["fun"](X)),
                 "name": r"$\overline{(\Gamma+\mathcal{E})^{1/2}}$",
                 "units": np.sqrt(funs["gramps_plus_enstrophy"]["units"]),
                 "unit_symbol": r"s$^{-1}$",
+                "tendency_unit_symbol": r"s$^{-2}$",
                 "name_english": r"(%s)$^{1/2}$ ($z$-mean)"%(funs["gramps_plus_enstrophy"]["name_english"]),
                 "abbrv": "GEsqrtI",
                 }
@@ -1455,43 +1385,145 @@ class HoltonMassModel(Model):
                 "fun": lambda X: self.unweighted_vertical_average(funs["gramps_enstrophy_arclength"]["fun"](X)),
                 "name": r"$\overline{\mathrm{Arc}(\Gamma,\mathcal{E})}$",
                 "units": funs["gramps_enstrophy_arclength"]["units"],
-                "unit_symbol": funs["gramps_enstrophy_arclength"]["unit_symbol"],
+                "unit_symbol": r"s$^{-1}$",
+                "unit_symbol": r"s$^{-2}$",
                 "name_english": r"%s ($z$-mean)"%(funs["gramps_enstrophy_arclength"]["name_english"]),
                 "abbrv": "GEARCI",
                 }
-        # Action-angle coordinates of vertical integrals
-        funs["gramps_plus_enstrophy_int"] = {
-                "fun": lambda X: funs["gramps_int"]["fun"](X) + funs["enstrophy_int"]["fun"](X),
-                "name": r"$\overline{\Gamma}+\overline{\mathcal{E}}$",
-                "units": funs["gramps_int"]["units"],
-                "unit_symbol": r"s$^{-2}$",
-                "name_english": r"GRAMPS + Enstrophy ($z$-mean)",
-                "abbrv": "GEI",
-                }
+        # 2.5 ===== Functions of integrals over altitude ============
         funs["gramps_plus_enstrophy_int_sqrt"] = {
                 "fun": lambda X: np.sqrt(funs["gramps_int"]["fun"](X) + funs["enstrophy_int"]["fun"](X)),
                 "name": r"$(\overline{\Gamma}+\overline{\mathcal{E}})^{1/2}$",
                 "units": np.sqrt(funs["gramps_int"]["units"]),
                 "unit_symbol": r"s$^{-1}$",
+                "tendency_unit_symbol": r"s$^{-2}$",
                 "name_english": r"(GRAMPS + Enstrophy $z$-mean)$^{1/2}$",
                 "abbrv": "GEIsqrt",
                 }
         funs["gramps_enstrophy_int_arclength"] = {
                 "fun": lambda X: funs["gramps_plus_enstrophy_int_sqrt"]["fun"](X) * np.arctan2(funs["enstrophy_int_sqrt"]["fun"](X), funs["gramps_int_sqrt"]["fun"](X)),
                 "units": funs["gramps_plus_enstrophy_int_sqrt"]["units"],
-                "unit_symbol": funs["gramps_plus_enstrophy_int_sqrt"]["unit_symbol"],
+                "unit_symbol": r"s$^{-1}$",
+                "tendency_unit_symbol": r"s$^{-2}$",
                 "name": r"Arc($\overline{\Gamma},\overline{\mathcal{E}}$)",
                 "name_english": "Arclength of integral",
                 "abbrv": "GEIARC",
                 }
-        funs["gramps_enstrophy_angle_ref"] = {
-                "fun": lambda X: funs["gramps_enstrophy_angle"]["fun"](X)[:,q['zi']], 
-                "name": r"%s (30 km)"%(funs["gramps_enstrophy_angle"]["name"]),
-                "units": 1.0, 
-                "unit_symbol": "radians",
-                "name_english": "Enstrophy-GRAMPS angle (30 km)",
-                "abbrv": "GEANG30",
-                }
+
+        # 3. ====== Functions at specific altitudes ==========
+        for key in ["diss","dqdy_times_vq","gramps_relax","gramps","gramps_sqrt","enstrophy","enstrophy_sqrt","gramps_plus_enstrophy","gramps_plus_enstrophy_sqrt","gramps_enstrophy_arclength",]:
+            for ref_alt in [10, 20, 30, 40, 50, 60]:
+                zi = np.argmin(np.abs(q['z_d'][1:-1]/1000 - ref_alt))
+                funs[f"{key}_{ref_alt}"] = {
+                        "fun": lambda X, key=key, zi=zi: funs[key]["fun"](X)[:,zi],
+                        "name": r"%s (%i km)"%(funs[key]["name"],ref_alt),
+                        "units": funs[key]["units"],
+                        "unit_symbol": funs[key]["unit_symbol"],
+                        "tendency_unit_symbol": funs[key]["tendency_unit_symbol"],
+                        "name_english": funs[key]["name_english"],
+                        "abbrv": r"%s%i"%(funs[key]["abbrv"],ref_alt),
+                        }
+        #funs["diss_ref"] = {
+        #        "fun": lambda X: funs["diss"]["fun"](X)[:,q['zi']],
+        #        "name": r"%s (30 km)"%(funs["diss"]["name"]),
+        #        "units": funs["diss"]["units"],
+        #        "unit_symbol": funs["diss"]["unit_symbol"],
+        #        "name_english": funs["diss"]["name_english"],
+        #        "abbrv": "D30",
+        #        }
+        #funs["dqdy_times_vq_ref"] = {
+        #        "fun": lambda X: funs["dqdy"]["fun"](X)[:,q['zi']]*funs["vq"]["fun"](X)[:,q['zi']],
+        #        "name": r"%s%s (30 km)"%(funs["dqdy"]["name"],funs["vq"]["name"]),
+        #        "units": funs["dqdy"]["units"]*funs["vq"]["units"],
+        #        "unit_symbol": "s$^{-3}$",
+        #        "name_english": "Meridional PV advection at 30 km",
+        #        "abbrv": "BeVQ30",
+        #       }
+        #funs["gramps_relax_ref"] = {
+        #        "fun": lambda X: funs["gramps_relax"]["fun"](X)[:,q['zi']], 
+        #        "name": r"%s (30 km)"%(funs["gramps_relax"]["name"]),
+        #        "units": funs["gramps_relax"]["units"],
+        #        "unit_symbol": funs["gramps_relax"]["unit_symbol"],
+        #        "name_english": r"%s (30 km)"%(funs["gramps_relax"]["name_english"]),
+        #        "abbrv": "RBe30",
+        #        }
+        #funs["gramps_plus_enstrophy_ref"] = {
+        #        "fun": lambda X: (funs["gramps"]["fun"](X)[:,q['zi']] + funs["enstrophy"]["fun"](X)[:,q['zi']]),
+        #        "name": "%s$+$%s (30 km)"%(funs["gramps"]["name"],funs["enstrophy"]["name"]),
+        #        "units": funs["enstrophy"]["units"],
+        #        "unit_symbol": "s$^{-2}$",
+        #        "name_english": "Enstrophy + GRAMPS at $z=30$ km",
+        #        "abbrv": "G+E30",
+        #        }
+        #funs["gramps_plus_enstrophy_sqrt_ref"] = {
+        #        "fun": lambda X: funs["gramps_plus_enstrophy_sqrt"]["fun"](X)[:,q['zi']],
+        #        "name": r"%s (30 km)"%(funs["gramps_plus_enstrophy_sqrt"]["name"]),
+        #        "units": funs["gramps_plus_enstrophy_sqrt"]["units"],
+        #        "unit_symbol": funs["gramps_plus_enstrophy_sqrt"]["unit_symbol"],
+        #        "name_english": r"%s (30 km)"%(funs["gramps_plus_enstrophy_sqrt"]["name_english"]),
+        #        "abbrv": "G+E30sqrt"
+        #        }
+        ## --------- GRAMPS stuff -------------
+        #funs["gramps_ref"] = {
+        #        "fun": lambda X: funs["gramps"]["fun"](X)[:,q['zi']],
+        #        "name": "%s (30 km)"%(funs["gramps"]["name"]),
+        #        "units": funs["gramps"]["units"],
+        #        "unit_symbol": funs["gramps"]["unit_symbol"],
+        #        "name_english": "%s ($z=30$km)"%(funs["gramps"]["name_english"]),
+        #        "abbrv": "G30",
+        #        }
+        #funs["gramps_ref_sqrt"] = {
+        #        "fun": lambda X: np.sqrt(funs["gramps"]["fun"](X)[:,q['zi']]),
+        #        "name": "%s (30 km)"%(funs["gramps_sqrt"]["name"]),
+        #        "units": np.sqrt(funs["gramps"]["units"]),
+        #        "unit_symbol": funs["gramps_sqrt"]["unit_symbol"],
+        #        "name_english": "%s ($z=30$km)"%(funs["gramps_sqrt"]["name_english"]),
+        #        "abbrv": "G30sqrt",
+        #        }
+        ## --------- Enstrophy stuff -------------
+        #funs["enstrophy_ref"] = {
+        #        "fun": lambda X: funs["enstrophy"]["fun"](X)[:,q['zi']],
+        #        "name": "%s (30 km)"%(funs["enstrophy"]["name"]),
+        #        "units": funs["enstrophy"]["units"],
+        #        "unit_symbol": funs["enstrophy"]["unit_symbol"],
+        #        "name_english": "%s ($z=30$km)"%(funs["enstrophy"]["name_english"]),
+        #        "abbrv": "E30",
+        #        }
+        #funs["enstrophy_ref_sqrt"] = {
+        #        "fun": lambda X: np.sqrt(funs["enstrophy"]["fun"](X)[:,q['zi']]),
+        #        "name": "%s (30 km)"%(funs["enstrophy_sqrt"]["name"]),
+        #        "units": funs["enstrophy_sqrt"]["units"],
+        #        "unit_symbol": r"s$^{-1}$",
+        #        "name_english": "%s$^{1/2}$ ($z=30$km)"%(funs["enstrophy"]["name_english"]),
+        #        "abbrv": "E30sqrt",
+        #        }
+        ## ---------- Action-angle stuff -----------
+        #funs["enstrophy_gramps_ratio_ref"] = {
+        #        "fun": lambda X: funs["enstrophy_gramps_ratio"]["fun"](X)[:,q['zi']],
+        #        "name": r"%s (30 km)"%(funs["enstrophy_gramps_ratio"]["name"]),
+        #        "units": funs["enstrophy_gramps_ratio"]["units"],
+        #        "unit_symbol": funs["enstrophy_gramps_ratio"]["unit_symbol"],
+        #        "name_english": r"%s (30 km)"%(funs["enstrophy_gramps_ratio"]),
+        #        "abbrv": "%s30"%(funs["enstrophy_gramps_ratio"]["abbrv"]),
+        #        }
+        #funs["gramps_enstrophy_arclength_ref"] = {
+        #        "fun": lambda X: funs["gramps_enstrophy_arclength"]["fun"](X)[:,q['zi']],
+        #        "name": r"%s (30 km)"%(funs["gramps_enstrophy_arclength"]["name"]),
+        #        "units": funs["gramps_enstrophy_arclength"]["units"],
+        #        "unit_symbol": funs["gramps_enstrophy_arclength"]["unit_symbol"],
+        #        "name_english": r"%s (30 km)"%(funs["gramps_enstrophy_arclength"]),
+        #        "abbrv": "GEARC30",
+        #        }
+        ## Vertical integrals of nonlinear action-angle coordinates
+        ## Action-angle coordinates of vertical integrals
+        #funs["gramps_enstrophy_angle_ref"] = {
+        #        "fun": lambda X: funs["gramps_enstrophy_angle"]["fun"](X)[:,q['zi']], 
+        #        "name": r"%s (30 km)"%(funs["gramps_enstrophy_angle"]["name"]),
+        #        "units": 1.0, 
+        #        "unit_symbol": "radians",
+        #        "name_english": "Enstrophy-GRAMPS angle (30 km)",
+        #        "abbrv": "GEANG30",
+        #        }
         return funs
     def plot_cooling_profile(self):
         q = self.q

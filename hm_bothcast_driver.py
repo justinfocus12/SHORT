@@ -225,15 +225,18 @@ if trans_state_enst_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = [
-            ["gramps_int_sqrt","enstrophy_int_sqrt"],
-            ["gramps_relax_int","gramps_int"],
-            ["diss_int","enstrophy_int"],
-            ["gramps_int","enstrophy_int"],
-            ["gramps_plus_enstrophy_int_sqrt","gramps_enstrophy_int_arclength"],
-            ["gramps_plus_enstrophy_sqrt_ref","gramps_enstrophy_arclength_ref"],
-            ["gramps_ref_sqrt","enstrophy_ref_sqrt"],
-            ][:1]
+    theta_2d_abbs = (
+            [["gramps_sqrt_%i"%(altitude),"enstrophy_sqrt_%i"%(altitude)] for altitude in [10,20,30,40,50,60][::-1]] + 
+            [["gramps_plus_enstrophy_sqrt_%i"%(altitude),"gramps_enstrophy_arclength_%i"%(altitude)] for altitude in [10,20,30,40,50,60][::-1]] + 
+            [
+                ["gramps_plus_enstrophy_int_sqrt","gramps_enstrophy_int_arclength"],
+                ["gramps_int_sqrt","enstrophy_int_sqrt"],
+                ["gramps_relax_int","gramps_int"],
+                ["diss_int","enstrophy_int"],
+                ["gramps_int","enstrophy_int"],
+                ["gramps_ref_sqrt","enstrophy_ref_sqrt"],
+            ]
+            )[:12]
     print("About to start displaying casts")
     for i in range(len(theta_2d_abbs)):
         if display_cast_flag:
