@@ -1163,6 +1163,7 @@ class HoltonMassModel(Model):
                         "name": r"$\mathcal{E}$", #$\frac{1}{2}\overline{q'^2}$",
                         "units": 1/q["Gsq"]**2*1/q['time']**2,
                         "unit_symbol": r"s$^{-2}$",
+                        "tendency_unit_symbol": r"s$^{-3}$",
                         "name_english": "Eddy enstrophy",
                         "abbrv": "E",
                         },
@@ -1171,6 +1172,7 @@ class HoltonMassModel(Model):
                         "name": r"$D$", #r"$\frac{f_0^2}{N^2}\overline{q'\rho_s^{-1}\partial_z(\alpha\rho_s\partial_z\psi')}$",
                         "units": 1/q["Gsq"]**2*1/q["time"]**3,
                         "unit_symbol": "s$^{-3}$",
+                        "tendency_unit_symbol": "s$^{-4}$",
                         "name_english": "Eddy enstrophy dissipation",
                         "abbrv": "D",
                  },
@@ -1213,6 +1215,7 @@ class HoltonMassModel(Model):
                 "name": r"%s%s"%(funs["dqdy"]["name"],funs["vq"]["name"]),
                 "units": funs["dqdy"]["units"]*funs["vq"]["units"],
                 "unit_symbol": "s$^{-3}$",
+                "tendency_unit_symbol": r"s$^{-4}$",
                 "name_english": "Meridional PV advection",
                 "abbrv": "BeVQ",
                }
@@ -1245,6 +1248,7 @@ class HoltonMassModel(Model):
                 "name": r"$\Gamma$",
                 "units": 1/q["Gsq"]**2 * 1/q["time"]**2, 
                 "unit_symbol": r"s$^{-2}$",
+                "tendency_unit_symbol": r"s$^{-3}$",
                 "name_english": "GRAMPS",
                 "abbrv": "G",
                 }
@@ -1260,7 +1264,8 @@ class HoltonMassModel(Model):
                 "fun": lambda X: funs["gramps_relax_coeff"]["fun"](X)*funs["dqdy"]["fun"](X), #funs["dqdyrelax"]["fun"](X)*funs["dqdy"]["fun"](X)*2/(q['eps']*q['l']**2),
                 "name": r"%s%s"%(funs["gramps_relax_coeff"]["name"],funs["dqdy"]["name"]),
                 "units": q["length"]**2*funs["dqdyrelax"]["units"]*funs["dqdy"]["units"],
-                "unit_symbol": "s$^{-3}$",
+                "unit_symbol": r"s$^{-3}$",
+                "tendency_unit_symbol": r"s$^{-4}$",
                 "name_english": "GRAMPS relaxation",
                 "abbrv": "RBe",
                 }
@@ -1341,7 +1346,8 @@ class HoltonMassModel(Model):
                 "fun": lambda X: self.unweighted_vertical_average(funs["gramps"]["fun"](X)),
                 "name": r"$\overline{\Gamma}$",
                 "units": funs["gramps"]["units"],
-                "unit_symbol": "%s"%(funs["gramps"]["unit_symbol"]),
+                "unit_symbol": r"s$^{-2}$",
+                "tendency_unit_symbol": r"s$^{-3}$",
                 "name_english": "GRAMPS ($z$-mean)",
                 "abbrv": "GI",
                 }

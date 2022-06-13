@@ -34,7 +34,7 @@ from tpt_obj import TPT
 datafolder = "/scratch/jf4241/SHORT_holtonmass"
 simfolder = join(datafolder,"runs")
 resultfolder = join(datafolder,"results")
-dayfolder = join(resultfolder,"2021-12-07")
+dayfolder = join(resultfolder,"2022-05-23")
 expfolder = join(dayfolder,"0")
 # -----------------------------------
 algo_params,algo_param_string = hm_params.get_algo_params()
@@ -222,7 +222,7 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
     return
 
 if __name__ == "__main__":
-    run_model = False
+    run_model = True
     savefolder = join(physical_param_folder,algo_param_string.replace("istart0","allstart"))
     if not exists(savefolder): mkdir(savefolder)
     # Make the list of savefolders

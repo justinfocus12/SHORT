@@ -485,8 +485,10 @@ class TPT:
         #ax[1].tick_params(axis='y',labelsize=40)
         #fig.savefig(join(self.savefolder,"{}_ensemble_ab".format(field_abb)))
         return fig,ax
-    def plot_field_long(self,model,data,field,fieldkey,fieldname,field_abb,field_fun=None,units=1.0,tmax=70,field_unit_symbol=None,time_unit_symbol=None,phases=['aa','ab','ba','bb'],density_1d_flag=True):
+    def plot_field_long(self,model,data,key_combo,color_combo,tmax=70,time_unit_symbol=None,phases=['aa','ab','ba','bb'],density_1d_flag=False):
         print("Beginning plot field long")
+        funlib = model.observable_function_library()
+        print(f"Evaluated fields in plot_field_long: {key_combo}")
         t_long,x_long = model.load_long_traj(self.long_simfolder)
         #self.display_1d_densities_emp(model,data,[field_abb],'vertial',phases=phases,save_flag=True)
         tmax = min(tmax,t_long[-1])
@@ -508,135 +510,106 @@ class TPT:
         print(f"num_trans = {len(ab_starts)}")
         # Plot, marking transitions
         tmax = min(t_long[-1],tmax)
-        # Interpolate field
         timax = np.argmin(np.abs(t_long-tmax))
         tsubset = np.linspace(0,timax-1,min(timax,5000)).astype(int)
-        if field_fun is None:
-            field_long = self.out_of_sample_extension(field,data,x_long[tsubset])
-            if field_abb == 'qp':
-                ab_long = np.array([0,1])
-            else:
-                ab_long = self.out_of_sample_extension(field,data,model.tpt_obs_xst)
-        else:
-            field_long = field_fun(x_long[tsubset]).flatten()
-            ab_long = field_fun(model.tpt_obs_xst).flatten()
-        print("field_long.shape = {}".format(field_long.shape))
-        fig,ax = plt.subplots(ncols=2,figsize=(22,7),gridspec_kw={'width_ratios': [3,1]},sharey=True)
-        ax[0].plot(t_long[tsubset],units*field_long,color='black')
-        ax[0].plot(t_long[[tsubset[0],tsubset[-1]]],ab_long[0]*np.ones(2)*units,color='skyblue',linewidth=2.5)
-        ax[0].plot(t_long[[tsubset[0],tsubset[-1]]],ab_long[1]*np.ones(2)*units,color='red',linewidth=2.5)
-        dthab = np.abs(ab_long[1]-ab_long[0])
+        fields = dict({key: funlib[key]["fun"](x_long[tsubset]) for key in key_combo})
+        fig,ax = plt.subplots(ncols=1,figsize=(22,7)) #,gridspec_kw={'width_ratios': [3,1]},sharey=True)
+        handles = []
+        for i in range(len(key_combo)):
+            key = key_combo[i]
+            h, = ax.plot(t_long[tsubset],funlib[key]["units"]*fields[key],color=color_combo[i],label=funlib[key]["name"])
+            handles += [h]
+        ax.legend(handles=handles,prop={'size':20})
+        #ax[0].plot(t_long[[tsubset[0],tsubset[-1]]],ab_long[0]*np.ones(2)*units,color='skyblue',linewidth=2.5)
+        #ax[0].plot(t_long[[tsubset[0],tsubset[-1]]],ab_long[1]*np.ones(2)*units,color='red',linewidth=2.5)
+        #dthab = np.abs(ab_long[1]-ab_long[0])
         #ax[0].text(0,units*(ab_long[0]+0.01*dthab),asymb,fontdict=bbigfont,color='black',weight='bold')
         #ax[0].text(0,units*(ab_long[1]+0.01*dthab),bsymb,fontdict=bbigfont,color='black',weight='bold')
         if any_trans:
             for i in range(len(ab_starts)):
                 if ab_ends[i] < timax:
-                    ax[0].axvspan(t_long[ab_starts[i]],t_long[ab_ends[i]],facecolor='orange',alpha=0.5,zorder=-1)
+                    ax.axvspan(t_long[ab_starts[i]],t_long[ab_ends[i]],facecolor='orange',alpha=0.5,zorder=-1)
             for i in range(len(ba_starts)):
                 if ba_ends[i] < timax:
-                    ax[0].axvspan(t_long[ba_starts[i]],t_long[ba_ends[i]],facecolor='mediumspringgreen',alpha=0.5,zorder=-1)
+                    ax.axvspan(t_long[ba_starts[i]],t_long[ba_ends[i]],facecolor='mediumspringgreen',alpha=0.5,zorder=-1)
         xlab = "Time"
         if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
-        ax[0].set_xlabel(xlab,fontdict=bigfont)
-        ylab = fieldname
-        if field_unit_symbol is not None: ylab += " [{}]".format(field_unit_symbol)
-        ax[0].set_ylabel(ylab,fontdict=bigfont)
-        ylim = ax[0].get_ylim()
+        ax.set_xlabel(xlab,fontdict=bigfont)
+        ylab = r"[%s]"%(funlib[key_combo[0]]["unit_symbol"])
+        ax.set_ylabel(ylab,fontdict=bigfont)
+        ylim = ax.get_ylim()
         fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
-        ax[0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
         #ax.set_title("Long integration",fontdict=font)
-        ax[0].tick_params(axis='both',labelsize=25)
+        ax.tick_params(axis='both',labelsize=25)
         #ax.yaxis.set_major_locator(ticker.NullLocator())
         # Now plot the densities in y
         if density_1d_flag:
-            print(f"field_abb = {field_abb}")
-            self.display_1d_densities(model,data,[fieldkey],'vertical',fig=fig,ax=ax[1],phases=phases)
+            for i in range(len(key_combo)):
+                self.display_1d_densities(model,data,[fieldkey],'vertical',fig=fig,ax=ax[1],phases=phases)
             ax[1].yaxis.set_visible(False)
             ax[1].set_xlabel("Probability density",fontdict=bigfont)
             ax[1].tick_params(axis='both',labelsize=25)
-        fig.savefig(join(self.savefolder,"long_{}".format(field_abb)),bbox_inches="tight",pad_inches=0.2)
+        save_suffix = "_".join([funlib[key]["abbrv"] for key in key_combo])
+        fig.savefig(join(self.savefolder,f"long1d_{save_suffix}"))
         plt.close(fig)
         print("Done plotting field long")
-        # ------------ Next: plot only some transitions on their own plot --------------
-        quantiles = np.array([0.15,0.25,0.4,0.5])
-        if any_trans:
-            avg_prea_flag = True
-            fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(12,12),sharex=True,sharey=True)
-            num_trans = min(300,len(ab_starts))
-            print(f"num_trans = {num_trans}")
-            trans_colors = ['red','cyan','black']
-            num_colored_trans = len(trans_colors)
-            # Select them from across the distribution of transit times
-            transit_quantiles = np.linspace(0,1,num_colored_trans+2)[1:-1]
-            colored_idx = np.zeros(num_colored_trans, dtype=int)
-            transit_distribution = np.array([ab_ends[i] - ab_starts[i] for i in range(num_trans)])
-            for i in range(num_colored_trans):
-                transit_time_quantile = np.quantile(transit_distribution,transit_quantiles[i])
-                colored_idx[i] = np.argmin(np.abs(transit_distribution - transit_time_quantile))
-            #max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
-            # Match the maximum duration with the later plots of flux distribution
-            max_duration = max(int(90/(t_long[1]-t_long[0])), max([ab_ends[i]-ab_starts[i] for i in colored_idx]) + 1)
-            print("max_duration = {}".format(max_duration))
-            field_trans_composite = np.zeros((num_trans,max_duration))
-            for i in range(num_trans):
-                if i % 10 == 0: print(f"Plotting transition {i} out of {num_trans}")
-                k0,k1 = ab_starts[i]-1,ab_ends[i]
-                k0_padded = k1 - max_duration # Get all the beginnings lined up
-                if field_fun is None:
-                    field_trans = self.out_of_sample_extension(field,data,x_long[k0_padded:k1],k=15)
-                else:
-                    field_trans = field_fun(x_long[k0_padded:k1]).flatten()
-                if (not avg_prea_flag) and (k0 > k0_padded+1):
-                    field_trans[:(k0-k0_padded-1)] = np.nan
-                ax[0,0].plot(t_long[k0_padded:k1]-t_long[k1],field_trans*units,color='gray',alpha=0.65,linewidth=0.75,zorder=-1)
-                if i in colored_idx:
-                    color = trans_colors[np.where(colored_idx==i)[0][0]]
-                    alpha = 1.0
-                    linewidth = 2
-                    ax[0,0].plot(t_long[k0:k1]-t_long[k1],field_trans[-(k1-k0):]*units,color=color,alpha=1.0,linewidth=2,zorder=1)
-                field_trans_composite[i] = field_trans
-                #pad = max_duration - (k1-k0)
-                #print("pad = ", pad)
-                #if field_fun is None:
-                #    field_trans = self.out_of_sample_extension(field,data,x_long[k0-pad:k1+pad])
-                #else:
-                #    field_trans = field_fun(x_long[k0-pad:k1+pad]).flatten()
-                #print("field_trans.shape = {}".format(field_trans.shape))
-                #ax[0].plot(t_long[k0-pad:k1]-t_long[k1],field_trans[:k1-k0+pad]*units,color='gray',alpha=0.25,linewidth=1,zorder=-1)
-                #if i in colored_idx:
-                #    color = trans_colors[np.where(colored_idx==i)[0][0]]
-                #    alpha = 1.0
-                #    linewidth = 2
-                #    ax[0].plot(t_long[k0:k1]-t_long[k1],field_trans[pad:k1-k0+pad]*units,color=color,alpha=1.0,linewidth=2,zorder=1)
-                #field_trans_composite[i] = field_trans[:k1-k0+pad]
-            # Plot the quantiles
-            for qi in range(len(quantiles)):
-                lower = np.nanquantile(field_trans_composite, quantiles[qi], axis=0)
-                if qi < len(quantiles)-1:
-                    upper = np.nanquantile(field_trans_composite, 1-quantiles[qi], axis=0)
-                    reds = (qi+1)/len(quantiles)
-                    ax[1,0].fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds(reds),alpha=1.0,zorder=qi)
-                else:
-                    ax[1,0].plot(t_long[:max_duration]-t_long[max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
-            xlab = r"Time$-\tau_B^+$"
-            ylab = fieldname
-            if field_unit_symbol is not None: ylab += " [{}]".format(field_unit_symbol)
-            for i in range(2):
-                ax[i,0].axhline(ab_long[0]*units,color='skyblue',zorder=-1)
-                ax[i,0].axhline(ab_long[1]*units,color='red',zorder=-1)
-                ax[i,0].set_ylabel(ylab,fontdict=font)
-                ylim = ax[i,0].get_ylim()
-                fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
-                ax[i,0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
-            if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
-            ax[1,0].set_xlabel(xlab,fontdict=font)
-            ax[1,0].set_xlim([-max_duration*(t_long[1]-t_long[0]),0])
-            # TODO: now plot the second column the same quantity vs. lead time and vs. committor
-            fig.savefig(join(self.savefolder,"transitory_{}_nt{}".format(field_abb,num_trans)),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # Save the composite in order to use later for comparison with the TPT composite
-            np.save(join(self.savefolder,"composite_{}".format(field_abb)),field_trans_composite)
-            np.save(join(self.savefolder,"composite_time"),t_long[:max_duration]-t_long[max_duration])
+        if False: 
+            # ------------ Next: plot only some transitions on their own plot --------------
+            quantiles = np.array([0.15,0.25,0.4,0.5])
+            if any_trans:
+                avg_prea_flag = True
+                fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(12,12),sharex=True,sharey=True)
+                num_trans = min(300,len(ab_starts))
+                print(f"num_trans = {num_trans}")
+                trans_colors = ['red','cyan','black']
+                num_colored_trans = len(trans_colors)
+                # Select them from across the distribution of transit times
+                transit_quantiles = np.linspace(0,1,num_colored_trans+2)[1:-1]
+                colored_idx = np.zeros(num_colored_trans, dtype=int)
+                transit_distribution = np.array([ab_ends[i] - ab_starts[i] for i in range(num_trans)])
+                for i in range(num_colored_trans):
+                    transit_time_quantile = np.quantile(transit_distribution,transit_quantiles[i])
+                    colored_idx[i] = np.argmin(np.abs(transit_distribution - transit_time_quantile))
+                #max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
+                # Match the maximum duration with the later plots of flux distribution
+                max_duration = max(int(90/(t_long[1]-t_long[0])), max([ab_ends[i]-ab_starts[i] for i in colored_idx]) + 1)
+                print("max_duration = {}".format(max_duration))
+                for i_key in range(len(key_combo)):
+                    field_trans_composite = np.zeros((num_trans,max_duration))
+                for i in range(num_trans):
+                    if i % 10 == 0: print(f"Tallying transition {i} out of {num_trans}")
+                    k0,k1 = ab_starts[i]-1,ab_ends[i]
+                    k0_padded = k1 - max_duration # Get all the beginnings lined up
+                    field_trans = funlib[key_combo[i_key]]["fun"](x_long[k0_padded:k1]).flatten() #(x_long[k0_padded:k1]).flatten()
+                    if (not avg_prea_flag) and (k0 > k0_padded+1):
+                        field_trans[:(k0-k0_padded-1)] = np.nan
+                    #ax[0,0].plot(t_long[k0_padded:k1]-t_long[k1],field_trans*funlib[key_combo[i_key]]["units"],color='gray',alpha=0.65,linewidth=0.75,zorder=-1)
+                    if False: #i in colored_idx:
+                        color = trans_colors[np.where(colored_idx==i)[0][0]]
+                        alpha = 1.0
+                        linewidth = 2
+                        ax[0,0].plot(t_long[k0:k1]-t_long[k1],field_trans[-(k1-k0):]*units,color=color,alpha=1.0,linewidth=2,zorder=1)
+                    field_trans_composite[i] = field_trans
+                # Plot the quantiles
+                for qi in range(len(quantiles)):
+                    lower = np.nanquantile(field_trans_composite, quantiles[qi], axis=0)
+                    if qi < len(quantiles)-1:
+                        upper = np.nanquantile(field_trans_composite, 1-quantiles[qi], axis=0)
+                        reds = (qi+1)/len(quantiles)
+                        ax[1,0].fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds(reds),alpha=1.0,zorder=qi)
+                    else:
+                        ax[1,0].plot(t_long[:max_duration]-t_long[max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
+                xlab = r"Time$-\tau_B^+$"
+                ylab = r"[%s]"%(funlib[key_combo[i_key]]["unit_symbol"])
+                if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
+                ax[1,0].set_xlabel(xlab,fontdict=font)
+                ax[1,0].set_xlim([-max_duration*(t_long[1]-t_long[0]),0])
+                fig.savefig(join(self.savefolder,"transitory_{}_nt{}".format(field_abb,num_trans)),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig)
+                # Save the composite in order to use later for comparison with the TPT composite
+                np.save(join(self.savefolder,"composite_{}".format(field_abb)),field_trans_composite)
+                np.save(join(self.savefolder,"composite_time"),t_long[:max_duration]-t_long[max_duration])
         del x_long
         return
     def plot_trans_2d_driver(self,model,data):
@@ -3905,6 +3878,12 @@ class TPT:
                             ax[0].fill_betweenx(z, transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k]*funlib[key]["units"], x2=transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k+1]*funlib[key]["units"], color=dirn_cmaps[dirn](0.75*(1-k/len(quantile_midranges))), zorder=-1-k, edgecolor=None)
                         h, = ax[0].plot(transdict[key]["snapshot"]["stochastic"][dirn][qi,-1]*funlib[key]["units"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
                         handles["snapshot"] += [h]
+                        # Plot A and B
+                        prof_A,prof_B = funlib[key]["fun"](model.tpt_obs_xst)
+                        h, = ax[0].plot(prof_A*funlib[key]["units"], z, color='dodgerblue', linestyle='--', linewidth=1.5, label=asymb)
+                        handles["snapshot"] += [h]
+                        h, = ax[0].plot(prof_B*funlib[key]["units"], z, color='red', linestyle='--', linewidth=1.5, label=bsymb)
+                        handles["snapshot"] += [h]
                         # Tendencies 
                         # Stochastic
                         h, = ax[1].plot(transdict[key]["tendency"]["stochastic"][dirn][qi]*funlib[key]["units"]/model.q["time"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
@@ -3924,7 +3903,11 @@ class TPT:
                     ax[1].axvline(0,linestyle=(0, (1,1)),color='gray')
                     ax[0].legend(handles=handles["snapshot"])
                     ax[0].set_xlabel(r"%s [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
-                    ax[1].set_xlabel(r"$\mathcal{J}_{AB}\cdot\nabla$[%s] [%s s$^{-1}$]"%(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
+                    if "tendency_unit_symbol" in funlib[key].keys():
+                        unit_suffix = r"[%s]"%(funlib[key]["tendency_unit_symbol"])
+                    else:
+                        unit_suffix = r"[%s s$^{-1}$]"%(funlib[key]["unit_symbol"])
+                    ax[1].set_xlabel(r"$\mathcal{L}_{AB}$[%s] %s"%(funlib[key]['name'],unit_suffix),fontdict=font)
                     ax[0].set_ylabel(r"$z$ [km]",fontdict=font)
                     ax[1].set_ylabel(r"$z$ [km]",fontdict=font)
                     ax[0].set_title(r"%s at %s"%(funlib[key]['name'],labels[qi]),fontdict=font)
@@ -3933,8 +3916,9 @@ class TPT:
                     dirn_combo_str = "".join([str(index) for index in dirn_combo])
                     for i in range(2):
                         xlim = ax[i].get_xlim()
-                        fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
+                        fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1],numdiv=10)
                         ax[i].xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
+                        ax[i].xaxis.set_major_locator(ticker.MaxNLocator(4))
                     fig.savefig(join(self.savefolder,f"trans_state_profile_qp{qp_levels[0]}-{qp_levels[-1]}_{dirn_combo_str}_{abbrv}_{qi}_Nx{Nx}_xlim{int(xlim_flag)}").replace(".","p"))
                     plt.close(fig)
                     # ---------------------------------------------------------------------
@@ -3987,10 +3971,10 @@ class TPT:
                 for k in range(len(quantile_midranges)):
                     ylohi = transdict["gramps_plus_enstrophy_int"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,0] * funlib["gramps_plus_enstrophy_int"]["units"]
                     ax[0,0].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
-                h_Ly0, = ax[1,0].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{J}_{AB}\cdot\nabla$[%s]"%(funlib["gramps_plus_enstrophy_int"]["name"]))
+                h_Ly0, = ax[1,0].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib["gramps_plus_enstrophy_int"]["name"]))
                 h_y0dot, = ax[1,0].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["gramps_plus_enstrophy_int"]["name"]))
-                h_y1, = ax[1,0].plot(qp_levels, y1, color="purple", label=funlib["gramps_relax_int"]["name"]) 
-                h_y2, = ax[1,0].plot(qp_levels, y2, color='red', linestyle='-', label=funlib["diss_int"]["name"])
+                h_y1, = ax[1,0].plot(qp_levels, y1, color="dodgerblue", label=funlib["gramps_relax_int"]["name"]) 
+                h_y2, = ax[1,0].plot(qp_levels, y2, color='magenta', linestyle='-', label=funlib["diss_int"]["name"])
                 ax[1,0].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
                 ax[0,0].legend(handles=[h_y0],prop={'size':16})
                 ax[1,0].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
@@ -4006,10 +3990,10 @@ class TPT:
                 for k in range(len(quantile_midranges)):
                     ylohi = transdict["gramps_int"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,0] * funlib["gramps_int"]["units"]
                     ax[0,1].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
-                h_Ly0, = ax[1,1].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{J}_{AB}\cdot\nabla$[%s]"%(funlib["gramps_int"]["name"]))
+                h_Ly0, = ax[1,1].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib["gramps_int"]["name"]))
                 h_y0dot, = ax[1,1].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["gramps_int"]["name"]))
-                h_y1, = ax[1,1].plot(qp_levels, y1, color="purple", label=funlib["gramps_relax_int"]["name"]) 
-                h_y2, = ax[1,1].plot(qp_levels, y2, color='cyan', linestyle='-', label=funlib["dqdy_times_vq_int"]["name"])
+                h_y1, = ax[1,1].plot(qp_levels, y1, color="dodgerblue", label=funlib["gramps_relax_int"]["name"]) 
+                h_y2, = ax[1,1].plot(qp_levels, y2, color='black', linestyle='-', label=funlib["dqdy_times_vq_int"]["name"])
                 ax[1,1].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
                 ax[0,1].legend(handles=[h_y0],prop={'size':16})
                 ax[1,1].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
@@ -4025,10 +4009,10 @@ class TPT:
                 for k in range(len(quantile_midranges)):
                     ylohi = transdict["enstrophy_int"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,0] * funlib["enstrophy_int"]["units"]
                     ax[0,2].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
-                h_Ly0, = ax[1,2].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{J}_{AB}\cdot\nabla$[%s]"%(funlib["enstrophy_int"]["name"]))
+                h_Ly0, = ax[1,2].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib["enstrophy_int"]["name"]))
                 h_y0dot, = ax[1,2].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["enstrophy_int"]["name"]))
-                h_y1, = ax[1,2].plot(qp_levels, y1, color='red', linestyle='-', label=funlib["diss"]["name"])
-                h_y2, = ax[1,2].plot(qp_levels, y2, color='cyan', linestyle='-', label=r"$-$%s"%(funlib["dqdy_times_vq_int"]["name"]))
+                h_y1, = ax[1,2].plot(qp_levels, y1, color='magenta', linestyle='-', label=funlib["diss_int"]["name"])
+                h_y2, = ax[1,2].plot(qp_levels, y2, color='black', linestyle='-', label=r"$-$%s"%(funlib["dqdy_times_vq_int"]["name"]))
                 ax[1,2].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
 
                 ax[0,2].legend(handles=[h_y0],prop={'size':16})
