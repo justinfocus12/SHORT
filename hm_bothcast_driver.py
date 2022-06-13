@@ -55,7 +55,7 @@ plot_long_2d_flag =     0
 plot_long_1d_flag =     0
 trans_state_flag =      0
 trans_state_enst_flag = 1
-display_cast_flag =     0
+display_cast_flag =     1
 display_current_flag =  0
 lifecycle_flag =        0
 gen_rates_flag =        0
@@ -225,24 +225,31 @@ if trans_state_enst_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    theta_2d_abbs = (
-            [["gramps_sqrt_%i"%(altitude),"enstrophy_sqrt_%i"%(altitude)] for altitude in [10,20,30,40,50,60][::-1]] + 
-            [["gramps_plus_enstrophy_sqrt_%i"%(altitude),"gramps_enstrophy_arclength_%i"%(altitude)] for altitude in [10,20,30,40,50,60][::-1]] + 
-            [
-                ["gramps_plus_enstrophy_int_sqrt","gramps_enstrophy_int_arclength"],
-                ["gramps_int_sqrt","enstrophy_int_sqrt"],
-                ["gramps_relax_int","gramps_int"],
-                ["diss_int","enstrophy_int"],
-                ["gramps_int","enstrophy_int"],
-                ["gramps_ref_sqrt","enstrophy_ref_sqrt"],
-            ]
-            )[:12]
-    print("About to start displaying casts")
-    for i in range(len(theta_2d_abbs)):
-        if display_cast_flag:
-            tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
-        if display_current_flag:
-            tpt.display_2d_currents(model,data,theta_2d_abbs[i:i+1])
+    #theta_2d_abbs = (
+    #        [["gramps_sqrt_%i"%(altitude),"enstrophy_sqrt_%i"%(altitude)] for altitude in [10,20,30,40,50,60][::-1]] + 
+    #        [["gramps_plus_enstrophy_sqrt_%i"%(altitude),"gramps_enstrophy_arclength_%i"%(altitude)] for altitude in [10,20,30,40,50,60][::-1]] + 
+    #        [
+    #            ["gramps_plus_enstrophy_int_sqrt","gramps_enstrophy_int_arclength"],
+    #            ["gramps_int_sqrt","enstrophy_int_sqrt"],
+    #            ["gramps_relax_int","gramps_int"],
+    #            ["diss_int","enstrophy_int"],
+    #            ["gramps_int","enstrophy_int"],
+    #            ["gramps_ref_sqrt","enstrophy_ref_sqrt"],
+    #        ]
+    #        )[:12]
+    profkey0 = "gramps_sqrt"
+    profkey1 = "enstrophy_sqrt"
+    alt_list = [10,20,30]
+    idx_combo_list = [[np.argmin(np.abs(model.q['z_d'][1:-1]/1000 - alt))]*2 for alt in alt_list]
+    suffix_combo_list = [[r"(%i km)"%alt]*2 for alt in alt_list]
+    if display_cast_flag:
+        print("About to start displaying casts")
+        tpt.display_casts_abba(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True)
+    #for i in range(len(theta_2d_abbs)):
+    #    if display_cast_flag:
+    #        tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
+    #    if display_current_flag:
+    #        tpt.display_2d_currents(model,data,theta_2d_abbs[i:i+1])
 # --------------------------------------------------------
 
 # ----------- Display lifecycle correlations -----------
