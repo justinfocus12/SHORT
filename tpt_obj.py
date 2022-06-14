@@ -485,7 +485,8 @@ class TPT:
         #ax[1].tick_params(axis='y',labelsize=40)
         #fig.savefig(join(self.savefolder,"{}_ensemble_ab".format(field_abb)))
         return fig,ax
-    def plot_field_long(self,model,data,key_combo,color_combo,tmax=70,time_unit_symbol=None,phases=['aa','ab','ba','bb'],density_1d_flag=False):
+    def plot_field_long(self,model,data,key_combo,color_combo,zi_combo,suffix_combo,tmax=70,time_unit_symbol=None,phases=['aa','ab','ba','bb'],density_1d_flag=False):
+        # zi_combo is a matrix. Each row is a different combination of altidudes; each column refers to a different key. 
         print("Beginning plot field long")
         funlib = model.observable_function_library()
         print(f"Evaluated fields in plot_field_long: {key_combo}")
@@ -513,46 +514,41 @@ class TPT:
         timax = np.argmin(np.abs(t_long-tmax))
         tsubset = np.linspace(0,timax-1,min(timax,5000)).astype(int)
         fields = dict({key: funlib[key]["fun"](x_long[tsubset]) for key in key_combo})
-        fig,ax = plt.subplots(ncols=1,figsize=(22,7)) #,gridspec_kw={'width_ratios': [3,1]},sharey=True)
-        handles = []
-        for i in range(len(key_combo)):
-            key = key_combo[i]
-            h, = ax.plot(t_long[tsubset],funlib[key]["units"]*fields[key],color=color_combo[i],label=funlib[key]["name"])
-            handles += [h]
-        ax.legend(handles=handles,prop={'size':20})
-        #ax[0].plot(t_long[[tsubset[0],tsubset[-1]]],ab_long[0]*np.ones(2)*units,color='skyblue',linewidth=2.5)
-        #ax[0].plot(t_long[[tsubset[0],tsubset[-1]]],ab_long[1]*np.ones(2)*units,color='red',linewidth=2.5)
-        #dthab = np.abs(ab_long[1]-ab_long[0])
-        #ax[0].text(0,units*(ab_long[0]+0.01*dthab),asymb,fontdict=bbigfont,color='black',weight='bold')
-        #ax[0].text(0,units*(ab_long[1]+0.01*dthab),bsymb,fontdict=bbigfont,color='black',weight='bold')
-        if any_trans:
-            for i in range(len(ab_starts)):
-                if ab_ends[i] < timax:
-                    ax.axvspan(t_long[ab_starts[i]],t_long[ab_ends[i]],facecolor='orange',alpha=0.5,zorder=-1)
-            for i in range(len(ba_starts)):
-                if ba_ends[i] < timax:
-                    ax.axvspan(t_long[ba_starts[i]],t_long[ba_ends[i]],facecolor='mediumspringgreen',alpha=0.5,zorder=-1)
-        xlab = "Time"
-        if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
-        ax.set_xlabel(xlab,fontdict=bigfont)
-        ylab = r"[%s]"%(funlib[key_combo[0]]["unit_symbol"])
-        ax.set_ylabel(ylab,fontdict=bigfont)
-        ylim = ax.get_ylim()
-        fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
-        ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
-        #ax.set_title("Long integration",fontdict=font)
-        ax.tick_params(axis='both',labelsize=25)
-        #ax.yaxis.set_major_locator(ticker.NullLocator())
-        # Now plot the densities in y
-        if density_1d_flag:
-            for i in range(len(key_combo)):
-                self.display_1d_densities(model,data,[fieldkey],'vertical',fig=fig,ax=ax[1],phases=phases)
-            ax[1].yaxis.set_visible(False)
-            ax[1].set_xlabel("Probability density",fontdict=bigfont)
-            ax[1].tick_params(axis='both',labelsize=25)
-        save_suffix = "_".join([funlib[key]["abbrv"] for key in key_combo])
-        fig.savefig(join(self.savefolder,f"long1d_{save_suffix}"))
-        plt.close(fig)
+        ylim = np.array([np.inf,-np.inf])
+        for i_z in range(len(zi_combo)):
+            for i_key in range(len(key_combo)):
+                ylim[0] = min(ylim[0], np.min(fields[key_combo[i_key]][:,zi_combo[i_z]]))
+                ylim[1] = max(ylim[1], np.max(fields[key_combo[i_key]][:,zi_combo[i_z]]))
+        ylim *= funlib[key_combo[0]]["units"]
+        print(f"ylim = {ylim}")
+        for i_z in range(len(zi_combo)):
+            fig,ax = plt.subplots(ncols=1,figsize=(22,7)) #,gridspec_kw={'width_ratios': [3,1]},sharey=True)
+            handles = []
+            for i_key in range(len(key_combo)):
+                key = key_combo[i_key]
+                h, = ax.plot(t_long[tsubset],funlib[key]["units"]*fields[key][:,zi_combo[i_z,i_key]],color=color_combo[i_key],label="%s %s"%(funlib[key]["name"],suffix_combo[i_z][i_key]))
+                handles += [h]
+            ax.legend(handles=handles,prop={'size':20})
+            if any_trans:
+                for i in range(len(ab_starts)):
+                    if ab_ends[i] < timax:
+                        ax.axvspan(t_long[ab_starts[i]],t_long[ab_ends[i]],facecolor='orange',alpha=0.5,zorder=-1)
+                for i in range(len(ba_starts)):
+                    if ba_ends[i] < timax:
+                        ax.axvspan(t_long[ba_starts[i]],t_long[ba_ends[i]],facecolor='mediumspringgreen',alpha=0.5,zorder=-1)
+            xlab = "Time"
+            if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
+            ax.set_xlabel(xlab,fontdict=bigfont)
+            ylab = r"[%s]"%(funlib[key_combo[0]]["unit_symbol"])
+            ax.set_ylabel(ylab,fontdict=bigfont)
+            ax.set_ylim(ylim)
+            fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+            ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+            #ax.set_title("Long integration",fontdict=font)
+            ax.tick_params(axis='both',labelsize=25)
+            save_suffix = "_".join(["%szi%i"%(funlib[key_combo[i_key]]["abbrv"],zi_combo[i_z][i_key]) for i_key in range(len(key_combo))])
+            fig.savefig(join(self.savefolder,f"long1d_{save_suffix}"))
+            plt.close(fig)
         print("Done plotting field long")
         if False: 
             # ------------ Next: plot only some transitions on their own plot --------------
@@ -4039,7 +4035,7 @@ class TPT:
                 # ------------------------------------------------------------------------
         # ----------------------- Plot timeseries of a few select quantities ----------
         # Three columns: GE, G, E
-        alt_list = np.array([30])
+        alt_list = np.array([10,20,30])
         q = model.q
         zi_list = np.array([np.argmin(np.abs(q['z_d'][1:-1]/1000 - alt)) for alt in alt_list])
         if plot_analysis_transdict_flag:
@@ -4064,8 +4060,8 @@ class TPT:
                         max(np.max(GE),np.max(G),np.max(E)),
                         ],
                         [
-                        min(np.min(GEdot),np.min(Gdot),np.min(Edot),np.min(LGE),np.min(LG),np.min(LE),np.min(RBe),np.min(D),np.min(BeVQ),np.min(-BeVQ)),
-                        max(np.max(GEdot),np.max(Gdot),np.max(Edot),np.max(LGE),np.max(LG),np.max(LE),np.max(RBe),np.max(D),np.max(BeVQ),np.max(-BeVQ)),
+                        min(np.min(GEdot),np.min(LGE),np.min(RBe),np.min(D)), #,np.min(Gdot),np.min(Edot),np.min(LG),np.min(LE),np.min(BeVQ),np.min(-BeVQ)),
+                        max(np.max(GEdot),np.max(LGE),np.max(RBe),np.max(D)), #,np.max(Gdot),np.max(Edot),np.max(LG),np.max(LE),np.max(BeVQ),np.max(-BeVQ)),
                         ]
                         ]
                 for i_alt,alt in enumerate(alt_list):
@@ -4076,7 +4072,10 @@ class TPT:
                     y0dot = GEdot[:,i_alt] #transdict["gramps_plus_enstrophy"]["tendency"]["deterministic"][dirn][:,zi]*funlib["gramps_plus_enstrophy"]["units"]/q["time"]
                     y1 = RBe[:,i_alt] #transdict["gramps_relax"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["gramps_relax"]["units"]
                     y2 = D[:,i_alt] #transdict["diss"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["diss"]["units"]
+                    y3 = BeVQ[:,i_alt] 
                     h_y0, = ax[0,0].plot(qp_levels, y0, color='darkorange', label=funlib["gramps_plus_enstrophy"]["name"])
+                    h_G, = ax[0,0].plot(qp_levels,G[:,-1,i_alt],color='dodgerblue', label=funlib["gramps"]["name"])
+                    h_E, = ax[0,0].plot(qp_levels,E[:,-1,i_alt],color='magenta', label=funlib["enstrophy"]["name"])
                     for k in range(len(quantile_midranges)):
                         ylohi = GE[:,2*k:2*k+2,i_alt] #transdict["gramps_plus_enstrophy"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,zi] * funlib["gramps_plus_enstrophy"]["units"]
                         ax[0,0].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
@@ -4084,9 +4083,10 @@ class TPT:
                     h_y0dot, = ax[1,0].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["gramps_plus_enstrophy"]["name"]))
                     h_y1, = ax[1,0].plot(qp_levels, y1, color="dodgerblue", label=funlib["gramps_relax"]["name"]) 
                     h_y2, = ax[1,0].plot(qp_levels, y2, color='magenta', linestyle='-', label=funlib["diss"]["name"])
+                    h_y3, = ax[1,0].plot(qp_levels, y3, color='black', linestyle='-', label=funlib["dqdy_times_vq"]["name"])
                     ax[1,0].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
-                    ax[0,0].legend(handles=[h_y0],prop={'size':16})
-                    ax[1,0].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
+                    ax[0,0].legend(handles=[h_y0,h_G,h_E],prop={'size':16})
+                    ax[1,0].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2,h_y3],prop={'size':16})
                     ax[0,0].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
                     ax[1,0].set_title(r"Tendency (%i km)"%(alt),fontdict=ffont)
                     # Column 1: plot the gramps

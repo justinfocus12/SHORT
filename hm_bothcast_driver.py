@@ -52,11 +52,11 @@ compute_tpt_flag =      0
 
 plot_trans_2d_flag =    0
 plot_long_2d_flag =     0
-plot_long_1d_flag =     0
+plot_long_1d_flag =     1
 trans_state_flag =      0
-trans_state_enst_flag = 1
-display_cast_flag =     1
-display_current_flag =  1
+trans_state_enst_flag = 0
+display_cast_flag =     0
+display_current_flag =  0
 lifecycle_flag =        0
 gen_rates_flag =        0
 flux_dist_flag =        0
@@ -192,27 +192,35 @@ if plot_long_2d_flag:
 # ----------------------------------------------------
 
 # ----------- Plot long trajectory in 1d ---------------
-if plot_long_1d_flag:
-    keys2plot = [
-            [
-                "gramps_plus_enstrophy_int",
-                "gramps_int",
-                "enstrophy_int"
-            ],
-            [
-                "dqdy_times_vq_int",
-                "gramps_relax_int",
-                "diss_int",
-            ],
-            ["Uref",]
-            ]
-    colorlists = [
-            ["black", "dodgerblue", "magenta"],
-            ["black", "dodgerblue", "magenta"],
-            ["black"],
-            ]
-    for i in range(len(keys2plot)):
-        tpt.plot_field_long(model,data,keys2plot[i],colorlists[i],tmax=3000,time_unit_symbol="days")
+alt_list = np.array([10,20,30])
+zi_list = np.array([np.argmin(np.abs(model.q['z_d'][1:-1]/1000 - alt_list[i])) for i in range(len(alt_list))])
+key_combos = ([
+    ["gramps_plus_enstrophy","gramps","enstrophy"],
+    ["dqdy_times_vq","gramps_relax","diss"],
+    ])
+
+color_combos = ([
+        ["black", "dodgerblue", "magenta"],
+        ["black", "dodgerblue", "magenta"]
+        ])
+zi_combos = ([
+    np.outer(zi_list, np.ones(3)).astype(int),
+    np.outer(zi_list, np.ones(3)).astype(int),
+    ])
+suffix_combos = ([
+    [["(%i km)"%(alt_list[i])]*3 for i in range(len(alt_list))],
+    [["(%i km)"%(alt_list[i])]*3 for i in range(len(alt_list))],
+    ])
+
+for i_com in range(len(key_combos)):
+    tpt.plot_field_long(model,data,
+            key_combos[i_com],
+            color_combos[i_com],
+            zi_combos[i_com],
+            suffix_combos[i_com],
+            tmax=3000,time_unit_symbol="days")
+    #for i in range(len(keys2plot)):
+    #    tpt.plot_field_long(model,data,keys2plot[i],colorlists[i],tmax=3000,time_unit_symbol="days")
 
 # ------------------------------------------------------
 # ---------- Plot dominant transition states-----------
@@ -225,22 +233,10 @@ if trans_state_enst_flag:
 
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
-    #theta_2d_abbs = (
-    #        [["gramps_sqrt_%i"%(altitude),"enstrophy_sqrt_%i"%(altitude)] for altitude in [10,20,30,40,50,60][::-1]] + 
-    #        [["gramps_plus_enstrophy_sqrt_%i"%(altitude),"gramps_enstrophy_arclength_%i"%(altitude)] for altitude in [10,20,30,40,50,60][::-1]] + 
-    #        [
-    #            ["gramps_plus_enstrophy_int_sqrt","gramps_enstrophy_int_arclength"],
-    #            ["gramps_int_sqrt","enstrophy_int_sqrt"],
-    #            ["gramps_relax_int","gramps_int"],
-    #            ["diss_int","enstrophy_int"],
-    #            ["gramps_int","enstrophy_int"],
-    #            ["gramps_ref_sqrt","enstrophy_ref_sqrt"],
-    #        ]
-    #        )[:12]
     profkey_list = [
             ["gramps_sqrt","enstrophy_sqrt"],
             ["gramps_plus_enstrophy_sqrt","gramps_enstrophy_arclength"],
-            ][1:]
+            ]
     alt_list = [10,20,30]
     idx_combo_list = [[np.argmin(np.abs(model.q['z_d'][1:-1]/1000 - alt))]*2 for alt in alt_list]
     suffix_combo_list = [[r"(%i km)"%alt]*2 for alt in alt_list]
