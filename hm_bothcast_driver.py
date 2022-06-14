@@ -56,7 +56,7 @@ plot_long_1d_flag =     0
 trans_state_flag =      0
 trans_state_enst_flag = 1
 display_cast_flag =     1
-display_current_flag =  0
+display_current_flag =  1
 lifecycle_flag =        0
 gen_rates_flag =        0
 flux_dist_flag =        0
@@ -237,21 +237,21 @@ if display_cast_flag or display_current_flag:
     #            ["gramps_ref_sqrt","enstrophy_ref_sqrt"],
     #        ]
     #        )[:12]
-    profkey0 = "gramps_sqrt"
-    profkey1 = "enstrophy_sqrt"
+    profkey_list = [
+            ["gramps_sqrt","enstrophy_sqrt"],
+            ["gramps_plus_enstrophy_sqrt","gramps_enstrophy_arclength"],
+            ][1:]
     alt_list = [10,20,30]
     idx_combo_list = [[np.argmin(np.abs(model.q['z_d'][1:-1]/1000 - alt))]*2 for alt in alt_list]
     suffix_combo_list = [[r"(%i km)"%alt]*2 for alt in alt_list]
-    if display_cast_flag:
-        print("About to start displaying casts")
-        tpt.display_casts_abba(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True)
-    if display_current_flag:
-        tpt.display_2d_currents(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True)
-    #for i in range(len(theta_2d_abbs)):
-    #    if display_cast_flag:
-    #        tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
-    #    if display_current_flag:
-    #        tpt.display_2d_currents(model,data,theta_2d_abbs[i:i+1])
+    for profkey_pair in profkey_list:
+        profkey0,profkey1 = profkey_pair
+        if display_cast_flag:
+            print(f"About to display cast for {profkey0},{profkey1}")
+            tpt.display_casts_abba(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True,square_bounds_flag=True)
+        if display_current_flag:
+            print(f"About to display current for {profkey0},{profkey1}")
+            tpt.display_dam_moments_abba_current(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True,square_bounds_flag=True)
 # --------------------------------------------------------
 
 # ----------- Display lifecycle correlations -----------

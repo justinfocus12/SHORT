@@ -1627,9 +1627,10 @@ class TPT:
             plt.close(fig)
         f.close()
         return
-    def display_dam_moments_abba_current(self,model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=False,horz_lines=0):
+    def display_dam_moments_abba_current(self,model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=False,square_bounds_flag=False):
         # Plot the whole shebang, including current and eventually FW and observed paths
         # But do it in increments: least action path, then sample paths, then reactive density, then reactive current
+        funlib = model.observable_function_library()
         # Load the transitions
         t_long,x_long = model.load_long_traj(self.long_simfolder)
         ab_reactive_flag = 1*(self.long_from_label==-1)*(self.long_to_label==1)
@@ -1642,21 +1643,15 @@ class TPT:
         num_obs = min([10,len(ab_starts),len(ba_starts)])
         ab_obs_idx = np.arange(num_obs) #np.random.choice(np.arange(len(ab_starts)),num_obs)
         ba_obs_idx = np.arange(num_obs) #np.random.choice(np.arange(len(ba_starts)),num_obs)
-        theta_ab_obs = []
-        theta_ba_obs = []
+        prof0_ab_obs = []
+        prof1_ab_obs = []
+        prof0_ba_obs = []
+        prof1_ba_obs = []
         for i in range(num_obs):
-            theta_ab_obs += [
-                    np.array([
-                        funlib[profkey0]["fun"](x_long[ab_starts[ab_obs_idx[i]]:ab_ends[ab_obs_idx[i]]]),
-                        funlib[profkey1]["fun"](x_long[ab_starts[ab_obs_idx[i]]:ab_ends[ab_obs_idx[i]]]),
-                        ])
-                    ]
-            theta_ba_obs += [
-                    np.array([
-                        funlib[profkey0]["fun"](x_long[ba_starts[ba_obs_idx[i]]:ba_ends[ba_obs_idx[i]]]),
-                        funlib[profkey1]["fun"](x_long[ba_starts[ba_obs_idx[i]]:ba_ends[ba_obs_idx[i]]]),
-                        ])
-                    ]
+            prof0_ab_obs += [funlib[profkey0]["fun"](x_long[ab_starts[ab_obs_idx[i]]:ab_ends[ab_obs_idx[i]]])]
+            prof1_ab_obs += [funlib[profkey1]["fun"](x_long[ab_starts[ab_obs_idx[i]]:ab_ends[ab_obs_idx[i]]])]
+            prof0_ba_obs += [funlib[profkey0]["fun"](x_long[ba_starts[ba_obs_idx[i]]:ba_ends[ba_obs_idx[i]]])]
+            prof1_ba_obs += [funlib[profkey1]["fun"](x_long[ba_starts[ba_obs_idx[i]]:ba_ends[ba_obs_idx[i]]])]
         del x_long
         # If I substitute in F- and F+ for q- and q+, I guess we'll see where pathways accumulate the most of whatever damage function it's measuring
         Nx,Nt,xdim = data.X.shape
@@ -1670,59 +1665,120 @@ class TPT:
         prof1_a,prof1_b = funlib[profkey1]["fun"](model.tpt_obs_xst).reshape((2,prof1dim))
         zi0list = [combo[0] for combo in idx_combo_list]
         zi1list = [combo[1] for combo in idx_combo_list]
-        prof0_bounds = np.array([np.nanquantile(prof0_x[:,zi0list],0.01),np.nanquantile(prof0_x[:,zi0list],0.99)])
-        prof1_bounds = np.array([np.nanquantile(prof1_x[:,zi1list],0.01),np.nanquantile(prof1_x[:,zi1list],0.99)])
-        if same_bounds_flag: 
+        prof0_bounds = np.array([np.nanquantile(prof0_x[:,zi0list],0.025),np.nanquantile(prof0_x[:,zi0list],0.975)])
+        prof1_bounds = np.array([np.nanquantile(prof1_x[:,zi1list],0.025),np.nanquantile(prof1_x[:,zi1list],0.975)])
+        if square_bounds_flag: 
             prof0_bounds = np.array([min(prof0_bounds[0],prof1_bounds[0]),max(prof0_bounds[1],prof1_bounds[1])])
             prof1_bounds = prof0_bounds.copy()
+        
+        # ------- Load least action paths in both directions --------
+        # A -> B
+        xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=1)
+        fw_idx = np.linspace(0,len(xfw)-1,200).astype(int)
+        xfw = xfw[fw_idx]
+        tfw = tfw[fw_idx]
+        idx_start = np.where(model.adist(xfw) > 0)[0][0]
+        idx_end = np.where(model.bdist(xfw) == 0)[0][0]
+        xfw = xfw[idx_start:idx_end]
+        tfw = tfw[idx_start:idx_end]
+        prof0_fw_ab = funlib[profkey0]["fun"](xfw)
+        prof1_fw_ab = funlib[profkey1]["fun"](xfw)
+        # B -> A
+        xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=-1)
+        fw_idx = np.linspace(0,len(xfw)-1,200).astype(int)
+        xfw = xfw[fw_idx]
+        tfw = tfw[fw_idx]
+        idx_start = np.where(model.bdist(xfw) > 0)[0][0]
+        idx_end = np.where(model.adist(xfw) == 0)[0][0]
+        xfw = xfw[idx_start:idx_end]
+        tfw = tfw[idx_start:idx_end]
+        prof0_fw_ba = funlib[profkey0]["fun"](xfw)
+        prof1_fw_ba = funlib[profkey1]["fun"](xfw)
+
+        # -----------------------------------------------------------
 
         keys = list(model.dam_dict.keys())
         eps = 0.001
         adist = model.adist(data.X[:,:Nt_max].reshape((Nx*Nt_max,xdim)))
         bdist = model.bdist(data.X[:,:Nt_max].reshape((Nx*Nt_max,xdim)))
+        print(f"adist.shape = {adist.shape}")
         interior_idx = np.where((adist>eps)*(bdist>eps))[0]
         for k in range(1): # num_moments):
             for i_com in range(len(idx_combo_list)):
                 combo = idx_combo_list[i_com]
                 print(f"Beginning combo {combo}")
                 zi0,zi1 = combo
-                theta_x = np.array([prof0_x,prof1_x]).T
-                thmin,thmax = np.min(theta_x[interior_idx,:],axis=0),np.max(theta_x[interior_idx,:],axis=0)
-                theta_x = theta_x.reshape((Nx,Nt_max,2))
+                theta_x = np.array([prof0_x[:,zi0],prof1_x[:,zi1]]).T.reshape((Nx,Nt_max,2))
+                theta_xst = np.array([[prof0_a[zi0],prof1_a[zi1]],[prof0_b[zi0],prof1_b[zi1]]])
+                theta_fw_ab = np.array([prof0_fw_ab[:,zi0],prof1_fw_ab[:,zi1]]).T
+                theta_fw_ba = np.array([prof0_fw_ba[:,zi0],prof1_fw_ba[:,zi1]]).T
+                theta_ab_obs = [np.array([prof0_ab_obs[i_trans][:,zi0], prof1_ab_obs[i_trans][:,zi1]]).T for i_trans in range(len(prof0_ab_obs))]
+                theta_ba_obs = [np.array([prof0_ba_obs[i_trans][:,zi0], prof1_ba_obs[i_trans][:,zi1]]).T for i_trans in range(len(prof0_ba_obs))]
+                print(f"theta_ab_obs: shp = {theta_ab_obs[0].shape}, {theta_ab_obs[1].shape}, ...")
+                fun0name = "%s %s"%(funlib[profkey0]["name"], suffix_combo_list[i_com][0])
+                fun1name = "%s %s"%(funlib[profkey1]["name"], suffix_combo_list[i_com][1])
+                units = [funlib[profkey0]["units"], funlib[profkey1]["units"]]
+                unit_symbols = [funlib[profkey0]["unit_symbol"], funlib[profkey1]["unit_symbol"]]
                 # -----------------------------
+                # Steady-state current
+                print(f"------------ Starting Steady-state stuff -----------")
+                comm_fwd = np.ones((Nx,Nt_max)) 
+                comm_bwd = np.ones((Nx,Nt_max)) 
+                weight = self.chom
+                fieldname = r"Steady-state"  #r"$\pi_{AB},J_{AB}$"
+                field = np.ones((Nx,Nt_max)) 
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss)
+                if same_bounds_flag:
+                    ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
+                    ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                if square_bounds_flag:
+                    xlim = ax.get_xlim()
+                    ylim = ax.get_ylim()
+                    ax.set_xlim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                    ax.set_ylim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                fig.savefig(join(self.savefolder,f"jss_sdens_th0{funlib[profkey0]['abbrv']}zi{zi0}_th1{funlib[profkey1]['abbrv']}zi{zi1}"),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig)
+                # -------------------------------
                 # A->A
                 print(f"------------ Starting A->A stuff -----------")
                 comm_bwd = self.dam_moments[keys[k]]['ax'][0][:,:Nt_max]
                 comm_fwd = self.dam_moments[keys[k]]['xa'][0][:,:Nt_max]
                 weight = self.chom
-                #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
                 # Committor
                 fieldname = r"$A\to A$"  #r"$\pi_{AB},J_{AB}$"
                 field = comm_bwd*comm_fwd 
                 field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-                fun0name = "%s %s"%(funlib[profkey0]["name"], suffix_combo_list[i_com][0])
-                fun0name = "%s %s"%(funlib[profkey1]["name"], suffix_combo_list[i_com][1])
-                units = [funlib[profkey0]["units"], funlib[profkey1]["units"]]
-                unit_symbols = [funlib[profkey0]["unit_symbol"], funlib[profkey1]["unit_symbol"]]
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
-                fig.savefig(join(self.savefolder,f"jaa_rdens_th0{profkey0}zi{zi0}_th1{profkey1}zi{zi1}"),bbox_inches="tight",pad_inches=0.2)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss)
+                if same_bounds_flag:
+                    ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
+                    ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                if square_bounds_flag:
+                    xlim = ax.get_xlim()
+                    ylim = ax.get_ylim()
+                    ax.set_xlim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                    ax.set_ylim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                fig.savefig(join(self.savefolder,f"jaa_rdens_th0{funlib[profkey0]['abbrv']}zi{zi0}_th1{funlib[profkey1]['abbrv']}zi{zi1}"),bbox_inches="tight",pad_inches=0.2)
                 plt.close(fig)
-                # TODO: modify the other current directions as above. Also adjust the steady-state current code
                 # -----------------------------
                 # B->B
                 print(f"------------ Starting B->B stuff -----------")
                 comm_bwd = self.dam_moments[keys[k]]['bx'][0][:,:Nt_max]
                 comm_fwd = self.dam_moments[keys[k]]['xb'][0][:,:Nt_max]
                 weight = self.chom
-                #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
                 # Committor
                 fieldname = r"$B\to B$"  #r"$\pi_{AB},J_{AB}$"
                 field = comm_bwd*comm_fwd 
                 field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-                #field *= (comm_fwd > 0)*(comm_fwd < 1)
-                #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
-                fig.savefig(join(self.savefolder,"jbb_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss)
+                if same_bounds_flag:
+                    ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
+                    ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                if square_bounds_flag:
+                    xlim = ax.get_xlim()
+                    ylim = ax.get_ylim()
+                    ax.set_xlim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                    ax.set_ylim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                fig.savefig(join(self.savefolder,f"jbb_rdens_th0{funlib[profkey0]['abbrv']}zi{zi0}_th1{funlib[profkey1]['abbrv']}zi{zi1}"),bbox_inches="tight",pad_inches=0.2)
                 plt.close(fig)
                 # -----------------------------
                 # A->B
@@ -1730,24 +1786,21 @@ class TPT:
                 comm_bwd = self.dam_moments[keys[k]]['ax'][0][:,:Nt_max]
                 comm_fwd = self.dam_moments[keys[k]]['xb'][0][:,:Nt_max]
                 weight = self.chom
-                #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
-                xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=1)
-                # Downsample
-                fw_idx = np.linspace(0,len(xfw)-1,200).astype(int)
-                xfw = xfw[fw_idx]
-                tfw = tfw[fw_idx]
-                idx_start = np.where(model.adist(xfw) > 0)[0][0]
-                idx_end = np.where(model.bdist(xfw) == 0)[0][0]
-                print(f"idx_start = {idx_start}, idx_end = {idx_end}")
-                xfw = xfw[idx_start:idx_end]
-                tfw = tfw[idx_start:idx_end]
-                theta_fw = theta_2d_fun(xfw)
                 # Committor
                 fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
                 field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
                 field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
-                fig.savefig(join(self.savefolder,"jab_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw_ab,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss)
+                if same_bounds_flag:
+                    ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
+                    ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                if square_bounds_flag:
+                    xlim = ax.get_xlim()
+                    ylim = ax.get_ylim()
+                    ax.set_xlim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                    ax.set_ylim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                fig.savefig(join(self.savefolder,f"jab_rdens_th0{funlib[profkey0]['abbrv']}zi{zi0}_th1{funlib[profkey1]['abbrv']}zi{zi1}"),bbox_inches="tight",pad_inches=0.2)
+                fig.savefig(join(self.savefolder,f"jab_rdens_th0{funlib[profkey0]['abbrv']}zi{zi0}_th1{funlib[profkey1]['abbrv']}zi{zi1}"),bbox_inches="tight",pad_inches=0.2)
                 plt.close(fig)
                 # ---------------------------------
                 # B->A
@@ -1756,27 +1809,23 @@ class TPT:
                 comm_bwd = self.dam_moments[keys[k]]['bx'][0][:,:Nt_max]
                 comm_fwd = self.dam_moments[keys[k]]['xa'][0][:,:Nt_max]
                 weight = self.chom
-                #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
-                xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=-1)
-                # Downsample
-                fw_idx = np.linspace(0,len(xfw)-1,200).astype(int)
-                xfw = xfw[fw_idx]
-                tfw = tfw[fw_idx]
-                idx_start = np.where(model.bdist(xfw) > 0)[0][0]
-                idx_end = np.where(model.adist(xfw) == 0)[0][0]
-                print(f"idx_start = {idx_start}, idx_end = {idx_end}")
-                xfw = xfw[idx_start:idx_end]
-                tfw = tfw[idx_start:idx_end]
-                theta_fw = theta_2d_fun(xfw)
                 # Committor
                 fieldname = r"$B\to A$"  #r"$\pi_{AB},J_{AB}$"
                 field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
                 field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False)
-                fig.savefig(join(self.savefolder,"jba_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw_ba,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False)
+                if same_bounds_flag:
+                    ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
+                    ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                if square_bounds_flag:
+                    xlim = ax.get_xlim()
+                    ylim = ax.get_ylim()
+                    ax.set_xlim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                    ax.set_ylim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                fig.savefig(join(self.savefolder,f"jba_rdens_th0{funlib[profkey0]['abbrv']}zi{zi0}_th1{funlib[profkey1]['abbrv']}zi{zi1}"),bbox_inches="tight",pad_inches=0.2)
                 plt.close(fig)
         return
-    def display_casts_abba(self,model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=False): #theta_2d_abbs):
+    def display_casts_abba(self,model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=False,square_bounds_flag=False): #theta_2d_abbs):
         #profkey 0 and profkey1 are two altitude-dependent fields, which we'll plot against each other at various altitudes
         funlib = model.observable_function_library()
         Nx,Nt,xdim = data.X.shape
@@ -1798,9 +1847,9 @@ class TPT:
         prof1_a,prof1_b = funlib[profkey1]["fun"](model.tpt_obs_xst).reshape((2,prof1dim))
         zi0list = [combo[0] for combo in idx_combo_list]
         zi1list = [combo[1] for combo in idx_combo_list]
-        prof0_bounds = np.array([np.nanquantile(prof0_x[:,zi0list],0.01),np.nanquantile(prof0_x[:,zi0list],0.99)])
-        prof1_bounds = np.array([np.nanquantile(prof1_x[:,zi1list],0.01),np.nanquantile(prof1_x[:,zi1list],0.99)])
-        if same_bounds_flag: 
+        prof0_bounds = np.array([np.nanquantile(prof0_x[:,zi0list],0.025),np.nanquantile(prof0_x[:,zi0list],0.975)])
+        prof1_bounds = np.array([np.nanquantile(prof1_x[:,zi1list],0.025),np.nanquantile(prof1_x[:,zi1list],0.975)])
+        if square_bounds_flag: 
             prof0_bounds = np.array([min(prof0_bounds[0],prof1_bounds[0]),max(prof0_bounds[1],prof1_bounds[1])])
             prof1_bounds = prof0_bounds.copy()
         print(f"Done computing {profkey0} and {profkey1} functions")
@@ -1854,8 +1903,14 @@ class TPT:
                         print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
                         print(f"Before setting limits, xlim = {ax.get_xlim()} and ylim = {ax.get_ylim()}")
-                        ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
-                        ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                        if same_bounds_flag:
+                            ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
+                            ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                        if square_bounds_flag:
+                            xlim = ax.get_xlim()
+                            ylim = ax.get_ylim()
+                            ax.set_xlim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                            ax.set_ylim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
                         print(f"After setting limits, xlim = {ax.get_xlim()} and ylim = {ax.get_ylim()}")
                         print(f"Done plotting field 2d")
                         fsuff = 'cast_%s%d_ab_th0%szi%i_th1%szi%i'%(model.dam_dict[keys[k]]['abb_full'],j,funlib[profkey0]["abbrv"],zi0,funlib[profkey1]["abbrv"],zi1)
@@ -1890,8 +1945,14 @@ class TPT:
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                         print(f"Beginning plotting field 2d")
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
-                        ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
-                        ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                        if same_bounds_flag:
+                            ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
+                            ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                        if square_bounds_flag:
+                            xlim = ax.get_xlim()
+                            ylim = ax.get_ylim()
+                            ax.set_xlim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                            ax.set_ylim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
                         print(f"Done plotting field 2d")
                         fsuff = 'cast_%s%d_ba_th0%szi%i_th1%szi%i'%(model.dam_dict[keys[k]]['abb_full'],j,funlib[profkey0]["abbrv"],zi0,funlib[profkey1]["abbrv"],zi1)
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
@@ -1930,8 +1991,14 @@ class TPT:
                             print("I got onto the one and j if statement")
                             _,_ = self.plot_field_2d(model,data,comm_fwd,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,contourf_flag=False,contour_notf_flag=True,contour_notf_levels=np.array([0.1,0.2,0.5,0.8,0.9]),fig=fig,ax=ax,ss=ss)
                             print(f"Made the contours")
-                        ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
-                        ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                        if same_bounds_flag:
+                            ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
+                            ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                        if square_bounds_flag:
+                            xlim = ax.get_xlim()
+                            ylim = ax.get_ylim()
+                            ax.set_xlim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                            ax.set_ylim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
                         fsuff = 'cast_%s%d_xb_th0%szi%i_th1%szi%i'%(model.dam_dict[keys[k]]['abb_full'],j,funlib[profkey0]["abbrv"],zi0,funlib[profkey1]["abbrv"],zi1)
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
@@ -1963,8 +2030,14 @@ class TPT:
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                         print(f"Beginning plotting field 2d")
                         fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
-                        ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
-                        ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                        if same_bounds_flag:
+                            ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
+                            ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
+                        if square_bounds_flag:
+                            xlim = ax.get_xlim()
+                            ylim = ax.get_ylim()
+                            ax.set_xlim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
+                            ax.set_ylim([min(xlim[0],ylim[0]),max(xlim[1],ylim[1])])
                         print(f"Done plotting field 2d")
                         fsuff = 'cast_%s%d_xa_th0%szi%i_th1%szi%i'%(model.dam_dict[keys[k]]['abb_full'],j,funlib[profkey0]["abbrv"],zi0,funlib[profkey1]["abbrv"],zi1)
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
@@ -2939,7 +3012,7 @@ class TPT:
             print("Jmag range = ({},{})".format(np.nanmin(Jmag),np.nanmax(Jmag)))
             print("J0.shape = {}".format(J0.shape))
             dsmin,dsmax = 0*np.max(current_shp)/40,np.max(current_shp)/20 # lengths of arrows in grid box units
-            coeff1 = 20.0/maxmag #10.0/maxmag
+            coeff1 = 10.0/maxmag #10.0/maxmag
             coeff0 = dsmax / (np.exp(-coeff1 * maxmag) - 1)
             ds = coeff0 * (np.exp(-coeff1 * Jmag) - 1)
             #ds = dsmin + (dsmax - dsmin)*(Jmag - minmag)/(maxmag - minmag)
@@ -3966,7 +4039,7 @@ class TPT:
                 # ------------------------------------------------------------------------
         # ----------------------- Plot timeseries of a few select quantities ----------
         # Three columns: GE, G, E
-        alt_list = np.array([30,20,10])
+        alt_list = np.array([30])
         q = model.q
         zi_list = np.array([np.argmin(np.abs(q['z_d'][1:-1]/1000 - alt)) for alt in alt_list])
         if plot_analysis_transdict_flag:
@@ -4014,8 +4087,8 @@ class TPT:
                     ax[1,0].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
                     ax[0,0].legend(handles=[h_y0],prop={'size':16})
                     ax[1,0].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
-                    ax[0,0].set_title(r"Snapshots",fontdict=ffont)
-                    ax[1,0].set_title(r"Tendency",fontdict=ffont)
+                    ax[0,0].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
+                    ax[1,0].set_title(r"Tendency (%i km)"%(alt),fontdict=ffont)
                     # Column 1: plot the gramps
                     y0 = G[:,-1,i_alt] #transdict["gramps"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["gramps"]["units"]
                     Ly0 = LG[:,i_alt] #transdict["gramps"]["tendency"]["stochastic"][dirn][:,zi]*funlib["gramps"]["units"]/q["time"]
@@ -4033,8 +4106,8 @@ class TPT:
                     ax[1,1].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
                     ax[0,1].legend(handles=[h_y0],prop={'size':16})
                     ax[1,1].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
-                    ax[0,1].set_title(r"Snapshots",fontdict=ffont)
-                    ax[1,1].set_title(r"Tendency",fontdict=ffont)
+                    ax[0,1].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
+                    ax[1,1].set_title(r"Tendency (%i km)"%(alt),fontdict=ffont)
                     # Column 2: plot the enstrophy 
                     y0 = E[:,-1,i_alt] #transdict["enstrophy"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["enstrophy"]["units"]
                     Ly0 = LE[:,i_alt] #transdict["enstrophy"]["tendency"]["stochastic"][dirn][:,zi]*funlib["enstrophy"]["units"]/q["time"]
@@ -4053,8 +4126,8 @@ class TPT:
 
                     ax[0,2].legend(handles=[h_y0],prop={'size':16})
                     ax[1,2].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
-                    ax[0,2].set_title(r"Snapshots")
-                    ax[1,2].set_title(r"Tendency",fontdict=ffont)
+                    ax[0,2].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
+                    ax[1,2].set_title(r"Tendency (%i km)"%(alt),fontdict=ffont)
                     # Labels
                     for c in range(ax.shape[1]):
                         ax[1,c].set_xlabel(r"$q_B^+$",fontdict=ffont)
