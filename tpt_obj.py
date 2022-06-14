@@ -1627,7 +1627,7 @@ class TPT:
             plt.close(fig)
         f.close()
         return
-    def display_dam_moments_abba_current(self,model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs,horz_lines=0):
+    def display_dam_moments_abba_current(self,model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=False,horz_lines=0):
         # Plot the whole shebang, including current and eventually FW and observed paths
         # But do it in increments: least action path, then sample paths, then reactive density, then reactive current
         # Load the transitions
@@ -1645,149 +1645,136 @@ class TPT:
         theta_ab_obs = []
         theta_ba_obs = []
         for i in range(num_obs):
-            theta_ab_obs += [theta_2d_fun(x_long[ab_starts[ab_obs_idx[i]]:ab_ends[ab_obs_idx[i]]])]
-            theta_ba_obs += [theta_2d_fun(x_long[ba_starts[ba_obs_idx[i]]:ba_ends[ba_obs_idx[i]]])]
+            theta_ab_obs += [
+                    np.array([
+                        funlib[profkey0]["fun"](x_long[ab_starts[ab_obs_idx[i]]:ab_ends[ab_obs_idx[i]]]),
+                        funlib[profkey1]["fun"](x_long[ab_starts[ab_obs_idx[i]]:ab_ends[ab_obs_idx[i]]]),
+                        ])
+                    ]
+            theta_ba_obs += [
+                    np.array([
+                        funlib[profkey0]["fun"](x_long[ba_starts[ba_obs_idx[i]]:ba_ends[ba_obs_idx[i]]]),
+                        funlib[profkey1]["fun"](x_long[ba_starts[ba_obs_idx[i]]:ba_ends[ba_obs_idx[i]]]),
+                        ])
+                    ]
         del x_long
         # If I substitute in F- and F+ for q- and q+, I guess we'll see where pathways accumulate the most of whatever damage function it's measuring
         Nx,Nt,xdim = data.X.shape
         Nt_max = int(np.ceil(np.argmin(np.abs(data.t_x - self.lag_time_current_display)))) + 1
         ss = np.random.choice(np.arange(Nx),300000,replace=False)
+        prof0_x = funlib[profkey0]["fun"](data.X[:,:Nt_max].reshape((Nx*Nt_max,xdim)))
+        prof0dim = int(prof0_x.size / (Nx*Nt_max))
+        prof0_a,prof0_b = funlib[profkey0]["fun"](model.tpt_obs_xst).reshape((2,prof0dim))
+        prof1_x = funlib[profkey1]["fun"](data.X[:,:Nt_max].reshape((Nx*Nt_max,xdim)))
+        prof1dim = int(prof1_x.size / (Nx*Nt_max))
+        prof1_a,prof1_b = funlib[profkey1]["fun"](model.tpt_obs_xst).reshape((2,prof1dim))
+        zi0list = [combo[0] for combo in idx_combo_list]
+        zi1list = [combo[1] for combo in idx_combo_list]
+        prof0_bounds = np.array([np.nanquantile(prof0_x[:,zi0list],0.01),np.nanquantile(prof0_x[:,zi0list],0.99)])
+        prof1_bounds = np.array([np.nanquantile(prof1_x[:,zi1list],0.01),np.nanquantile(prof1_x[:,zi1list],0.99)])
+        if same_bounds_flag: 
+            prof0_bounds = np.array([min(prof0_bounds[0],prof1_bounds[0]),max(prof0_bounds[1],prof1_bounds[1])])
+            prof1_bounds = prof0_bounds.copy()
+
         keys = list(model.dam_dict.keys())
-        num_moments = self.dam_moments[keys[0]]['xb'].shape[0]-1
-        theta_xst = theta_2d_fun(model.tpt_obs_xst) # Possibly to be used as theta_ab
         eps = 0.001
         adist = model.adist(data.X[:,:Nt_max].reshape((Nx*Nt_max,xdim)))
         bdist = model.bdist(data.X[:,:Nt_max].reshape((Nx*Nt_max,xdim)))
-        print(f"In current-plotting function, about to compute theta_x on data.X with shape {data.X.shape}")
-        t0 = timelib.time()
-        theta_x = theta_2d_fun(data.X[:,:Nt_max].reshape((Nx*Nt_max,xdim)))
-        duration = timelib.time() - t0
-        print(f"In current-plotting function, finished computing theta_x with shape {theta_x.shape}. It took {duration} seconds")
         interior_idx = np.where((adist>eps)*(bdist>eps))[0]
-        thmin,thmax = np.min(theta_x[interior_idx,:],axis=0),np.max(theta_x[interior_idx,:],axis=0)
-        theta_x = theta_x.reshape((Nx,Nt_max,2))
         for k in range(1): # num_moments):
-            # -----------------------------
-            # A->A
-            print(f"------------ Starting A->A stuff -----------")
-            comm_bwd = self.dam_moments[keys[k]]['ax'][0][:,:Nt_max]
-            comm_fwd = self.dam_moments[keys[k]]['xa'][0][:,:Nt_max]
-            weight = self.chom
-            #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
-            # Committor
-            fieldname = r"$A\to A$"  #r"$\pi_{AB},J_{AB}$"
-            field = comm_bwd*comm_fwd 
-            field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
-            if horz_lines > 0:
-                print("---------------Drawing in some horizontal lines for flux distributions")
-                # Draw in lines for reactive flux densities
-                nnidx = np.where(np.isnan(field) == 0)[0]
-                th1_min,th1_max = thmin[1],thmax[1]
-                dramp = (th1_max - th1_min)/horz_lines
-                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
-                for i_th in range(len(th_levels)):
-                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
-            fig.savefig(join(self.savefolder,"jaa_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # -----------------------------
-            # B->B
-            print(f"------------ Starting B->B stuff -----------")
-            comm_bwd = self.dam_moments[keys[k]]['bx'][0][:,:Nt_max]
-            comm_fwd = self.dam_moments[keys[k]]['xb'][0][:,:Nt_max]
-            weight = self.chom
-            #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
-            # Committor
-            fieldname = r"$B\to B$"  #r"$\pi_{AB},J_{AB}$"
-            field = comm_bwd*comm_fwd 
-            field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            #field *= (comm_fwd > 0)*(comm_fwd < 1)
-            #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
-            if horz_lines > 0:
-                print("---------------Drawing in some horizontal lines for flux distributions")
-                # Draw in lines for reactive flux densities
-                nnidx = np.where(np.isnan(field) == 0)[0]
-                th1_min,th1_max = thmin[1],thmax[1]
-                dramp = (th1_max - th1_min)/horz_lines
-                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
-                for i_th in range(len(th_levels)):
-                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
-            fig.savefig(join(self.savefolder,"jbb_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # -----------------------------
-            # A->B
-            print(f"------------ Starting A->B stuff -----------")
-            comm_bwd = self.dam_moments[keys[k]]['ax'][0][:,:Nt_max]
-            comm_fwd = self.dam_moments[keys[k]]['xb'][0][:,:Nt_max]
-            weight = self.chom
-            #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
-            xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=1)
-            # Downsample
-            fw_idx = np.linspace(0,len(xfw)-1,200).astype(int)
-            xfw = xfw[fw_idx]
-            tfw = tfw[fw_idx]
-            idx_start = np.where(model.adist(xfw) > 0)[0][0]
-            idx_end = np.where(model.bdist(xfw) == 0)[0][0]
-            print(f"idx_start = {idx_start}, idx_end = {idx_end}")
-            xfw = xfw[idx_start:idx_end]
-            tfw = tfw[idx_start:idx_end]
-            theta_fw = theta_2d_fun(xfw)
-            # Committor
-            fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
-            field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
-            field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
-            if horz_lines > 0:
-                print("---------------Drawing in some horizontal lines for flux distributions")
-                # Draw in lines for reactive flux densities
-                nnidx = np.where(np.isnan(field) == 0)[0]
-                th1_min,th1_max = thmin[1],thmax[1]
-                dramp = (th1_max - th1_min)/horz_lines
-                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
-                for i_th in range(len(th_levels)):
-                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
-            fig.savefig(join(self.savefolder,"jab_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
-            # ---------------------------------
-            # B->A
-            print(f"------------ Starting B->A stuff -----------")
-            fieldname = r"$B\to A$ density, current" #r"$\pi_{BA},J_{BA}$"
-            comm_bwd = self.dam_moments[keys[k]]['bx'][0][:,:Nt_max]
-            comm_fwd = self.dam_moments[keys[k]]['xa'][0][:,:Nt_max]
-            weight = self.chom
-            #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
-            xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=-1)
-            # Downsample
-            fw_idx = np.linspace(0,len(xfw)-1,200).astype(int)
-            xfw = xfw[fw_idx]
-            tfw = tfw[fw_idx]
-            idx_start = np.where(model.bdist(xfw) > 0)[0][0]
-            idx_end = np.where(model.adist(xfw) == 0)[0][0]
-            print(f"idx_start = {idx_start}, idx_end = {idx_end}")
-            xfw = xfw[idx_start:idx_end]
-            tfw = tfw[idx_start:idx_end]
-            theta_fw = theta_2d_fun(xfw)
-            # Committor
-            fieldname = r"$B\to A$"  #r"$\pi_{AB},J_{AB}$"
-            field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
-            field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-            fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False)
-            if horz_lines > 0:
-                print("---------------Drawing in some horizontal lines for flux distributions")
-                # Draw in lines for reactive flux densities
-                nnidx = np.where(np.isnan(field) == 0)[0]
-                th1_min,th1_max = thmin[1],thmax[1]
-                dramp = (th1_max - th1_min)/horz_lines
-                print("th1_min = {}, th1_max = {}".format(th1_min,th1_max))
-                th_levels = np.linspace(th1_min+0.5*dramp,th1_max-0.5*dramp,horz_lines)
-                for i_th in range(len(th_levels)):
-                    ax.axhline(y=th_levels[i_th]*theta_2d_units[1],color='black',linewidth=0.75,zorder=10)
-            fig.savefig(join(self.savefolder,"jba_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
+            for i_com in range(len(idx_combo_list)):
+                combo = idx_combo_list[i_com]
+                print(f"Beginning combo {combo}")
+                zi0,zi1 = combo
+                theta_x = np.array([prof0_x,prof1_x]).T
+                thmin,thmax = np.min(theta_x[interior_idx,:],axis=0),np.max(theta_x[interior_idx,:],axis=0)
+                theta_x = theta_x.reshape((Nx,Nt_max,2))
+                # -----------------------------
+                # A->A
+                print(f"------------ Starting A->A stuff -----------")
+                comm_bwd = self.dam_moments[keys[k]]['ax'][0][:,:Nt_max]
+                comm_fwd = self.dam_moments[keys[k]]['xa'][0][:,:Nt_max]
+                weight = self.chom
+                #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
+                # Committor
+                fieldname = r"$A\to A$"  #r"$\pi_{AB},J_{AB}$"
+                field = comm_bwd*comm_fwd 
+                field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+                fun0name = "%s %s"%(funlib[profkey0]["name"], suffix_combo_list[i_com][0])
+                fun0name = "%s %s"%(funlib[profkey1]["name"], suffix_combo_list[i_com][1])
+                units = [funlib[profkey0]["units"], funlib[profkey1]["units"]]
+                unit_symbols = [funlib[profkey0]["unit_symbol"], funlib[profkey1]["unit_symbol"]]
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
+                fig.savefig(join(self.savefolder,f"jaa_rdens_th0{profkey0}zi{zi0}_th1{profkey1}zi{zi1}"),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig)
+                # TODO: modify the other current directions as above. Also adjust the steady-state current code
+                # -----------------------------
+                # B->B
+                print(f"------------ Starting B->B stuff -----------")
+                comm_bwd = self.dam_moments[keys[k]]['bx'][0][:,:Nt_max]
+                comm_fwd = self.dam_moments[keys[k]]['xb'][0][:,:Nt_max]
+                weight = self.chom
+                #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
+                # Committor
+                fieldname = r"$B\to B$"  #r"$\pi_{AB},J_{AB}$"
+                field = comm_bwd*comm_fwd 
+                field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+                #field *= (comm_fwd > 0)*(comm_fwd < 1)
+                #field[(comm_fwd > 0)*(comm_fwd < 1) == 0] = np.nan
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
+                fig.savefig(join(self.savefolder,"jbb_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig)
+                # -----------------------------
+                # A->B
+                print(f"------------ Starting A->B stuff -----------")
+                comm_bwd = self.dam_moments[keys[k]]['ax'][0][:,:Nt_max]
+                comm_fwd = self.dam_moments[keys[k]]['xb'][0][:,:Nt_max]
+                weight = self.chom
+                #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
+                xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=1)
+                # Downsample
+                fw_idx = np.linspace(0,len(xfw)-1,200).astype(int)
+                xfw = xfw[fw_idx]
+                tfw = tfw[fw_idx]
+                idx_start = np.where(model.adist(xfw) > 0)[0][0]
+                idx_end = np.where(model.bdist(xfw) == 0)[0][0]
+                print(f"idx_start = {idx_start}, idx_end = {idx_end}")
+                xfw = xfw[idx_start:idx_end]
+                tfw = tfw[idx_start:idx_end]
+                theta_fw = theta_2d_fun(xfw)
+                # Committor
+                fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
+                field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
+                field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False,ss=ss)
+                fig.savefig(join(self.savefolder,"jab_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig)
+                # ---------------------------------
+                # B->A
+                print(f"------------ Starting B->A stuff -----------")
+                fieldname = r"$B\to A$ density, current" #r"$\pi_{BA},J_{BA}$"
+                comm_bwd = self.dam_moments[keys[k]]['bx'][0][:,:Nt_max]
+                comm_fwd = self.dam_moments[keys[k]]['xa'][0][:,:Nt_max]
+                weight = self.chom
+                #theta_x = theta_2d_fun(data.X.reshape((Nx*Nt,xdim))).reshape((Nx,Nt,2))
+                xfw,tfw = model.load_least_action_path(self.physical_param_folder,dirn=-1)
+                # Downsample
+                fw_idx = np.linspace(0,len(xfw)-1,200).astype(int)
+                xfw = xfw[fw_idx]
+                tfw = tfw[fw_idx]
+                idx_start = np.where(model.bdist(xfw) > 0)[0][0]
+                idx_end = np.where(model.adist(xfw) == 0)[0][0]
+                print(f"idx_start = {idx_start}, idx_end = {idx_end}")
+                xfw = xfw[idx_start:idx_end]
+                tfw = tfw[idx_start:idx_end]
+                theta_fw = theta_2d_fun(xfw)
+                # Committor
+                fieldname = r"$B\to A$"  #r"$\pi_{AB},J_{AB}$"
+                field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
+                field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=None,abpoints_flag=False)
+                fig.savefig(join(self.savefolder,"jba_rdens_{}_{}".format(theta_2d_abbs[0],theta_2d_abbs[1])),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig)
         return
     def display_casts_abba(self,model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=False): #theta_2d_abbs):
         #profkey 0 and profkey1 are two altitude-dependent fields, which we'll plot against each other at various altitudes
@@ -1827,29 +1814,6 @@ class TPT:
             theta_2d_units = [funlib[profkey0]["units"],funlib[profkey1]["units"]]
             theta_2d_unit_symbols = [funlib[profkey0]["unit_symbol"],funlib[profkey1]["unit_symbol"]]
             weight = self.chom
-        #for i in range(len(theta_2d_abbs)):
-        #    print("Starting view (%s,%s)"%(theta_2d_abbs[i][0],theta_2d_abbs[i][1]))
-        #    fun0 = funlib[theta_2d_abbs[i][0]]
-        #    fun1 = funlib[theta_2d_abbs[i][1]]
-        #    #theta_2d_fun = lambda x: np.array([fun0["fun"](x).flatten(),fun1["fun"](x).flatten()]).T
-        #    def theta_2d_fun(x):
-        #        th = np.zeros((len(x),2))
-        #        th[:,0] = fun0["fun"](x).flatten()
-        #        th[:,1] = fun1["fun"](x).flatten()
-        #        return th
-        #    theta_xst = theta_2d_fun(model.tpt_obs_xst) # Possibly to be used as theta_ab
-        #    print(f"Just computed theta_xst, whose shape is {theta_xst.shape}")
-        #    theta_2d_names = [fun0["name"],fun1["name"]] #[r"$|\Psi(30 km)|$",r"$U(30 km)$"]
-        #    theta_2d_units = np.array([fun0["units"],fun1["units"]])
-        #    theta_2d_unit_symbols = [fun0["unit_symbol"],fun1["unit_symbol"]]
-        #    print(f"chom shape = {self.chom.shape}")
-        #    weight = self.chom
-        #    print(f"About to compute theta_x on data.X with shape {data.X.shape}")
-        #    t0 = timelib.time()
-        #    theta_x = theta_2d_fun(data.X[:,:Nt_max].reshape((Nx*Nt_max,xdim))).reshape((Nx,Nt_max,2))
-        #    duration = timelib.time() - t0
-        #    print(f"Just computed theta_x, whose shape is {theta_x.shape}. It took {duration} seconds")
-
             print(f"keys = {keys}")
             for k in range(len(keys)):
                 print("\tStarting damage function %s"%(keys[k]))
@@ -1898,6 +1862,7 @@ class TPT:
                         fig.savefig(join(self.savefolder,fsuff),bbox_inches="tight",pad_inches=0.2)
                         plt.close(fig)
                         print(f"Done saving fig with suffix {fsuff}")
+                        # Plot the current as well
                     # ---------------------------------
                     # B->A
                     print(f"---------------In display_casts, starting B->A stuff---------")
@@ -2744,7 +2709,7 @@ class TPT:
             self.display_change_of_measure_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,[abbrv0,abbrv1])
             self.display_dam_moments_abba_current(model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,[abbrv0,abbrv1],horz_lines=0)
         return
-    def display_change_of_measure_current(self,model,data,theta_2d_fun,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs):
+    def display_change_of_measure_current(self,model,data,theta_x,theta_2d_names,theta_2d_units,theta_2d_unit_symbols,theta_2d_abbs):
         # Put the equilibrium current on top of the change of measure
         Nx,Nt,xdim = data.X.shape
         Nt_max = int(np.ceil(np.argmin(np.abs(data.t_x - self.lag_time_current_display)))) + 1
@@ -4026,8 +3991,8 @@ class TPT:
                         max(np.max(GE),np.max(G),np.max(E)),
                         ],
                         [
-                        min(np.min(GEdot),np.min(Gdot),np.min(Edot),np.min(LGE),np.min(LG),np.min(LE),np.min(RBe),np.min(D),np.min(BeVQ)),
-                        max(np.max(GEdot),np.max(Gdot),np.max(Edot),np.max(LGE),np.max(LG),np.max(LE),np.max(RBe),np.max(D),np.max(BeVQ)),
+                        min(np.min(GEdot),np.min(Gdot),np.min(Edot),np.min(LGE),np.min(LG),np.min(LE),np.min(RBe),np.min(D),np.min(BeVQ),np.min(-BeVQ)),
+                        max(np.max(GEdot),np.max(Gdot),np.max(Edot),np.max(LGE),np.max(LG),np.max(LE),np.max(RBe),np.max(D),np.max(BeVQ),np.max(-BeVQ)),
                         ]
                         ]
                 for i_alt,alt in enumerate(alt_list):

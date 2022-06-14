@@ -245,6 +245,8 @@ if display_cast_flag or display_current_flag:
     if display_cast_flag:
         print("About to start displaying casts")
         tpt.display_casts_abba(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True)
+    if display_current_flag:
+        tpt.display_2d_currents(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True)
     #for i in range(len(theta_2d_abbs)):
     #    if display_cast_flag:
     #        tpt.display_casts_abba(model,data,theta_2d_abbs[i:i+1])
