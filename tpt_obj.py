@@ -1666,6 +1666,10 @@ class TPT:
         if square_bounds_flag: 
             prof0_bounds = np.array([min(prof0_bounds[0],prof1_bounds[0]),max(prof0_bounds[1],prof1_bounds[1])])
             prof1_bounds = prof0_bounds.copy()
+        if same_bounds_flag:
+            bounds_prescribed = np.array([prof0_bounds,prof1_bounds])
+        else:
+            bounds_prescribed=None
         
         # ------- Load least action paths in both directions --------
         # A -> B
@@ -1723,7 +1727,7 @@ class TPT:
                 weight = self.chom
                 fieldname = r"Steady-state"  #r"$\pi_{AB},J_{AB}$"
                 field = np.ones((Nx,Nt_max)) 
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss,bounds_prescribed=bounds_prescribed)
                 if same_bounds_flag:
                     ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
                     ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
@@ -1744,7 +1748,7 @@ class TPT:
                 fieldname = r"$A\to A$"  #r"$\pi_{AB},J_{AB}$"
                 field = comm_bwd*comm_fwd 
                 field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss,bounds_prescribed=bounds_prescribed)
                 if same_bounds_flag:
                     ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
                     ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
@@ -1765,7 +1769,7 @@ class TPT:
                 fieldname = r"$B\to B$"  #r"$\pi_{AB},J_{AB}$"
                 field = comm_bwd*comm_fwd 
                 field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss,bounds_prescribed=bounds_prescribed)
                 if same_bounds_flag:
                     ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
                     ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
@@ -1786,7 +1790,7 @@ class TPT:
                 fieldname = r"$A\to B$"  #r"$\pi_{AB},J_{AB}$"
                 field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xb'][0] 
                 field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw_ab,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw_ab,magu_obs=theta_ab_obs,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss,bounds_prescribed=bounds_prescribed)
                 if same_bounds_flag:
                     ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
                     ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
@@ -1809,7 +1813,7 @@ class TPT:
                 fieldname = r"$B\to A$"  #r"$\pi_{AB},J_{AB}$"
                 field = comm_bwd * comm_fwd #self.dam_moments[keys[k]]['xa'][0] 
                 field[(comm_fwd > eps)*(comm_fwd < 1-eps)*(comm_bwd > eps)*(comm_bwd < 1-eps) == 0] = np.nan
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw_ba,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=theta_fw_ba,magu_obs=theta_ba_obs,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,bounds_prescribed=bounds_prescribed)
                 if same_bounds_flag:
                     ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
                     ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
@@ -1848,6 +1852,10 @@ class TPT:
         if square_bounds_flag: 
             prof0_bounds = np.array([min(prof0_bounds[0],prof1_bounds[0]),max(prof0_bounds[1],prof1_bounds[1])])
             prof1_bounds = prof0_bounds.copy()
+        if same_bounds_flag:
+            bounds_prescribed = np.array([prof0_bounds,prof1_bounds])
+        else:
+            bounds_prescribed=None
         print(f"Done computing {profkey0} and {profkey1} functions")
         for i_com in range(len(idx_combo_list)):
             combo = idx_combo_list[i_com]
@@ -1897,7 +1905,7 @@ class TPT:
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                         print(f"Beginning plotting field 2d")
                         print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss,bounds_prescribed=bounds_prescribed)
                         print(f"Before setting limits, xlim = {ax.get_xlim()} and ylim = {ax.get_ylim()}")
                         if same_bounds_flag:
                             ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
@@ -1940,7 +1948,7 @@ class TPT:
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                         print(f"Beginning plotting field 2d")
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss,bounds_prescribed=bounds_prescribed)
                         if same_bounds_flag:
                             ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
                             ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
@@ -1981,11 +1989,11 @@ class TPT:
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                         print(f"Beginning plotting field 2d")
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=True,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss,bounds_prescribed=bounds_prescribed)
                         print(f"Made the base figure")
                         if keys[k] == 'one' and j == 1:
-                            print("I got onto the one and j if statement")
-                            _,_ = self.plot_field_2d(model,data,comm_fwd,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,contourf_flag=False,contour_notf_flag=True,contour_notf_levels=np.array([0.1,0.2,0.5,0.8,0.9]),fig=fig,ax=ax,ss=ss)
+                            print("I got into the one and j if statement")
+                            _,_ = self.plot_field_2d(model,data,comm_fwd,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,contourf_flag=False,contour_notf_flag=True,contour_notf_levels=np.array([0.1,0.2,0.5,0.8,0.9]),fig=fig,ax=ax,ss=ss,bounds_prescribed=bounds_prescribed)
                             print(f"Made the contours")
                         if same_bounds_flag:
                             ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
@@ -2025,7 +2033,7 @@ class TPT:
                             field[np.where(field < vmin**j)[0]] = np.nan
                             print("field range: ({},{})".format(np.nanmin(field),np.nanmax(field)))
                         print(f"Beginning plotting field 2d")
-                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss)
+                        fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,shp=[20,20],fieldname=fieldname,fun0name=theta_2d_names[0],fun1name=theta_2d_names[1],units=theta_2d_units,unit_symbols=theta_2d_unit_symbols,avg_flag=True,current_flag=False,logscale=False,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.coolwarm,theta_ab=theta_xst,abpoints_flag=False,vmin=None,vmax=None,ss=ss,bounds_prescribed=bounds_prescribed)
                         if same_bounds_flag:
                             ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
                             ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
@@ -2941,7 +2949,7 @@ class TPT:
                 ).T
             ).T
         return Jtheta_up,Jtheta_dn,ti0
-    def project_current(self,data,theta_x,theta_yj,theta_xpj,theta_ypj,shp,comm_bwd,comm_fwd,ss=None):
+    def project_current(self,data,theta_x,theta_yj,theta_xpj,theta_ypj,shp,comm_bwd,comm_fwd,ss=None,bounds_prescribed=None):
         # data must have already the current boundaries inserted
         # Use the project_field utility in the data object
         # If dirn=1, current from A to B. Otherwise, current from B to A
@@ -2966,12 +2974,12 @@ class TPT:
         Ncell = np.prod(shp)
         J = np.zeros((Ncell,thdim))
         for d in range(thdim):
-            _,dth,thaxes,cgrid,J0,J0_std,_,_,_ = helper.project_field(field0[:,d],chomss,theta_x[ss],shp=shp,avg_flag=False)
-            _,dth,thaxes,cgrid,J1,J1_std,_,_,_ = helper.project_field(field1[:,d],chomss,theta_yj[ss],shp=shp,avg_flag=False)
+            _,dth,thaxes,cgrid,J0,J0_std,_,_,_ = helper.project_field(field0[:,d],chomss,theta_x[ss],shp=shp,avg_flag=False,bounds=bounds_prescribed)
+            _,dth,thaxes,cgrid,J1,J1_std,_,_,_ = helper.project_field(field1[:,d],chomss,theta_yj[ss],shp=shp,avg_flag=False,bounds=bounds_prescribed)
             J[:,d] = 1/(2*self.lag_time_current_display*np.prod(dth))*(J0 + J1)
         return thaxes,J
-    def plot_field_2d(self,model,data,field,weight,theta_x,shp=[60,60],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",current_flag=False,current_bdy_flag=False,comm_bwd=None,comm_fwd=None,current_shp=[25,25],abpoints_flag=False,theta_ab=None,avg_flag=True,logscale=False,ss=None,magu_fw=None,magu_obs=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',fig=None,ax=None,vmin=None,vmax=None,contourf_flag=True,contour_notf_flag=False,contour_notf_levels=None):
-        fig,ax = helper.plot_field_2d(field[:,0],weight,theta_x[:,0],shp=shp,cmap=cmap,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,avg_flag=avg_flag,std_flag=False,logscale=logscale,ss=ss,units=units,unit_symbols=unit_symbols,cbar_orientation=cbar_orientation,fig=fig,ax=ax,vmin=vmin,vmax=vmax,contourf_flag=contourf_flag,contour_notf_flag=contour_notf_flag,contour_notf_levels=contour_notf_levels)
+    def plot_field_2d(self,model,data,field,weight,theta_x,shp=[60,60],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",current_flag=False,current_bdy_flag=False,comm_bwd=None,comm_fwd=None,current_shp=[25,25],abpoints_flag=False,theta_ab=None,avg_flag=True,logscale=False,ss=None,magu_fw=None,magu_obs=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',fig=None,ax=None,vmin=None,vmax=None,contourf_flag=True,contour_notf_flag=False,contour_notf_levels=None,bounds_prescribed=None):
+        fig,ax = helper.plot_field_2d(field[:,0],weight,theta_x[:,0],shp=shp,cmap=cmap,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,avg_flag=avg_flag,std_flag=False,logscale=logscale,ss=ss,units=units,unit_symbols=unit_symbols,cbar_orientation=cbar_orientation,fig=fig,ax=ax,vmin=vmin,vmax=vmax,contourf_flag=contourf_flag,contour_notf_flag=contour_notf_flag,contour_notf_levels=contour_notf_levels,bounds_prescribed=bounds_prescribed)
         if abpoints_flag:
             ass_theta = self.aidx
             bss_theta = self.bidx
@@ -2995,7 +3003,7 @@ class TPT:
             print(f"last_entry_idx max = {np.max(data.last_entry_idx)}")
             print(f"first_exit_idx max = {np.max(data.first_exit_idx)}")
             print("About to go into plotting current")
-            thaxes_current,J = self.project_current(data,theta_x[:,0],theta_x[np.arange(data.nshort),data.last_idx],theta_x[np.arange(data.nshort),data.last_entry_idx],theta_x[np.arange(data.nshort),data.first_exit_idx],current_shp,comm_bwd,comm_fwd,ss=ss)
+            thaxes_current,J = self.project_current(data,theta_x[:,0],theta_x[np.arange(data.nshort),data.last_idx],theta_x[np.arange(data.nshort),data.last_entry_idx],theta_x[np.arange(data.nshort),data.first_exit_idx],current_shp,comm_bwd,comm_fwd,ss=ss,bounds_prescribed=bounds_prescribed)
             dth = np.array([thax[1] - thax[0] for thax in thaxes_current])
             Jmag_full = np.sqrt(np.sum(J**2, 1))
             minmag,maxmag = np.nanmin(Jmag_full),np.nanmax(Jmag_full)
@@ -3782,8 +3790,8 @@ class TPT:
         return fig,ax
     def plot_transition_states_ensttend(self,model,data,xlim_flag=True,lap_flag=True):
         # ----- Determine what to compute and plot ---------
-        compute_lap_flag =                  1
-        compute_transdict_flag =            1
+        compute_lap_flag =                  0
+        compute_transdict_flag =            0
         plot_profile_transdict_flag =       1
         plot_timeseries_transdict_flag =    0
         plot_analysis_transdict_flag =      1
@@ -3829,9 +3837,9 @@ class TPT:
         dirn_colors = {"aa": "dodgerblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
         dirn_cmaps = {"ab": plt.cm.binary, "aa": plt.cm.Blues_r}
         dirn_labels = {"aa": r"$A\to A$","ab": r"$A\to B$","ba": r"$B\to A$","bb": r"$B\to B$","??": r"Average"}
-        plot_snapshot_flag = {"aa": True, "ab": True, "ba": False, "bb": False}
-        plot_quantile_flag = {"aa": False, "ab": True, "ba": False, "bb": False}
-        plot_tendency_flag = {"aa": True, "ab": True, "ba": False, "bb": False}
+        plot_snapshot_flag = {"aa": 0, "ab": 1, "ba": 0, "bb": 0}
+        plot_quantile_flag = {"aa": 0, "ab": 1, "ba": 0, "bb": 0}
+        plot_tendency_flag = {"aa": 0, "ab": 1, "ba": 0, "bb": 0}
         # ----------------- Compute least-action tendencies at each committor level ----------------------
         if not (compute_lap_flag):
             lap = pickle.load(open(join(self.savefolder,"trans_lap"),"rb"))

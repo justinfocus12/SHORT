@@ -282,10 +282,10 @@ def plot_field_1d(theta,u,weight,shp=[20,],uname="",thetaname="",avg_flag=True,s
         ax.plot(xylim,xylim,color='black',linestyle='--')
     return fig,ax,handle
 
-def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",avg_flag=True,std_flag=True,logscale=False,ss=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',cbar_location='top',fig=None,ax=None,vmin=None,vmax=None,cbar_pad=0.2,fmt_x=None,fmt_y=None,contourf_flag=True,contour_notf_flag=False,contour_notf_levels=None):
+def plot_field_2d(field,weight,theta_x,shp=[20,20],cmap=plt.cm.coolwarm,fieldname="",fun0name="",fun1name="",avg_flag=True,std_flag=True,logscale=False,ss=None,units=np.ones(2),unit_symbols=["",""],cbar_orientation='horizontal',cbar_location='top',fig=None,ax=None,vmin=None,vmax=None,cbar_pad=0.2,fmt_x=None,fmt_y=None,contourf_flag=True,contour_notf_flag=False,contour_notf_levels=None,bounds_prescribed=None):
     # The function inside TPT should just extend this one
     shp = np.array(shp)
-    shp,dth,thaxes,cgrid,field_mean,field_std,field_std_L2,field_std_Linf,_ = project_field(field,weight,theta_x,shp,avg_flag=avg_flag)
+    shp,dth,thaxes,cgrid,field_mean,field_std,field_std_L2,field_std_Linf,_ = project_field(field,weight,theta_x,shp,avg_flag=avg_flag,bounds=bounds_prescribed)
     if std_flag:
         if fig is None or ax is None:
             fig,ax = plt.subplots(ncols=2,figsize=(12,6))
