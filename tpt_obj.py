@@ -3792,7 +3792,7 @@ class TPT:
         # ----- Determine what to compute and plot ---------
         compute_lap_flag =                  0
         compute_transdict_flag =            0
-        plot_profile_transdict_flag =       1
+        plot_profile_transdict_flag =       0
         plot_timeseries_transdict_flag =    0
         plot_analysis_transdict_flag =      1
         # -----------------------------------------------
@@ -4075,87 +4075,48 @@ class TPT:
                         max(np.max(GE),np.max(G),np.max(E)),
                         ],
                         [
-                        min(np.min(GEdot),np.min(LGE),np.min(RBe),np.min(D)), #,np.min(Gdot),np.min(Edot),np.min(LG),np.min(LE),np.min(BeVQ),np.min(-BeVQ)),
-                        max(np.max(GEdot),np.max(LGE),np.max(RBe),np.max(D)), #,np.max(Gdot),np.max(Edot),np.max(LG),np.max(LE),np.max(BeVQ),np.max(-BeVQ)),
+                        min(np.min(GEdot/GE[:,-1,:]),np.min(LGE/GE[:,-1,:]),np.min(RBe/GE[:,-1,:]),np.min(D/GE[:,-1,:])), #,np.min(Gdot),np.min(Edot),np.min(LG),np.min(LE),np.min(BeVQ),np.min(-BeVQ)),
+                        max(np.max(GEdot/GE[:,-1,:]),np.max(LGE/GE[:,-1,:]),np.max(RBe/GE[:,-1,:]),np.max(D/GE[:,-1,:])), #,np.max(Gdot),np.max(Edot),np.max(LG),np.max(LE),np.max(BeVQ),np.max(-BeVQ)),
                         ]
                         ]
+                fig,ax = plt.subplots(nrows=2, ncols=len(alt_list), figsize=(6*len(alt_list),12), sharex=True, sharey="row")
                 for i_alt,alt in enumerate(alt_list):
-                    fig,ax = plt.subplots(nrows=2, ncols=3, figsize=(18,12), sharex=True, sharey="row")
                     # Column 0: plot the enstrophy + gramps 
-                    y0 = GE[:,-1,i_alt] #transdict["gramps_plus_enstrophy"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["gramps_plus_enstrophy"]["units"]
-                    Ly0 = LGE[:,i_alt] #transdict["gramps_plus_enstrophy"]["tendency"]["stochastic"][dirn][:,zi]*funlib["gramps_plus_enstrophy"]["units"]/q["time"]
-                    y0dot = GEdot[:,i_alt] #transdict["gramps_plus_enstrophy"]["tendency"]["deterministic"][dirn][:,zi]*funlib["gramps_plus_enstrophy"]["units"]/q["time"]
-                    y1 = RBe[:,i_alt] #transdict["gramps_relax"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["gramps_relax"]["units"]
-                    y2 = D[:,i_alt] #transdict["diss"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["diss"]["units"]
-                    y3 = BeVQ[:,i_alt] 
-                    h_y0, = ax[0,0].plot(qp_levels, y0, color='darkorange', label=funlib["gramps_plus_enstrophy"]["name"])
-                    h_G, = ax[0,0].plot(qp_levels,G[:,-1,i_alt],color='dodgerblue', label=funlib["gramps"]["name"])
-                    h_E, = ax[0,0].plot(qp_levels,E[:,-1,i_alt],color='magenta', label=funlib["enstrophy"]["name"])
+                    y0 = GE[:,-1,i_alt] 
+                    Ly0 = LGE[:,i_alt]/y0 
+                    y0dot = GEdot[:,i_alt]/y0 
+                    y1 = RBe[:,i_alt]/y0 
+                    y2 = D[:,i_alt]/y0 
+                    y3 = BeVQ[:,i_alt]/y0 
+                    h_y0, = ax[0,i_alt].plot(qp_levels, y0, color='darkorange', label=funlib["gramps_plus_enstrophy"]["name"])
+                    h_G, = ax[0,i_alt].plot(qp_levels,G[:,-1,i_alt],color='dodgerblue', label=funlib["gramps"]["name"])
+                    h_E, = ax[0,i_alt].plot(qp_levels,E[:,-1,i_alt],color='magenta', label=funlib["enstrophy"]["name"])
                     for k in range(len(quantile_midranges)):
                         ylohi = GE[:,2*k:2*k+2,i_alt] #transdict["gramps_plus_enstrophy"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,zi] * funlib["gramps_plus_enstrophy"]["units"]
-                        ax[0,0].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
-                    h_Ly0, = ax[1,0].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib["gramps_plus_enstrophy"]["name"]))
-                    h_y0dot, = ax[1,0].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["gramps_plus_enstrophy"]["name"]))
-                    h_y1, = ax[1,0].plot(qp_levels, y1, color="dodgerblue", label=funlib["gramps_relax"]["name"]) 
-                    h_y2, = ax[1,0].plot(qp_levels, y2, color='magenta', linestyle='-', label=funlib["diss"]["name"])
-                    h_y3, = ax[1,0].plot(qp_levels, y3, color='black', linestyle='-', label=funlib["dqdy_times_vq"]["name"])
-                    ax[1,0].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
-                    ax[0,0].legend(handles=[h_y0,h_G,h_E],prop={'size':16})
-                    ax[1,0].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2,h_y3],prop={'size':16})
-                    ax[0,0].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
-                    ax[1,0].set_title(r"Tendency (%i km)"%(alt),fontdict=ffont)
-                    # Column 1: plot the gramps
-                    y0 = G[:,-1,i_alt] #transdict["gramps"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["gramps"]["units"]
-                    Ly0 = LG[:,i_alt] #transdict["gramps"]["tendency"]["stochastic"][dirn][:,zi]*funlib["gramps"]["units"]/q["time"]
-                    y0dot = Gdot[:,i_alt] #transdict["gramps"]["tendency"]["deterministic"][dirn][:,zi]*funlib["gramps"]["units"]/q["time"]
-                    y1 = RBe[:,i_alt] #transdict["gramps_relax"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["gramps_relax"]["units"]
-                    y2 = BeVQ[:,i_alt] #transdict["dqdy_times_vq"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["dqdy_times_vq"]["units"]
-                    h_y0, = ax[0,1].plot(qp_levels, y0, color='darkorange', label=funlib["gramps"]["name"])
-                    for k in range(len(quantile_midranges)):
-                        ylohi = G[:,2*k:2*k+2,i_alt] 
-                        ax[0,1].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
-                    h_Ly0, = ax[1,1].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib["gramps"]["name"]))
-                    h_y0dot, = ax[1,1].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["gramps"]["name"]))
-                    h_y1, = ax[1,1].plot(qp_levels, y1, color="dodgerblue", label=funlib["gramps_relax"]["name"]) 
-                    h_y2, = ax[1,1].plot(qp_levels, y2, color='black', linestyle='-', label=funlib["dqdy_times_vq"]["name"])
-                    ax[1,1].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
-                    ax[0,1].legend(handles=[h_y0],prop={'size':16})
-                    ax[1,1].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
-                    ax[0,1].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
-                    ax[1,1].set_title(r"Tendency (%i km)"%(alt),fontdict=ffont)
-                    # Column 2: plot the enstrophy 
-                    y0 = E[:,-1,i_alt] #transdict["enstrophy"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["enstrophy"]["units"]
-                    Ly0 = LE[:,i_alt] #transdict["enstrophy"]["tendency"]["stochastic"][dirn][:,zi]*funlib["enstrophy"]["units"]/q["time"]
-                    y0dot = Edot[:,i_alt] #transdict["enstrophy"]["tendency"]["deterministic"][dirn][:,zi]*funlib["enstrophy"]["units"]/q["time"]
-                    y1 = D[:,i_alt] #transdict["diss"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["diss"]["units"]
-                    y2 = -BeVQ[:,i_alt] #-transdict["dqdy_times_vq"]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib["dqdy_times_vq"]["units"]
-                    h_y0, = ax[0,2].plot(qp_levels, y0, color='darkorange', label=funlib["enstrophy"]["name"])
-                    for k in range(len(quantile_midranges)):
-                        ylohi = E[:,2*k:2*k+2,i_alt] 
-                        ax[0,2].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
-                    h_Ly0, = ax[1,2].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib["enstrophy"]["name"]))
-                    h_y0dot, = ax[1,2].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]"%(funlib["enstrophy"]["name"]))
-                    h_y1, = ax[1,2].plot(qp_levels, y1, color='magenta', linestyle='-', label=funlib["diss"]["name"])
-                    h_y2, = ax[1,2].plot(qp_levels, y2, color='black', linestyle='-', label=r"$-$%s"%(funlib["dqdy_times_vq"]["name"]))
-                    ax[1,2].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
-
-                    ax[0,2].legend(handles=[h_y0],prop={'size':16})
-                    ax[1,2].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2],prop={'size':16})
-                    ax[0,2].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
-                    ax[1,2].set_title(r"Tendency (%i km)"%(alt),fontdict=ffont)
-                    # Labels
-                    for c in range(ax.shape[1]):
-                        ax[1,c].set_xlabel(r"$q_B^+$",fontdict=ffont)
-                    ax[0,0].set_ylabel(r"[%s]"%(funlib["enstrophy"]["unit_symbol"]),fontdict=ffont)
-                    ax[1,0].set_ylabel(r"[s$^{-3}$]",fontdict=ffont)
-                    for r in range(ax.shape[0]):
-                        ax[r,0].set_ylim(ylim_prescribed[r])
-                        ylim = ax[r,0].get_ylim()
-                        fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
-                        ax[r,0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
-                    # Save 
-                    fig.savefig(join(self.savefolder,f"trans_state_analysis_{dirn}_{alt}"))
-                    plt.close(fig)
+                        ax[0,i_alt].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
+                    h_Ly0, = ax[1,i_alt].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]/(%s)"%(funlib["gramps_plus_enstrophy"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
+                    h_y0dot, = ax[1,i_alt].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]/(%s)"%(funlib["gramps_plus_enstrophy"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
+                    h_y1, = ax[1,i_alt].plot(qp_levels, y1, color="dodgerblue", label=r"%s/(%s)"%(funlib["gramps_relax"]["name"],funlib["gramps_plus_enstrophy"]["name"])) 
+                    h_y2, = ax[1,i_alt].plot(qp_levels, y2, color='magenta', linestyle='-', label="%s/(%s)"%(funlib["diss"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
+                    h_y3, = ax[1,i_alt].plot(qp_levels, y3, color='black', linestyle='-', label=r"%s/(%s)"%(funlib["dqdy_times_vq"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
+                    ax[1,i_alt].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
+                    ax[0,i_alt].legend(handles=[h_y0,h_G,h_E],prop={'size':13})
+                    ax[1,i_alt].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2,h_y3],prop={'size':13})
+                    ax[0,i_alt].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
+                    ax[1,i_alt].set_title(r"Relative tendency (%i km)"%(alt),fontdict=ffont)
+                # Labels
+                for c in range(ax.shape[1]):
+                    ax[1,c].set_xlabel(r"$q_B^+$",fontdict=ffont)
+                ax[0,0].set_ylabel(r"[%s]"%(funlib["enstrophy"]["unit_symbol"]),fontdict=ffont)
+                ax[1,0].set_ylabel(r"[s$^{-1}$]",fontdict=ffont)
+                for r in range(ax.shape[0]):
+                    ax[r,0].set_ylim(ylim_prescribed[r])
+                    ylim = ax[r,0].get_ylim()
+                    fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+                    ax[r,0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+                # Save 
+                fig.savefig(join(self.savefolder,f"trans_state_analysis_{dirn}"))
+                plt.close(fig)
         return
     def plot_transition_states_new(self,model,data):
         # All new version. One straightforward function. Plot max-flux path, and also plot profiles. 
