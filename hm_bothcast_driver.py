@@ -52,11 +52,11 @@ compute_tpt_flag =      0
 
 plot_trans_2d_flag =    0
 plot_long_2d_flag =     0
-plot_long_1d_flag =     1
+plot_long_1d_flag =     0
 trans_state_flag =      0
 trans_state_enst_flag = 0
-display_cast_flag =     0
-display_current_flag =  0
+display_cast_flag =     1
+display_current_flag =  1
 lifecycle_flag =        0
 gen_rates_flag =        0
 flux_dist_flag =        0
@@ -192,35 +192,36 @@ if plot_long_2d_flag:
 # ----------------------------------------------------
 
 # ----------- Plot long trajectory in 1d ---------------
-alt_list = np.array([10,20,30])
-zi_list = np.array([np.argmin(np.abs(model.q['z_d'][1:-1]/1000 - alt_list[i])) for i in range(len(alt_list))])
-key_combos = ([
-    ["gramps_plus_enstrophy","gramps","enstrophy"],
-    ["dqdy_times_vq","gramps_relax","diss"],
-    ])
-
-color_combos = ([
-        ["black", "dodgerblue", "magenta"],
-        ["black", "dodgerblue", "magenta"]
+if plot_long_1d_flag:
+    alt_list = np.array([10,20,30])
+    zi_list = np.array([np.argmin(np.abs(model.q['z_d'][1:-1]/1000 - alt_list[i])) for i in range(len(alt_list))])
+    key_combos = ([
+        ["gramps_plus_enstrophy","gramps","enstrophy"],
+        ["dqdy_times_vq","gramps_relax","diss"],
         ])
-zi_combos = ([
-    np.outer(zi_list, np.ones(3)).astype(int),
-    np.outer(zi_list, np.ones(3)).astype(int),
-    ])
-suffix_combos = ([
-    [["(%i km)"%(alt_list[i])]*3 for i in range(len(alt_list))],
-    [["(%i km)"%(alt_list[i])]*3 for i in range(len(alt_list))],
-    ])
-
-for i_com in range(len(key_combos)):
-    tpt.plot_field_long(model,data,
-            key_combos[i_com],
-            color_combos[i_com],
-            zi_combos[i_com],
-            suffix_combos[i_com],
-            tmax=3000,time_unit_symbol="days")
-    #for i in range(len(keys2plot)):
-    #    tpt.plot_field_long(model,data,keys2plot[i],colorlists[i],tmax=3000,time_unit_symbol="days")
+    
+    color_combos = ([
+            ["black", "dodgerblue", "magenta"],
+            ["black", "dodgerblue", "magenta"]
+            ])
+    zi_combos = ([
+        np.outer(zi_list, np.ones(3)).astype(int),
+        np.outer(zi_list, np.ones(3)).astype(int),
+        ])
+    suffix_combos = ([
+        [["(%i km)"%(alt_list[i])]*3 for i in range(len(alt_list))],
+        [["(%i km)"%(alt_list[i])]*3 for i in range(len(alt_list))],
+        ])
+    
+    for i_com in range(len(key_combos)):
+        tpt.plot_field_long(model,data,
+                key_combos[i_com],
+                color_combos[i_com],
+                zi_combos[i_com],
+                suffix_combos[i_com],
+                tmax=3000,time_unit_symbol="days")
+        #for i in range(len(keys2plot)):
+        #    tpt.plot_field_long(model,data,keys2plot[i],colorlists[i],tmax=3000,time_unit_symbol="days")
 
 # ------------------------------------------------------
 # ---------- Plot dominant transition states-----------

@@ -3008,7 +3008,7 @@ class TPT:
             print("Jmag range = ({},{})".format(np.nanmin(Jmag),np.nanmax(Jmag)))
             print("J0.shape = {}".format(J0.shape))
             dsmin,dsmax = 0*np.max(current_shp)/40,np.max(current_shp)/20 # lengths of arrows in grid box units
-            coeff1 = 10.0/maxmag #10.0/maxmag
+            coeff1 = 15.0/maxmag #10.0/maxmag
             coeff0 = dsmax / (np.exp(-coeff1 * maxmag) - 1)
             ds = coeff0 * (np.exp(-coeff1 * Jmag) - 1)
             #ds = dsmin + (dsmax - dsmin)*(Jmag - minmag)/(maxmag - minmag)
@@ -3782,8 +3782,8 @@ class TPT:
         return fig,ax
     def plot_transition_states_ensttend(self,model,data,xlim_flag=True,lap_flag=True):
         # ----- Determine what to compute and plot ---------
-        compute_lap_flag =                  0
-        compute_transdict_flag =            0
+        compute_lap_flag =                  1
+        compute_transdict_flag =            1
         plot_profile_transdict_flag =       1
         plot_timeseries_transdict_flag =    0
         plot_analysis_transdict_flag =      1
@@ -3799,7 +3799,7 @@ class TPT:
         chom = self.chom[ss]
         ramp = comm_fwd.reshape((Nx,Nt,1))
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
-        dirns = ["ab"]
+        dirns = ["ab","aa"]
         qp_min,qp_max = 0.0,1.0
         qp_step = 0.05
         qp_levels = np.linspace(qp_min, qp_max, int((qp_max-qp_min)/qp_step)+1)
@@ -3814,7 +3814,7 @@ class TPT:
             idx_qi = np.where(np.abs(comm_fwd - qp_levels[qi]) < qp_tol)[0]
             qlevel_idx += [idx_qi]
         funlib = model.observable_function_library()
-        keys_prof = ["gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstrophy","gramps_relax","dqdy_times_vq","diss",]
+        keys_prof = ["U","gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstrophy","gramps_relax","dqdy_times_vq","diss",]
         #alt_list = ["10","20","30","40","50","60","int"]
         keys_scal = [] #(
                 #["gramps_plus_enstrophy_%s"%alt for alt in alt_list] + 
@@ -3827,8 +3827,11 @@ class TPT:
         #dirns = ["aa","ab","ba","bb","??"]
         dirn_index = {"aa": 0, "ab": 1, "ba": 2, "bb": 3, "??": 4}
         dirn_colors = {"aa": "dodgerblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
-        dirn_cmaps = {"ab": plt.cm.binary}
+        dirn_cmaps = {"ab": plt.cm.binary, "aa": plt.cm.Blues_r}
         dirn_labels = {"aa": r"$A\to A$","ab": r"$A\to B$","ba": r"$B\to A$","bb": r"$B\to B$","??": r"Average"}
+        plot_snapshot_flag = {"aa": True, "ab": True, "ba": False, "bb": False}
+        plot_quantile_flag = {"aa": False, "ab": True, "ba": False, "bb": False}
+        plot_tendency_flag = {"aa": True, "ab": True, "ba": False, "bb": False}
         # ----------------- Compute least-action tendencies at each committor level ----------------------
         if not (compute_lap_flag):
             lap = pickle.load(open(join(self.savefolder,"trans_lap"),"rb"))
@@ -3948,29 +3951,32 @@ class TPT:
                 for qi in range(len(qp_levels)):
                     fig,ax = plt.subplots(ncols=2,figsize=(12,6))
                     handles = {"snapshot": [], "tendency": []}
+                    # Plot A and B
+                    prof_A,prof_B = funlib[key]["fun"](model.tpt_obs_xst)
+                    h, = ax[0].plot(prof_A*funlib[key]["units"], z, color='dodgerblue', linestyle='--', linewidth=1.5, label=asymb)
+                    handles["snapshot"] += [h]
+                    h, = ax[0].plot(prof_B*funlib[key]["units"], z, color='red', linestyle='--', linewidth=1.5, label=bsymb)
+                    handles["snapshot"] += [h]
                     for dirn in dirns:
                         # Snapshots (with percentile ranges)
-                        for k in range(len(quantile_midranges)):
-                            ax[0].fill_betweenx(z, transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k]*funlib[key]["units"], x2=transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k+1]*funlib[key]["units"], color=dirn_cmaps[dirn](0.75*(1-k/len(quantile_midranges))), zorder=-1-k, edgecolor=None)
-                        h, = ax[0].plot(transdict[key]["snapshot"]["stochastic"][dirn][qi,-1]*funlib[key]["units"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
-                        handles["snapshot"] += [h]
-                        # Plot A and B
-                        prof_A,prof_B = funlib[key]["fun"](model.tpt_obs_xst)
-                        h, = ax[0].plot(prof_A*funlib[key]["units"], z, color='dodgerblue', linestyle='--', linewidth=1.5, label=asymb)
-                        handles["snapshot"] += [h]
-                        h, = ax[0].plot(prof_B*funlib[key]["units"], z, color='red', linestyle='--', linewidth=1.5, label=bsymb)
-                        handles["snapshot"] += [h]
-                        # Tendencies 
-                        # Stochastic
-                        h, = ax[1].plot(transdict[key]["tendency"]["stochastic"][dirn][qi]*funlib[key]["units"]/model.q["time"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
-                        handles["tendency"] += [h]
-                        # Deterministic
-                        ax[1].plot(transdict[key]["tendency"]["deterministic"][dirn][qi]*funlib[key]["units"]/model.q["time"], z, color=dirn_colors[dirn], linestyle='--')
-                        if lap_flag and (dirn in lap.keys()):
-                            h, = ax[0].plot(lap[dirn][key]["snapshot"][qi]*funlib[key]["units"], z, color="cyan", label=r"Min-action")
+                        if plot_quantile_flag[dirn]:
+                            for k in range(len(quantile_midranges)):
+                                ax[0].fill_betweenx(z, transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k]*funlib[key]["units"], x2=transdict[key]["snapshot"]["stochastic"][dirn][qi,2*k+1]*funlib[key]["units"], color=dirn_cmaps[dirn](0.75*(1-k/len(quantile_midranges))), zorder=-1-k, edgecolor=None)
+                        if plot_snapshot_flag[dirn]:
+                            h, = ax[0].plot(transdict[key]["snapshot"]["stochastic"][dirn][qi,-1]*funlib[key]["units"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
                             handles["snapshot"] += [h]
-                            h, = ax[1].plot(lap[dirn][key]["tendency"][qi]*funlib[key]["units"]/model.q["time"], z, color="cyan", label=r"Min-action")
+                        # Tendencies 
+                        if plot_tendency_flag[dirn]:
+                            # Stochastic
+                            h, = ax[1].plot(transdict[key]["tendency"]["stochastic"][dirn][qi]*funlib[key]["units"]/model.q["time"], z, color=dirn_colors[dirn], label=dirn_labels[dirn])
                             handles["tendency"] += [h]
+                            # Deterministic
+                            ax[1].plot(transdict[key]["tendency"]["deterministic"][dirn][qi]*funlib[key]["units"]/model.q["time"], z, color=dirn_colors[dirn], linestyle='--')
+                            if lap_flag and (dirn in lap.keys()):
+                                h, = ax[0].plot(lap[dirn][key]["snapshot"][qi]*funlib[key]["units"], z, color="cyan", label=r"Min-action")
+                                handles["snapshot"] += [h]
+                                h, = ax[1].plot(lap[dirn][key]["tendency"][qi]*funlib[key]["units"]/model.q["time"], z, color="cyan", label=r"Min-action")
+                                handles["tendency"] += [h]
                     # Set axis limits 
                     if xlim_flag:
                         ax[0].set_xlim(transdict[key]["snapshot"]["xlim"]*funlib[key]["units"])
@@ -3978,6 +3984,7 @@ class TPT:
                     ax[0].axvline(0,linestyle=(0, (1,1)),color='black')
                     ax[1].axvline(0,linestyle=(0, (1,1)),color='gray')
                     ax[0].legend(handles=handles["snapshot"])
+                    ax[1].legend(handles=handles["tendency"])
                     ax[0].set_xlabel(r"%s [%s]"%(funlib[key]['name'],funlib[key]['unit_symbol']),fontdict=font)
                     if "tendency_unit_symbol" in funlib[key].keys():
                         unit_suffix = r"[%s]"%(funlib[key]["tendency_unit_symbol"])
