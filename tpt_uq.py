@@ -1,4 +1,4 @@
-# Aggregate together statistics from different independent DGA runs. Also compare with DNS results for a unified UQ pipeline.
+# Aggregate together statistics from different independent DGA runs. Also compare with ES results for a unified UQ pipeline.
 import numpy as np
 import time
 from numpy import save,load
@@ -7,10 +7,14 @@ import matplotlib
 matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 matplotlib.rcParams['font.size'] = 40
-matplotlib.rcParams['font.family'] = 'serif'
+matplotlib.rcParams['font.family'] = 'monospace'
 matplotlib.rcParams['savefig.bbox'] = 'tight'
 matplotlib.rcParams['savefig.pad_inches'] = 0.2
-font = {'family': 'serif', 'size': 25,}
+matplotlib.rcParams['legend.fontsize'] = 15
+font = {'family': 'monospace', 'size': 20,}
+bigfont = {'family': 'monospace', 'size': 40}
+giantfont = {'family': 'monospace', 'size': 80}
+ggiantfont = {'family': 'monospace', 'size': 120}
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pickle
@@ -57,7 +61,7 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
             rates_dga[keys[k]]["ab"][i,:] = tpt.dam_moments[keys[k]]['rate_ab']
             rates_dga[keys[k]]["ba"][i,:] = tpt.dam_moments[keys[k]]['rate_ba']
         if i == 0:
-            # Extract DNS info
+            # Extract ES info
             dam_dns = tpt.dam_emp
             long_from_label = tpt.long_from_label
             long_to_label = tpt.long_to_label
@@ -117,11 +121,13 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
     df = pd.DataFrame(index=index,data=dict({
         "Phase": names,
         "DGA": [genrate_dga[keys[0]][dirn]["mean"][0] for dirn in index],
-        "DNS": [genrate_dns[keys[0]][dirn]["mean"][0] for dirn in index],
+        "ES": [genrate_dns[keys[0]][dirn]["mean"][0] for dirn in index],
         }))
-    df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=yerr,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
-    ax.set_title("Rate")
-    ax.set_ylabel(r"Rate [days$^{-1}$]")
+    df.plot(kind="bar",x="Phase",y=['ES','DGA'],yerr=yerr,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
+    ax.set_title("Rate",fontdict=font)
+    ax.set_ylabel(r"Rate [days$^{-1}$]",fontdict=font)
+    ax.tick_params(axis='x',labelsize=15)
+    ax.tick_params(axis='y',labelsize=15)
     ax.set_xlabel("")
     fig.savefig(join(savefolder,"rates_bar"),bbox_inches="tight",pad_inches=0.2)
     plt.close(fig)
@@ -135,9 +141,9 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
             df = pd.DataFrame(index=index,data=dict({
                 "Phase": names,
                 "DGA": [genrate_dga[key][dirn]["mean"][i_mom] for dirn in index],
-                "DNS": [genrate_dns[key][dirn]["mean"][i_mom] for dirn in index],
+                "ES": [genrate_dns[key][dirn]["mean"][i_mom] for dirn in index],
                 }))
-            df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=yerr,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
+            df.plot(kind="bar",x="Phase",y=['ES','DGA'],yerr=yerr,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
             ax.set_title("Generalized rate: {}, moment {}".format(model.dam_dict[key]['name'],i_mom))
             ax.set_ylabel(r"$(%s)^{%i}/\mathrm{time}$ $[(%s)^{%i}/\mathrm{day}]$"%(model.dam_dict[key]['name_full'],i_mom,model.dam_dict[key]['unit_symbol_t'],i_mom))
             ax.set_xlabel("")
@@ -165,7 +171,7 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
     to_list = [1,-1,-1,1]
     bwd_key = ['ax','bx','ax','bx']
     fwd_key = ['xb','xa','xa','xb']
-    # DNS
+    # ES
     for i_ph in range(len(phase_list)):
         phase = phase_list[i_ph]
         from_label = from_list[i_ph]
@@ -198,7 +204,7 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
             print("comm_bwd: min={}, max={}. comm_fwd: min={}, max={}. chom: min={}, max={}, sum={}. time_frac_dga = {} ".format(comm_bwd.min(),comm_bwd.max(),comm_fwd.min(),comm_fwd.max(),tpt.chom.min(),tpt.chom.max(),tpt.chom.sum(),timefrac_dga[phase][i]))
     df = pd.DataFrame(index=phase_list,data=dict({
         "Phase": phase_list_names,
-        "DNS": [timefrac_dns[phase]["mean"] for phase in phase_list],
+        "ES": [timefrac_dns[phase]["mean"] for phase in phase_list],
         "DGA": [timefrac_dga[phase].mean() for phase in phase_list],
         }))
     yerr = np.zeros((2,2,len(phase_list))) # (dns,dga) x (lo,hi) x (aa,ab,bb,ba)
@@ -206,11 +212,13 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
     yerr[1,0,:] = [timefrac_dga[phase].mean()-timefrac_dga[phase].min() for phase in phase_list]
     yerr[1,1,:] = [timefrac_dga[phase].max()-timefrac_dga[phase].mean() for phase in phase_list]
     fig,ax = plt.subplots()
-    df.plot(kind="bar",x="Phase",y=['DNS','DGA'],yerr=yerr,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
+    df.plot(kind="bar",x="Phase",y=['ES','DGA'],yerr=yerr,ax=ax,color=['cyan','red'],rot=0,error_kw=dict(ecolor='black',lw=3,capsize=6,capthick=3))
     #ax.yaxis.set_minor_locator(ticker.LogLocator(base=10.0,subs=[0.8,1.0,1.2,1.4,1.6]))
-    ax.set_title("Phase durations")
-    ax.set_ylabel(r"Time fraction")
+    ax.set_title("Phase durations",fontdict=font)
+    ax.set_ylabel(r"Time fraction",fontdict=font)
     ax.set_xlabel("")
+    ax.tick_params(axis='x',labelsize=15)
+    ax.tick_params(axis='y',labelsize=15)
     fig.savefig(join(savefolder,"lifecycle_bar"),bbox_inches="tight",pad_inches=0.2)
     ax.set_yscale('log')
     ticks = [0.025,0.05,0.1,0.2,0.4]
@@ -222,7 +230,7 @@ def compile_generalized_rates_dga(model,tpt_file_list,hm_params,algo_params,save
     return
 
 if __name__ == "__main__":
-    run_model = True
+    run_model = False # Do this the first time running in a new dayfolder 
     savefolder = join(physical_param_folder,algo_param_string.replace("istart0","allstart"))
     if not exists(savefolder): mkdir(savefolder)
     # Make the list of savefolders

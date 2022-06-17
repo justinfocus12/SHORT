@@ -1565,50 +1565,50 @@ class HoltonMassModel(Model):
     def plot_two_snapshots(self,xt0,xt1,suffix0="",suffix1=""):
         q = self.q
         n = q['Nz']-1
-        def fmt(num,pos):
-            return '{:.1f}'.format(num)
         fig,ax = plt.subplots(ncols=3,figsize=(18,6),sharey=True)
         z = q['z_d'][1:-1]/1000
         handles = []
-        handle, = ax[0].plot(xt0[2*n:3*n]*q['length']/q['time'],z,color='skyblue',linewidth=1.5,label=suffix0)
-        handles += [handle]
-        handle, = ax[0].plot(xt1[2*n:3*n]*q['length']/q['time'],z,color='red',linewidth=1.5,label=suffix1)
-        handles += [handle]
-        ax[0].set_xlabel(r"$U$ [m/s]",fontdict=ffont)
-        ax[0].set_ylabel(r"$z$ [km]",fontdict=ffont)
-        ax[0].set_title("Zonal wind",fontdict=ffont)
+        # Panel 0: altitude-dependent cooling
+        ax[0].plot(q['alpha_d'][1:-1], z, color='black')
+        ax[0].set_xlabel(r"$\alpha(z)$ [s$^{-1}$]",fontdict=ffont)
+        ax[0].set_title("Cooling coefficient",fontdict=ffont)
+        ax[0].axvline(x=0, linestyle='--', color='black')
         ax[0].tick_params(axis='both', which='major', labelsize=20)
+        ax[0].set_ylabel(r"$z$ [km]",fontdict=ffont)
+        xlim = ax[0].get_xlim()
+        fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1],numdiv=10)
+        ax[0].xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
+        # Panel 1: zonal wind 
+        handle, = ax[1].plot(xt0[2*n:3*n]*q['length']/q['time'],z,color='skyblue',linewidth=1.5,label=suffix0)
+        handles += [handle]
+        handle, = ax[1].plot(xt1[2*n:3*n]*q['length']/q['time'],z,color='red',linewidth=1.5,label=suffix1)
+        handles += [handle]
+        ax[1].set_xlabel(r"$U$ [m/s]",fontdict=ffont)
+        ax[1].set_title("Zonal wind",fontdict=ffont)
+        ax[1].tick_params(axis='both', which='major', labelsize=20)
         base_x = 20.0
         base_y = 20.0
-        xlim,ylim = ax[0].get_xlim(),ax[0].get_ylim()
-        ax[0].xaxis.set_major_locator(plt.FixedLocator(np.arange(xlim[0]//base_x,xlim[-1]//base_x+1,1)*base_x))
-        ax[0].yaxis.set_major_locator(plt.FixedLocator(np.arange(ylim[0]//base_y,ylim[-1]//base_y+1,1)*base_y))
+        xlim,ylim = ax[1].get_xlim(),ax[1].get_ylim()
+        ax[1].xaxis.set_major_locator(plt.FixedLocator(np.arange(xlim[0]//base_x,xlim[-1]//base_x+1,1)*base_x))
+        ax[1].yaxis.set_major_locator(plt.FixedLocator(np.arange(ylim[0]//base_y,ylim[-1]//base_y+1,1)*base_y))
         if len(suffix0)>0 or len(suffix1)>0:
-            ax[0].legend(handles=handles,prop={'size': 25})
-        # In the second window, plot the meridionally averaged streamfunction
+            ax[1].legend(handles=handles,prop={'size': 25})
+        # Panel 2: streamfunction
         x = np.linspace(0,360,50)
         xz,zx = np.meshgrid(x,q['z_d'][1:-1]/1000,indexing='ij')
         psi0 = np.outer(np.cos(2*x*np.pi/180),xt0[:n]) - np.outer(np.sin(2*x*np.pi/180),xt0[n:2*n])
         psi1 = np.outer(np.cos(2*x*np.pi/180),xt1[:n]) - np.outer(np.sin(2*x*np.pi/180),xt1[n:2*n])
         psi1 *= np.exp(q['z_d'][1:-1]/(2*q['H']))*q['length']**2/q['time']
         psi0 *= np.exp(q['z_d'][1:-1]/(2*q['H']))*q['length']**2/q['time']
-        im = ax[1].contour(xz,zx,psi0,colors='skyblue')
-        im = ax[1].contour(xz,zx,psi1,colors='red')
-        ax[1].set_xlabel("Longitude",fontdict=ffont)
-        #ax[1].set_ylabel("Altitude [km]",fontdict=font)
+        im = ax[2].contour(xz,zx,psi0,colors='skyblue')
+        im = ax[2].contour(xz,zx,psi1,colors='red')
+        ax[2].set_xlabel(r"Longitude [$^\circ$E]",fontdict=ffont)
         dpsi = im.levels[1]-im.levels[0]
-        ax[1].set_title(r"Streamfunction [m$^2$/s]",fontdict=ffont) # ($\Delta=%.1e$)"%(dpsi),fontdict=ffont)
-        ax[1].tick_params(axis='both', which='major', labelsize=20)
+        ax[2].set_title(r"Streamfunction [m$^2$/s]",fontdict=ffont) # ($\Delta=%.1e$)"%(dpsi),fontdict=ffont)
+        ax[2].tick_params(axis='both', which='major', labelsize=20)
         base_x = 90.0
         base_y = 20.0
-        xlim,ylim = ax[1].get_xlim(),ax[1].get_ylim()
-        #ax[1].xaxis.set_major_locator(plt.FixedLocator(np.arange(xlim[0]//base_x,xlim[-1]//base_x+1,1)*base_x))
-        #ax[1].yaxis.set_major_locator(plt.NullLocator()) #plt.FixedLocator(np.arange(ylim[0]//base_y,ylim[-1]//base_y+1,1)*base_y))
-        ax[2].plot(q['alpha_d'][1:-1], z, color='black')
-        ax[2].set_xlabel(r"$\alpha(z)$ [s$^{-1}$]",fontdict=ffont)
-        ax[2].set_title("Cooling coefficient",fontdict=ffont)
-        ax[2].axvline(x=0, linestyle='--', color='black')
-        ax[2].tick_params(axis='both', which='major', labelsize=20)
+        xlim,ylim = ax[2].get_xlim(),ax[2].get_ylim()
         return fig,ax
     def plot_sparse_regression_zslices(self,coeffs,scores,savefolder,suffix=""):
         # Plot the correlation as a function of altitude, where the regression has been done for each altitude separately
