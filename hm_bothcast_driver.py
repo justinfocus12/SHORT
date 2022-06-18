@@ -55,8 +55,8 @@ plot_long_2d_flag =     0
 plot_long_1d_flag =     0
 trans_state_flag =      0
 trans_state_enst_flag = 0
-display_cast_flag =     0
-display_current_flag =  0
+display_cast_flag =     1
+display_current_flag =  1
 lifecycle_flag =        0
 gen_rates_flag =        0
 flux_dist_flag =        0
@@ -235,6 +235,7 @@ if trans_state_enst_flag:
 # ----------- Display casts and currents in 2d -----------
 if display_cast_flag or display_current_flag:
     profkey_list = [
+            ["vTint","U"],
             ["gramps_sqrt","enstrophy_sqrt"],
             ["gramps_plus_enstrophy_sqrt","gramps_enstrophy_arclength"],
             ]
@@ -243,12 +244,13 @@ if display_cast_flag or display_current_flag:
     suffix_combo_list = [[r"(%i km)"%alt]*2 for alt in alt_list]
     for profkey_pair in profkey_list:
         profkey0,profkey1 = profkey_pair
+        square_bounds_flag = (funlib[profkey0]["units"] == funlib[profkey1]["units"])
         if display_cast_flag:
             print(f"About to display cast for {profkey0},{profkey1}")
-            tpt.display_casts_abba(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True,square_bounds_flag=True)
+            tpt.display_casts_abba(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True,square_bounds_flag=square_bounds_flag)
         if display_current_flag:
             print(f"About to display current for {profkey0},{profkey1}")
-            tpt.display_dam_moments_abba_current(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True,square_bounds_flag=True)
+            tpt.display_dam_moments_abba_current(model,data,profkey0,profkey1,idx_combo_list,suffix_combo_list,same_bounds_flag=True,square_bounds_flag=square_bounds_flag)
 # --------------------------------------------------------
 
 # ----------- Display lifecycle correlations -----------

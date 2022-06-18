@@ -1727,7 +1727,7 @@ class TPT:
                 weight = self.chom
                 fieldname = r"Steady-state"  #r"$\pi_{AB},J_{AB}$"
                 field = np.ones((Nx,Nt_max)) 
-                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=True,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss,bounds_prescribed=bounds_prescribed)
+                fig,ax = self.plot_field_2d(model,data,field,weight,theta_x,fieldname=fieldname,fun0name=fun0name,fun1name=fun1name,units=units,unit_symbols=unit_symbols,avg_flag=False,current_flag=True,current_bdy_flag=False,logscale=True,comm_bwd=comm_bwd,comm_fwd=comm_fwd,magu_fw=None,magu_obs=None,cmap=plt.cm.YlOrBr,theta_ab=theta_xst,abpoints_flag=False,ss=ss,bounds_prescribed=bounds_prescribed)
                 if same_bounds_flag:
                     ax.set_xlim(prof0_bounds*funlib[profkey0]["units"])
                     ax.set_ylim(prof1_bounds*funlib[profkey1]["units"])
