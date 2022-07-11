@@ -196,24 +196,31 @@ if plot_long_1d_flag:
     alt_list = np.array([10,20,30])
     zi_list = np.array([np.argmin(np.abs(model.q['z_d'][1:-1]/1000 - alt_list[i])) for i in range(len(alt_list))])
     key_combos = ([
+        ["U","U","U"],
+        ["vT","vT","vT"],
         ["gramps_plus_enstrophy","gramps","enstrophy"],
         ["dqdy_times_vq","gramps_relax","diss"],
         ])
-    
     color_combos = ([
             ["black", "dodgerblue", "magenta"],
-            ["black", "dodgerblue", "magenta"]
+            ["black", "dodgerblue", "magenta"],
+            ["black", "dodgerblue", "magenta"],
+            ["black", "dodgerblue", "magenta"],
             ])
     zi_combos = ([
+        np.outer(np.ones(1),zi_list).astype(int),
+        np.outer(np.ones(1),zi_list).astype(int),
         np.outer(zi_list, np.ones(3)).astype(int),
         np.outer(zi_list, np.ones(3)).astype(int),
         ])
     suffix_combos = ([
+        [["(%i km)"%(alt_list[i]) for i in range(len(alt_list))]],
+        [["(%i km)"%(alt_list[i]) for i in range(len(alt_list))]],
         [["(%i km)"%(alt_list[i])]*3 for i in range(len(alt_list))],
         [["(%i km)"%(alt_list[i])]*3 for i in range(len(alt_list))],
         ])
     
-    for i_com in range(len(key_combos)):
+    for i_com in range(2): #len(key_combos)):
         tpt.plot_field_long(model,data,
                 key_combos[i_com],
                 color_combos[i_com],
@@ -242,7 +249,7 @@ if display_cast_flag or display_current_flag:
     alt_list = [10,20,30]
     idx_combo_list = [[np.argmin(np.abs(model.q['z_d'][1:-1]/1000 - alt))]*2 for alt in alt_list]
     suffix_combo_list = [[r"(%i km)"%alt]*2 for alt in alt_list]
-    for profkey_pair in profkey_list:
+    for profkey_pair in profkey_list[:1]:
         profkey0,profkey1 = profkey_pair
         square_bounds_flag = (funlib[profkey0]["units"] == funlib[profkey1]["units"])
         if display_cast_flag:

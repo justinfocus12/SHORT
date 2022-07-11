@@ -486,7 +486,7 @@ class TPT:
         #fig.savefig(join(self.savefolder,"{}_ensemble_ab".format(field_abb)))
         return fig,ax
     def plot_field_long(self,model,data,key_combo,color_combo,zi_combo,suffix_combo,tmax=70,time_unit_symbol=None,phases=['aa','ab','ba','bb'],density_1d_flag=False):
-        # zi_combo is a matrix. Each row is a different combination of altidudes; each column refers to a different key. 
+        # zi_combo is a matrix. Each row is a different combination of altitudes; each column refers to a different key. 
         print("Beginning plot field long")
         funlib = model.observable_function_library()
         print(f"Evaluated fields in plot_field_long: {key_combo}")
@@ -1661,8 +1661,9 @@ class TPT:
         prof1_a,prof1_b = funlib[profkey1]["fun"](model.tpt_obs_xst).reshape((2,prof1dim))
         zi0list = [combo[0] for combo in idx_combo_list]
         zi1list = [combo[1] for combo in idx_combo_list]
-        prof0_bounds = np.array([np.nanquantile(prof0_x[:,zi0list],0.025),np.nanquantile(prof0_x[:,zi0list],0.975)])
-        prof1_bounds = np.array([np.nanquantile(prof1_x[:,zi1list],0.025),np.nanquantile(prof1_x[:,zi1list],0.975)])
+        prof0_bounds = np.array([np.nanquantile(prof0_x[:,zi0list],0.01),np.nanquantile(prof0_x[:,zi0list],0.99)])
+        prof1_bounds = np.array([np.nanquantile(prof1_x[:,zi1list],0.01),np.nanquantile(prof1_x[:,zi1list],0.99)])
+        prof1_bounds[1] += 0.15*(prof1_bounds[1] - prof1_bounds[0])
         if square_bounds_flag: 
             prof0_bounds = np.array([min(prof0_bounds[0],prof1_bounds[0]),max(prof0_bounds[1],prof1_bounds[1])])
             prof1_bounds = prof0_bounds.copy()
@@ -1847,8 +1848,9 @@ class TPT:
         prof1_a,prof1_b = funlib[profkey1]["fun"](model.tpt_obs_xst).reshape((2,prof1dim))
         zi0list = [combo[0] for combo in idx_combo_list]
         zi1list = [combo[1] for combo in idx_combo_list]
-        prof0_bounds = np.array([np.nanquantile(prof0_x[:,zi0list],0.025),np.nanquantile(prof0_x[:,zi0list],0.975)])
-        prof1_bounds = np.array([np.nanquantile(prof1_x[:,zi1list],0.025),np.nanquantile(prof1_x[:,zi1list],0.975)])
+        prof0_bounds = np.array([np.nanquantile(prof0_x[:,zi0list],0.01),np.nanquantile(prof0_x[:,zi0list],0.99)])
+        prof1_bounds = np.array([np.nanquantile(prof1_x[:,zi1list],0.01),np.nanquantile(prof1_x[:,zi1list],0.99)])
+        prof1_bounds[1] += 0.15*(prof1_bounds[1] - prof1_bounds[0])
         if square_bounds_flag: 
             prof0_bounds = np.array([min(prof0_bounds[0],prof1_bounds[0]),max(prof0_bounds[1],prof1_bounds[1])])
             prof1_bounds = prof0_bounds.copy()
