@@ -1097,6 +1097,7 @@ class HoltonMassModel(Model):
                  "unit_symbol": r"K$\cdot$m/s",
                  "name_english": "Heat flux",
                  "abbrv": "VT",
+                 "tendency_unit_symbol": r"K$\cdot$m/s$^2$",
                  },
                 "vT21p5": 
                 {"fun": lambda X: self.meridional_heat_flux(X)[:,zlevel(21.5)],

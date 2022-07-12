@@ -3792,11 +3792,11 @@ class TPT:
         return fig,ax
     def plot_transition_states_ensttend(self,model,data,xlim_flag=True,lap_flag=True):
         # ----- Determine what to compute and plot ---------
-        compute_lap_flag =                  0
-        compute_transdict_flag =            0
-        plot_profile_transdict_flag =       0
-        plot_timeseries_transdict_flag =    0
-        plot_analysis_transdict_flag =      1
+        compute_lap_flag =                  1
+        compute_transdict_flag =            1
+        plot_profile_transdict_flag =       1
+        plot_timeseries_transdict_flag =    1
+        plot_analysis_transdict_flag =      0
         # -----------------------------------------------
         # Take a subset
         ss = np.random.choice(np.arange(data.X.shape[0]),size=30000,replace=False)
@@ -3824,7 +3824,7 @@ class TPT:
             idx_qi = np.where(np.abs(comm_fwd - qp_levels[qi]) < qp_tol)[0]
             qlevel_idx += [idx_qi]
         funlib = model.observable_function_library()
-        keys_prof = ["U","gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstrophy","gramps_relax","dqdy_times_vq","diss",]
+        keys_prof = ["U","vT","gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstrophy","gramps_relax","dqdy_times_vq","diss",]
         #alt_list = ["10","20","30","40","50","60","int"]
         keys_scal = [] #(
                 #["gramps_plus_enstrophy_%s"%alt for alt in alt_list] + 
@@ -4015,41 +4015,46 @@ class TPT:
                     fig.savefig(join(self.savefolder,f"trans_state_profile_qp{qp_levels[0]}-{qp_levels[-1]}_{dirn_combo_str}_{abbrv}_{qi}_Nx{Nx}_xlim{int(xlim_flag)}").replace(".","p"))
                     plt.close(fig)
                     # ---------------------------------------------------------------------
-        # -------------- Plot the same thing as a timeseries at 30 km --------------
+        # -------------- Plot the same thing as a timeseries at various altitudes --------------
+        alt_list = [10,20,30]
+        q = model.q
+        zi_list = np.array([np.argmin(np.abs(q['z_d'][1:-1]/1000 - alt)) for alt in alt_list])
         if plot_timeseries_transdict_flag:
-            for key in keys_scal:
+            for key in ["U","vT"]:
                 abbrv = funlib[key]["abbrv"]
-                fig,ax = plt.subplots(nrows=2, figsize=(6,12), sharex=True)
-                handles = [[],[]]
-                for dirn in dirns:
-                    # Stochastic 
-                    h, = ax[0].plot(qp_levels,transdict[key]["snapshot"]["stochastic"][dirn][:,-1,0]*funlib[key]["units"], color=dirn_colors[dirn], linestyle='-', marker='.', label=r"%s (%s)"%(funlib[key]["name"],dirn_labels[dirn]))
-                    handles[0] += [h]
-                    h, = ax[1].plot(qp_levels,transdict[key]["tendency"]["stochastic"][dirn][:,0]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='-', marker='.', label=r"$\mathcal{L}_{AB}[%s]"%(funlib[key]["name"]))
-                    handles[1] += [h]
-                    # Deterministic
-                    h, = ax[1].plot(qp_levels,transdict[key]["tendency"]["deterministic"][dirn][:,0]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='--',marker='.', label=r"$\partial_t$[%s]"%(funlib[key]["name"]))
-                    handles[1] += [h]
-                    if lap_flag and (dirn in lap.keys()):
-                        h, = ax[0].plot(qp_levels,lap[dirn][key]["snapshot"][:,0]*funlib[key]["units"],color='cyan',linestyle='-',marker='.',label=r"Min-action")
+                for i_alt,alt in enumerate(alt_list):
+                    zi = zi_list[i_alt]
+                    fig,ax = plt.subplots(nrows=2, figsize=(6,12), sharex=True)
+                    handles = [[],[]]
+                    for dirn in ["ab"]:
+                        # Stochastic 
+                        h, = ax[0].plot(qp_levels,transdict[key]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib[key]["units"], color=dirn_colors[dirn], linestyle='-', marker='.', label=r"%s (%s)"%(funlib[key]["name"],dirn_labels[dirn]))
                         handles[0] += [h]
-                        h, = ax[1].plot(qp_levels,lap[dirn][key]["tendency"][:,0]*funlib[key]["units"]/model.q["time"],color='cyan',linestyle='-',marker='.',label=r"Min-action")
+                        h, = ax[1].plot(qp_levels,transdict[key]["tendency"]["stochastic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='-', marker='.', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib[key]["name"]))
                         handles[1] += [h]
-                    ax[1].axhline(y=0, color='gray', linestyle='-', linewidth=1, zorder=-10, alpha=0.4)
-                    ax[1].set_xlabel(r"$q_B^+$",fontdict=font)
-                    ax[0].set_ylabel(r"[%s]"%(funlib[key]["unit_symbol"]),fontdict=font)
-                    ax[1].set_ylabel(r"[%s]"%(funlib[key]["tendency_unit_symbol"]),fontdict=font)
-                    ax[0].set_title(r"%s"%(funlib[key]["name"]),fontdict=font)
-                    ax[1].set_title(r"%s tendency"%(funlib[key]["name"]),fontdict=font)
-                    for i in range(2):
-                        ylim = ax[i].get_ylim()
-                        fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
-                        ax[i].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
-                    ax[0].legend(handles=handles[0])
-                    ax[1].legend(handles=handles[1])
-                    fig.savefig(join(self.savefolder,f"trans_state_timeseries_qp{qp_levels[0]}-{qp_levels[-1]}_{dirn_combo_str}_{abbrv}_Nx{Nx}").replace(".","p"))
-                    plt.close(fig)
-                # ------------------------------------------------------------------------
+                        # Deterministic
+                        h, = ax[1].plot(qp_levels,transdict[key]["tendency"]["deterministic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='--',marker='.', label=r"$\partial_t$[%s]"%(funlib[key]["name"]))
+                        handles[1] += [h]
+                        if lap_flag and (dirn in lap.keys()):
+                            h, = ax[0].plot(qp_levels,lap[dirn][key]["snapshot"][:,zi]*funlib[key]["units"],color='cyan',linestyle='-',marker='.',label=r"Min-action")
+                            handles[0] += [h]
+                            h, = ax[1].plot(qp_levels,lap[dirn][key]["tendency"][:,zi]*funlib[key]["units"]/model.q["time"],color='cyan',linestyle='-',marker='.',label=r"Min-action")
+                            handles[1] += [h]
+                        ax[1].axhline(y=0, color='gray', linestyle='-', linewidth=1, zorder=-10, alpha=0.4)
+                        ax[1].set_xlabel(r"$q_B^+$",fontdict=font)
+                        ax[0].set_ylabel(r"[%s]"%(funlib[key]["unit_symbol"]),fontdict=font)
+                        ax[1].set_ylabel(r"[%s]"%(funlib[key]["tendency_unit_symbol"]),fontdict=font)
+                        ax[0].set_title(r"Snapshot (%i km)"%(alt),fontdict=font)
+                        ax[1].set_title(r"Tendency (%i km)"%(alt),fontdict=font)
+                        for i in range(2):
+                            ylim = ax[i].get_ylim()
+                            fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+                            ax[i].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+                        ax[0].legend(handles=handles[0])
+                        ax[1].legend(handles=handles[1])
+                        fig.savefig(join(self.savefolder,f"trans_state_timeseries_qp{qp_levels[0]}-{qp_levels[-1]}_{dirn_combo_str}_{abbrv}_zi{zi}_Nx{Nx}").replace(".","p"))
+                        plt.close(fig)
+                    # ------------------------------------------------------------------------
         # ----------------------- Plot timeseries of a few select quantities ----------
         # Three columns: GE, G, E
         alt_list = np.array([10,20,30])
@@ -4166,7 +4171,7 @@ class TPT:
             for i in range(len(qp_levels))]
         if plot_profile_flag:
             #prof_key_list = ["U","vT","dqdy","q2"]
-            prof_key_list = ["U","diss","dqdy","enstrophy","vq","ensttend"]
+            prof_key_list = ["U","vT","diss","dqdy","enstrophy","vq","ensttend"][:2]
             rflux = []
             rflux_idx = []
             for qi in range(len(qp_levels)):
