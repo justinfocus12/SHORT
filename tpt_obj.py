@@ -550,62 +550,48 @@ class TPT:
             fig.savefig(join(self.savefolder,f"long1d_{save_suffix}"))
             plt.close(fig)
         print("Done plotting field long")
-        if False: 
-            # ------------ Next: plot only some transitions on their own plot --------------
-            quantiles = np.array([0.15,0.25,0.4,0.5])
-            if any_trans:
+        # ------------ Next: plot the traditional composite --------------
+        for i_z in range(len(zi_combo)):
+            fig,ax = plt.subplots(ncols=len(key_combo),figsize=(6*len(key_combo),6),sharex=True,sharey=True)
+            handles = []
+            for i_key in range(len(key_combo)):
+                key = key_combo[i_key]
+                quantile_midranges = np.array([0.25,0.5,0.9])
                 avg_prea_flag = True
-                fig,ax = plt.subplots(ncols=2,nrows=2,figsize=(12,12),sharex=True,sharey=True)
                 num_trans = min(300,len(ab_starts))
                 print(f"num_trans = {num_trans}")
-                trans_colors = ['red','cyan','black']
-                num_colored_trans = len(trans_colors)
                 # Select them from across the distribution of transit times
-                transit_quantiles = np.linspace(0,1,num_colored_trans+2)[1:-1]
-                colored_idx = np.zeros(num_colored_trans, dtype=int)
-                transit_distribution = np.array([ab_ends[i] - ab_starts[i] for i in range(num_trans)])
-                for i in range(num_colored_trans):
-                    transit_time_quantile = np.quantile(transit_distribution,transit_quantiles[i])
-                    colored_idx[i] = np.argmin(np.abs(transit_distribution - transit_time_quantile))
-                #max_duration = max([ab_ends[i]-ab_starts[i] for i in range(num_trans)])
                 # Match the maximum duration with the later plots of flux distribution
-                max_duration = max(int(90/(t_long[1]-t_long[0])), max([ab_ends[i]-ab_starts[i] for i in colored_idx]) + 1)
+                max_duration = int(100/(t_long[1]-t_long[0]))
                 print("max_duration = {}".format(max_duration))
-                for i_key in range(len(key_combo)):
-                    field_trans_composite = np.zeros((num_trans,max_duration))
+                field_trans_composite = np.nan*np.ones((num_trans,max_duration))
                 for i in range(num_trans):
                     if i % 10 == 0: print(f"Tallying transition {i} out of {num_trans}")
                     k0,k1 = ab_starts[i]-1,ab_ends[i]
-                    k0_padded = k1 - max_duration # Get all the beginnings lined up
-                    field_trans = funlib[key_combo[i_key]]["fun"](x_long[k0_padded:k1]).flatten() #(x_long[k0_padded:k1]).flatten()
-                    if (not avg_prea_flag) and (k0 > k0_padded+1):
-                        field_trans[:(k0-k0_padded-1)] = np.nan
-                    #ax[0,0].plot(t_long[k0_padded:k1]-t_long[k1],field_trans*funlib[key_combo[i_key]]["units"],color='gray',alpha=0.65,linewidth=0.75,zorder=-1)
-                    if False: #i in colored_idx:
-                        color = trans_colors[np.where(colored_idx==i)[0][0]]
-                        alpha = 1.0
-                        linewidth = 2
-                        ax[0,0].plot(t_long[k0:k1]-t_long[k1],field_trans[-(k1-k0):]*units,color=color,alpha=1.0,linewidth=2,zorder=1)
-                    field_trans_composite[i] = field_trans
+                    k0_padded = max(0, k1 - max_duration) # Get all the beginnings lined up
+                    field_trans = funlib[key]["fun"](x_long[k0_padded:k1])[:,zi_combo[i_z,i_key]] 
+                    print(f"field_trans.shape = {field_trans.shape}")
+                    print(f"field_trans_composite.shape = {field_trans_composite.shape}")
+                    field_trans_composite[i,-len(field_trans):] = field_trans
+                # Plot the mean
+                ax[i_key].plot(t_long[:max_duration]-t_long[max_duration],np.nanmean(field_trans_composite,axis=0)*funlib[key]["units"],color='orange')
                 # Plot the quantiles
-                for qi in range(len(quantiles)):
-                    lower = np.nanquantile(field_trans_composite, quantiles[qi], axis=0)
-                    if qi < len(quantiles)-1:
-                        upper = np.nanquantile(field_trans_composite, 1-quantiles[qi], axis=0)
-                        reds = (qi+1)/len(quantiles)
-                        ax[1,0].fill_between(t_long[:max_duration]-t_long[max_duration],lower*units,upper*units,color=plt.cm.Reds(reds),alpha=1.0,zorder=qi)
-                    else:
-                        ax[1,0].plot(t_long[:max_duration]-t_long[max_duration],lower*units,color='black',zorder=qi+10,linestyle='-',linewidth=2)
+                for qi in range(len(quantile_midranges)):
+                    lower = np.nanquantile(field_trans_composite, 0.5-0.5*quantile_midranges[qi], axis=0)
+                    upper = np.nanquantile(field_trans_composite, 0.5+0.5*quantile_midranges[qi], axis=0)
+                    ax[i_key].fill_between(t_long[:max_duration]-t_long[max_duration],lower*funlib[key]["units"],upper*funlib[key]["units"],color=plt.cm.binary(0.75*(1-qi/len(quantile_midranges))),alpha=1.0,zorder=-qi)
                 xlab = r"Time$-\tau_B^+$"
                 ylab = r"[%s]"%(funlib[key_combo[i_key]]["unit_symbol"])
                 if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
-                ax[1,0].set_xlabel(xlab,fontdict=font)
-                ax[1,0].set_xlim([-max_duration*(t_long[1]-t_long[0]),0])
-                fig.savefig(join(self.savefolder,"transitory_{}_nt{}".format(field_abb,num_trans)),bbox_inches="tight",pad_inches=0.2)
-                plt.close(fig)
-                # Save the composite in order to use later for comparison with the TPT composite
-                np.save(join(self.savefolder,"composite_{}".format(field_abb)),field_trans_composite)
-                np.save(join(self.savefolder,"composite_time"),t_long[:max_duration]-t_long[max_duration])
+                ax[i_key].set_xlabel(xlab,fontdict=ffont)
+                ax[i_key].set_xlim([-max_duration*(t_long[1]-t_long[0]),0])
+                ax[i_key].set_title("Composite %s (%i km)"%(funlib[key]["name"],10*round(1/10*model.q["z_d"][1:-1][zi_combo[i_z,i_key]]/1000)),fontdict=ffont)
+            ax[0].set_ylabel(ylab,fontdict=ffont)
+            fig.savefig(join(self.savefolder,"transitory_{}_nt{}".format(funlib[key]["abbrv"],num_trans)),bbox_inches="tight",pad_inches=0.2)
+            plt.close(fig)
+            # Save the composite in order to use later for comparison with the TPT composite
+            #np.save(join(self.savefolder,"composite_{}".format(field_abb)),field_trans_composite)
+            #np.save(join(self.savefolder,"composite_time"),t_long[:max_duration]-t_long[max_duration])
         del x_long
         return
     def plot_trans_2d_driver(self,model,data):
@@ -3792,8 +3778,8 @@ class TPT:
         return fig,ax
     def plot_transition_states_ensttend(self,model,data,xlim_flag=True,lap_flag=True):
         # ----- Determine what to compute and plot ---------
-        compute_lap_flag =                  1
-        compute_transdict_flag =            1
+        compute_lap_flag =                  0
+        compute_transdict_flag =            0
         plot_profile_transdict_flag =       1
         plot_timeseries_transdict_flag =    1
         plot_analysis_transdict_flag =      0
@@ -3930,11 +3916,11 @@ class TPT:
                         # Axis limits
                         transdict[key]["snapshot"]["xlim"][0] = min(
                                 transdict[key]["snapshot"]["xlim"][0],
-                                np.min(transdict[key]["snapshot"]["stochastic"][dirn][qi]),
+                                np.min(transdict[key]["snapshot"]["stochastic"][dirn][qi,:-3,:]), # Exclude the largest quantile envelope
                                 )
                         transdict[key]["snapshot"]["xlim"][1] = max(
                                 transdict[key]["snapshot"]["xlim"][1],
-                                np.max(transdict[key]["snapshot"]["stochastic"][dirn][qi]),
+                                np.max(transdict[key]["snapshot"]["stochastic"][dirn][qi,:-3,:]),
                                 )
                         transdict[key]["tendency"]["xlim"][0] = min(
                                 transdict[key]["tendency"]["xlim"][0],
@@ -4020,38 +4006,54 @@ class TPT:
         q = model.q
         zi_list = np.array([np.argmin(np.abs(q['z_d'][1:-1]/1000 - alt)) for alt in alt_list])
         if plot_timeseries_transdict_flag:
-            for key in ["U","vT"]:
-                abbrv = funlib[key]["abbrv"]
-                for i_alt,alt in enumerate(alt_list):
-                    zi = zi_list[i_alt]
-                    fig,ax = plt.subplots(nrows=2, figsize=(6,12), sharex=True)
-                    handles = [[],[]]
-                    for dirn in ["ab"]:
+            for dirn in ["ab"]:
+                for key in ["U","vT"]:
+                    abbrv = funlib[key]["abbrv"]
+                    ylim_prescribed = ([
+                            [
+                                np.min(transdict[key]["snapshot"]["stochastic"][dirn][:,:,zi_list])*funlib[key]["units"],
+                                np.max(transdict[key]["snapshot"]["stochastic"][dirn][:,:,zi_list])*funlib[key]["units"],
+                            ],
+                            [
+                                min([np.min(transdict[key]["tendency"][stic][dirn][:,zi_list])*funlib[key]["units"]/q["time"] for stic in ["stochastic","deterministic"]]),
+                                max([np.max(transdict[key]["tendency"][stic][dirn][:,zi_list])*funlib[key]["units"]/q["time"] for stic in ["stochastic","deterministic"]]),
+                            ],
+                        ])
+                    if key in ["U","vT"]:
+                        ylim_prescribed[0][0] = 0.0
+                    for i_alt,alt in enumerate(alt_list):
+                        zi = zi_list[i_alt]
+                        fig,ax = plt.subplots(nrows=2, figsize=(6,12), sharex=True)
+                        handles = [[],[]]
                         # Stochastic 
-                        h, = ax[0].plot(qp_levels,transdict[key]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib[key]["units"], color=dirn_colors[dirn], linestyle='-', marker='.', label=r"%s (%s)"%(funlib[key]["name"],dirn_labels[dirn]))
+                        h, = ax[0].plot(qp_levels,transdict[key]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib[key]["units"], color=dirn_colors[dirn], linestyle='-', label=r"%s (%s)"%(funlib[key]["name"],dirn_labels[dirn]))
                         handles[0] += [h]
-                        h, = ax[1].plot(qp_levels,transdict[key]["tendency"]["stochastic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='-', marker='.', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib[key]["name"]))
+                        for k in range(len(quantile_midranges)):
+                            ylohi = transdict[key]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,zi] * funlib[key]["units"]
+                            ax[0].fill_between(qp_levels,ylohi[:,0],ylohi[:,1], color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))), zorder=-k)
+                        h, = ax[1].plot(qp_levels,transdict[key]["tendency"]["stochastic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib[key]["name"]))
                         handles[1] += [h]
                         # Deterministic
-                        h, = ax[1].plot(qp_levels,transdict[key]["tendency"]["deterministic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='--',marker='.', label=r"$\partial_t$[%s]"%(funlib[key]["name"]))
+                        h, = ax[1].plot(qp_levels,transdict[key]["tendency"]["deterministic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='--',label=r"$\partial_t$[%s]"%(funlib[key]["name"]))
                         handles[1] += [h]
                         if lap_flag and (dirn in lap.keys()):
-                            h, = ax[0].plot(qp_levels,lap[dirn][key]["snapshot"][:,zi]*funlib[key]["units"],color='cyan',linestyle='-',marker='.',label=r"Min-action")
+                            h, = ax[0].plot(qp_levels,lap[dirn][key]["snapshot"][:,zi]*funlib[key]["units"],color='cyan',linestyle='-',label=r"Min-action")
                             handles[0] += [h]
-                            h, = ax[1].plot(qp_levels,lap[dirn][key]["tendency"][:,zi]*funlib[key]["units"]/model.q["time"],color='cyan',linestyle='-',marker='.',label=r"Min-action")
+                            h, = ax[1].plot(qp_levels,lap[dirn][key]["tendency"][:,zi]*funlib[key]["units"]/model.q["time"],color='cyan',linestyle='-',label=r"Min-action")
                             handles[1] += [h]
                         ax[1].axhline(y=0, color='gray', linestyle='-', linewidth=1, zorder=-10, alpha=0.4)
                         ax[1].set_xlabel(r"$q_B^+$",fontdict=font)
                         ax[0].set_ylabel(r"[%s]"%(funlib[key]["unit_symbol"]),fontdict=font)
                         ax[1].set_ylabel(r"[%s]"%(funlib[key]["tendency_unit_symbol"]),fontdict=font)
-                        ax[0].set_title(r"Snapshot (%i km)"%(alt),fontdict=font)
-                        ax[1].set_title(r"Tendency (%i km)"%(alt),fontdict=font)
-                        for i in range(2):
-                            ylim = ax[i].get_ylim()
+                        ax[0].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
+                        ax[1].set_title(r"Tendency (%i km)"%(alt),fontdict=ffont)
+                        for r in range(2):
+                            ax[r].set_ylim(ylim_prescribed[r])
+                            ylim = ax[r].get_ylim()
                             fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
-                            ax[i].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
-                        ax[0].legend(handles=handles[0])
-                        ax[1].legend(handles=handles[1])
+                            ax[r].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+                        ax[0].legend(handles=handles[0],prop={"size": 13})
+                        ax[1].legend(handles=handles[1],prop={"size": 13})
                         fig.savefig(join(self.savefolder,f"trans_state_timeseries_qp{qp_levels[0]}-{qp_levels[-1]}_{dirn_combo_str}_{abbrv}_zi{zi}_Nx{Nx}").replace(".","p"))
                         plt.close(fig)
                     # ------------------------------------------------------------------------

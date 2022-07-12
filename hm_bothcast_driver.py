@@ -52,9 +52,9 @@ compute_tpt_flag =      0
 
 plot_trans_2d_flag =    0
 plot_long_2d_flag =     0
-plot_long_1d_flag =     0
+plot_long_1d_flag =     1
 trans_state_flag =      0
-trans_state_enst_flag = 1
+trans_state_enst_flag = 0
 display_cast_flag =     0
 display_current_flag =  0
 lifecycle_flag =        0
@@ -198,6 +198,7 @@ if plot_long_1d_flag:
     key_combos = ([
         ["U","U","U"],
         ["vT","vT","vT"],
+        ["gramps_plus_enstrophy"]*3,
         ["gramps_plus_enstrophy","gramps","enstrophy"],
         ["dqdy_times_vq","gramps_relax","diss"],
         ])
@@ -206,8 +207,10 @@ if plot_long_1d_flag:
             ["black", "dodgerblue", "magenta"],
             ["black", "dodgerblue", "magenta"],
             ["black", "dodgerblue", "magenta"],
+            ["black", "dodgerblue", "magenta"],
             ])
     zi_combos = ([
+        np.outer(np.ones(1),zi_list).astype(int),
         np.outer(np.ones(1),zi_list).astype(int),
         np.outer(np.ones(1),zi_list).astype(int),
         np.outer(zi_list, np.ones(3)).astype(int),
@@ -216,11 +219,12 @@ if plot_long_1d_flag:
     suffix_combos = ([
         [["(%i km)"%(alt_list[i]) for i in range(len(alt_list))]],
         [["(%i km)"%(alt_list[i]) for i in range(len(alt_list))]],
+        [["(%i km)"%(alt_list[i]) for i in range(len(alt_list))]],
         [["(%i km)"%(alt_list[i])]*3 for i in range(len(alt_list))],
         [["(%i km)"%(alt_list[i])]*3 for i in range(len(alt_list))],
         ])
     
-    for i_com in range(2): #len(key_combos)):
+    for i_com in range(3): #len(key_combos)):
         tpt.plot_field_long(model,data,
                 key_combos[i_com],
                 color_combos[i_com],
