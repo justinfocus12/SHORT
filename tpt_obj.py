@@ -3895,20 +3895,32 @@ class TPT:
                 print(f"theta_x.shape = {theta_x.shape}")
                 thdim = theta_x.shape[-1]
                 transdict[key] = dict({})
+                transdict[key]["leadtime"] = dict()
                 transdict[key]["snapshot"] = dict({"stochastic": dict(), "xlim": np.zeros(2)})
                 transdict[key]["tendency"] = dict({"stochastic": dict(), "deterministic": dict(), "xlim": np.zeros(2)})
                 for dirn in dirns:
                     transdict[key]["snapshot"]["stochastic"][dirn] = np.zeros((len(qp_levels),1+2*len(quantile_midranges),thdim))
+                    transdict[key]["leadtime"][dirn] = np.zeros((len(qp_levels),1+2*len(quantile_midranges)))
                     transdict[key]["tendency"]["stochastic"][dirn] = np.zeros((len(qp_levels),thdim))
                     transdict[key]["tendency"]["deterministic"][dirn] = np.zeros((len(qp_levels),thdim))
                 for qi in range(len(qp_levels)):
                     idx = np.array(qlevel_idx[qi]) 
-                    # Get the average for tendencies 
                     for dirn in dirns:
                         qm = comm_bwd[idx,ti0]*(dirn[0]=='a') + (1-comm_bwd[idx,ti0])*(dirn[0]=='b') + np.ones(len(idx))*(dirn[0]=='?')
                         qp = comm_fwd[idx,ti0]*(dirn[1]=='b') + (1-comm_fwd[idx,ti0])*(dirn[1]=='a') + np.ones(len(idx))*(dirn[1]=='?')
-                        # Snapshot, stochastic
                         weights = chom[idx]*qm*qp/np.sum(chom[idx]*qm*qp)
+                        # Lead time
+                        eta_key = 'xb' if dirn[1]=='b' else 'xa'
+                        eta = self.dam_moments['one'][eta_key][1,ss[idx],ti0]*(qp > 1e-3)/(qp + 1.0*(qp <= 1e-3))
+                        eta[qp <= 1e-3] = np.nan
+                        order = np.argsort(eta)
+                        cdf = np.cumsum(weights[order])
+                        for k in range(len(quantile_midranges)):
+                            alpha = (1 - quantile_midranges[k])/2
+                            transdict[key]["leadtime"][dirn][qi,2*k] = eta[order[np.where(cdf >= alpha)[0][0]]]
+                            transdict[key]["leadtime"][dirn][qi,2*k+1] = eta[order[np.where(cdf >= 1-alpha)[0][0]]]
+                        transdict[key]["leadtime"][dirn][qi,-1] = np.nansum(eta*weights)
+                        # Snapshot, stochastic
                         for d in range(thdim):
                             order = np.argsort(theta_x[idx,ti0,d])
                             cdf = np.cumsum(weights[order])
@@ -4032,27 +4044,31 @@ class TPT:
                     if key in ["U","vT"]:
                         ylim_prescribed[0][0] = 0.0
                     for i_alt,alt in enumerate(alt_list):
+                        # Big question: do we want to plot committor or lead time in the horizontal
+                        #progress = qp_levels
+                        progress = -transdict[key]["leadtime"]["ab"][:,-1]
                         zi = zi_list[i_alt]
-                        fig,ax = plt.subplots(nrows=2, figsize=(6,12), sharex=True)
+                        fig,ax = plt.subplots(nrows=2, figsize=(6,12)) #, sharex=True)
                         handles = [[],[]]
                         # Stochastic 
-                        h, = ax[0].plot(qp_levels,transdict[key]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib[key]["units"], color=dirn_colors[dirn], linestyle='-', label=r"%s (%s)"%(funlib[key]["name"],dirn_labels[dirn]))
+                        h, = ax[0].plot(progress,transdict[key]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib[key]["units"], color=dirn_colors[dirn], linestyle='-', label=r"%s (%s)"%(funlib[key]["name"],dirn_labels[dirn]))
                         handles[0] += [h]
                         for k in range(len(quantile_midranges)):
                             ylohi = transdict[key]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,zi] * funlib[key]["units"]
-                            ax[0].fill_between(qp_levels,ylohi[:,0],ylohi[:,1], color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))), zorder=-k)
-                        h, = ax[1].plot(qp_levels,transdict[key]["tendency"]["stochastic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib[key]["name"]))
+                            ax[0].fill_between(progress,ylohi[:,0],ylohi[:,1], color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))), zorder=-k)
+                        h, = ax[1].plot(progress,transdict[key]["tendency"]["stochastic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib[key]["name"]))
                         handles[1] += [h]
                         # Deterministic
-                        h, = ax[1].plot(qp_levels,transdict[key]["tendency"]["deterministic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='--',label=r"$\partial_t$[%s]"%(funlib[key]["name"]))
+                        h, = ax[1].plot(progress,transdict[key]["tendency"]["deterministic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='--',label=r"$\partial_t$[%s]"%(funlib[key]["name"]))
                         handles[1] += [h]
                         if lap_flag and (dirn in lap.keys()):
-                            h, = ax[0].plot(qp_levels,lap[dirn][key]["snapshot"][:,zi]*funlib[key]["units"],color='cyan',linestyle='-',label=r"Min-action")
+                            h, = ax[0].plot(progress,lap[dirn][key]["snapshot"][:,zi]*funlib[key]["units"],color='cyan',linestyle='-',label=r"Min-action")
                             handles[0] += [h]
-                            h, = ax[1].plot(qp_levels,lap[dirn][key]["tendency"][:,zi]*funlib[key]["units"]/model.q["time"],color='cyan',linestyle='-',label=r"Min-action")
+                            h, = ax[1].plot(progress,lap[dirn][key]["tendency"][:,zi]*funlib[key]["units"]/model.q["time"],color='cyan',linestyle='-',label=r"Min-action")
                             handles[1] += [h]
                         ax[1].axhline(y=0, color='gray', linestyle='-', linewidth=1, zorder=-10, alpha=0.4)
-                        ax[1].set_xlabel(r"$q_B^+$",fontdict=font)
+                        ax[0].set_xlabel(r"$-\eta_B^+$",fontdict=font)
+                        ax[1].set_xlabel(r"$-\eta_B^+$",fontdict=font)
                         ax[0].set_ylabel(r"[%s]"%(funlib[key]["unit_symbol"]),fontdict=font)
                         ax[1].set_ylabel(r"[%s]"%(funlib[key]["tendency_unit_symbol"]),fontdict=font)
                         ax[0].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
