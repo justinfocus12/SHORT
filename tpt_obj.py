@@ -552,9 +552,9 @@ class TPT:
         print("Done plotting field long")
         # ------------ Next: plot the traditional composite --------------
         for i_z in range(len(zi_combo)):
-            fig,ax = plt.subplots(ncols=len(key_combo),figsize=(6*len(key_combo),6),sharex=True,sharey=True)
             handles = []
             for i_key in range(len(key_combo)):
+                fig,ax = plt.subplots(nrows=2,figsize=(6,12)) # This is a hack to make the figures equal-sized as in the TPT composite
                 key = key_combo[i_key]
                 quantile_midranges = np.array([0.25,0.5,0.9])
                 avg_prea_flag = True
@@ -566,29 +566,39 @@ class TPT:
                 print("max_duration = {}".format(max_duration))
                 field_trans_composite = np.nan*np.ones((num_trans,max_duration))
                 for i in range(num_trans):
-                    if i % 10 == 0: print(f"Tallying transition {i} out of {num_trans}")
                     k0,k1 = ab_starts[i]-1,ab_ends[i]
                     k0_padded = max(0, k1 - max_duration) # Get all the beginnings lined up
                     field_trans = funlib[key]["fun"](x_long[k0_padded:k1])[:,zi_combo[i_z,i_key]] 
-                    print(f"field_trans.shape = {field_trans.shape}")
-                    print(f"field_trans_composite.shape = {field_trans_composite.shape}")
                     field_trans_composite[i,-len(field_trans):] = field_trans
                 # Plot the mean
-                ax[i_key].plot(t_long[:max_duration]-t_long[max_duration],np.nanmean(field_trans_composite,axis=0)*funlib[key]["units"],color='orange')
+                ax[0].plot(t_long[:max_duration]-t_long[max_duration],np.nanmean(field_trans_composite,axis=0)*funlib[key]["units"],color='orange')
                 # Plot the quantiles
                 for qi in range(len(quantile_midranges)):
                     lower = np.nanquantile(field_trans_composite, 0.5-0.5*quantile_midranges[qi], axis=0)
                     upper = np.nanquantile(field_trans_composite, 0.5+0.5*quantile_midranges[qi], axis=0)
-                    ax[i_key].fill_between(t_long[:max_duration]-t_long[max_duration],lower*funlib[key]["units"],upper*funlib[key]["units"],color=plt.cm.binary(0.75*(1-qi/len(quantile_midranges))),alpha=1.0,zorder=-qi)
+                    ax[0].fill_between(t_long[:max_duration]-t_long[max_duration],lower*funlib[key]["units"],upper*funlib[key]["units"],color=plt.cm.binary(0.75*(1-qi/len(quantile_midranges))),alpha=1.0,zorder=-qi)
                 xlab = r"Time$-\tau_B^+$"
                 ylab = r"[%s]"%(funlib[key_combo[i_key]]["unit_symbol"])
                 if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
-                ax[i_key].set_xlabel(xlab,fontdict=ffont)
-                ax[i_key].set_xlim([-max_duration*(t_long[1]-t_long[0]),0])
-                ax[i_key].set_title("Composite %s (%i km)"%(funlib[key]["name"],10*round(1/10*model.q["z_d"][1:-1][zi_combo[i_z,i_key]]/1000)),fontdict=ffont)
-            ax[0].set_ylabel(ylab,fontdict=ffont)
-            fig.savefig(join(self.savefolder,"transitory_{}_nt{}".format(funlib[key]["abbrv"],num_trans)),bbox_inches="tight",pad_inches=0.2)
-            plt.close(fig)
+                ax[0].set_xlabel(xlab,fontdict=ffont)
+                ax[0].set_xlim([-max_duration*(t_long[1]-t_long[0]),0])
+                ax[0].set_title("Composite %s (%i km)"%(funlib[key]["name"],10*round(1/10*model.q["z_d"][1:-1][zi_combo[i_z,i_key]]/1000)),fontdict=ffont)
+                ax[0].set_ylabel(ylab,fontdict=ffont)
+                # If there is a transdict available, set the axis limits using that
+                if exists(join(self.savefolder,"transdict")):
+                    transdict = pickle.load(open(join(self.savefolder,"transdict"), "rb"))
+                    if key in transdict.keys():
+                        ylim_prescribed = ([
+                                    np.min(transdict[key]["snapshot"]["stochastic"]["ab"][:,:,zi_combo[i_z]])*funlib[key]["units"],
+                                    np.max(transdict[key]["snapshot"]["stochastic"]["ab"][:,:,zi_combo[i_z]])*funlib[key]["units"],
+                                    ])
+                        ax[0].set_ylim(ylim_prescribed)
+                ylim = ax[0].get_ylim()
+                fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+                ax[0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+                print(f"zi_combo = {zi_combo}; zi_combo[i_z] = {zi_combo[i_z]}")
+                fig.savefig(join(self.savefolder,"transitory_{}_nt{}_zi{}".format(funlib[key]["abbrv"],num_trans,zi_combo[i_z,i_key])),bbox_inches="tight",pad_inches=0.2)
+                plt.close(fig)
             # Save the composite in order to use later for comparison with the TPT composite
             #np.save(join(self.savefolder,"composite_{}".format(field_abb)),field_trans_composite)
             #np.save(join(self.savefolder,"composite_time"),t_long[:max_duration]-t_long[max_duration])
