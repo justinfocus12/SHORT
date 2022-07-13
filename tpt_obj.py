@@ -554,7 +554,7 @@ class TPT:
         for i_z in range(len(zi_combo)):
             handles = []
             for i_key in range(len(key_combo)):
-                fig,ax = plt.subplots(nrows=2,figsize=(6,12)) # This is a hack to make the figures equal-sized as in the TPT composite
+                fig,ax = plt.subplots(figsize=(6,6)) 
                 key = key_combo[i_key]
                 quantile_midranges = np.array([0.25,0.5,0.9])
                 avg_prea_flag = True
@@ -571,31 +571,35 @@ class TPT:
                     field_trans = funlib[key]["fun"](x_long[k0_padded:k1])[:,zi_combo[i_z,i_key]] 
                     field_trans_composite[i,-len(field_trans):] = field_trans
                 # Plot the mean
-                ax[0].plot(t_long[:max_duration]-t_long[max_duration],np.nanmean(field_trans_composite,axis=0)*funlib[key]["units"],color='orange')
+                ax.plot(t_long[:max_duration]-t_long[max_duration],np.nanmean(field_trans_composite,axis=0)*funlib[key]["units"],color='orange')
                 # Plot the quantiles
                 for qi in range(len(quantile_midranges)):
                     lower = np.nanquantile(field_trans_composite, 0.5-0.5*quantile_midranges[qi], axis=0)
                     upper = np.nanquantile(field_trans_composite, 0.5+0.5*quantile_midranges[qi], axis=0)
-                    ax[0].fill_between(t_long[:max_duration]-t_long[max_duration],lower*funlib[key]["units"],upper*funlib[key]["units"],color=plt.cm.binary(0.75*(1-qi/len(quantile_midranges))),alpha=1.0,zorder=-qi)
+                    ax.fill_between(t_long[:max_duration]-t_long[max_duration],lower*funlib[key]["units"],upper*funlib[key]["units"],color=plt.cm.binary(0.75*(1-qi/len(quantile_midranges))),alpha=1.0,zorder=-qi)
                 xlab = r"Time$-\tau_B^+$"
                 ylab = r"[%s]"%(funlib[key_combo[i_key]]["unit_symbol"])
                 if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
-                ax[0].set_xlabel(xlab,fontdict=ffont)
-                ax[0].set_xlim([-max_duration*(t_long[1]-t_long[0]),0])
-                ax[0].set_title("Composite %s (%i km)"%(funlib[key]["name"],10*round(1/10*model.q["z_d"][1:-1][zi_combo[i_z,i_key]]/1000)),fontdict=ffont)
-                ax[0].set_ylabel(ylab,fontdict=ffont)
+                ax.set_xlabel(xlab,fontdict=ffont)
+                ax.set_xlim([-max_duration*(t_long[1]-t_long[0]),0])
+                ax.set_title("Composite %s (%i km)"%(funlib[key]["name"],10*round(1/10*model.q["z_d"][1:-1][zi_combo[i_z,i_key]]/1000)),fontdict=ffont)
+                ax.set_ylabel(ylab,fontdict=ffont)
                 # If there is a transdict available, set the axis limits using that
                 if exists(join(self.savefolder,"transdict")):
                     transdict = pickle.load(open(join(self.savefolder,"transdict"), "rb"))
                     if key in transdict.keys():
                         ylim_prescribed = ([
-                                    np.min(transdict[key]["snapshot"]["stochastic"]["ab"][:,:,zi_combo[i_z]])*funlib[key]["units"],
-                                    np.max(transdict[key]["snapshot"]["stochastic"]["ab"][:,:,zi_combo[i_z]])*funlib[key]["units"],
+                                    np.min(transdict[key]["committor"]["snapshot"]["stochastic"]["ab"][:,:,zi_combo[i_z]])*funlib[key]["units"],
+                                    np.max(transdict[key]["committor"]["snapshot"]["stochastic"]["ab"][:,:,zi_combo[i_z]])*funlib[key]["units"],
                                     ])
-                        ax[0].set_ylim(ylim_prescribed)
-                ylim = ax[0].get_ylim()
+                        ax.set_ylim(ylim_prescribed)
+                ylim = ax.get_ylim()
                 fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
-                ax[0].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+                ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+                xlim = ax.get_xlim()
+                fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
+                ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
+                ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
                 print(f"zi_combo = {zi_combo}; zi_combo[i_z] = {zi_combo[i_z]}")
                 fig.savefig(join(self.savefolder,"transitory_{}_nt{}_zi{}".format(funlib[key]["abbrv"],num_trans,zi_combo[i_z,i_key])),bbox_inches="tight",pad_inches=0.2)
                 plt.close(fig)
@@ -3840,7 +3844,7 @@ class TPT:
             idx_ti = np.where(np.abs(eta_B[:,ti0] - eta_levels[ti]) < eta_tol)[0]
             etalevel_idx += [idx_ti]
         funlib = model.observable_function_library()
-        keys_prof = ["U","vT"] #,"gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstrophy","gramps_relax","dqdy_times_vq","diss",]
+        keys_prof = ["U","vT","gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstrophy","gramps_relax","dqdy_times_vq","diss",]
         dirn_index = {"aa": 0, "ab": 1, "ba": 2, "bb": 3, "??": 4}
         dirn_colors = {"aa": "dodgerblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
         dirn_cmaps = {"ab": plt.cm.binary, "aa": plt.cm.Blues_r}
@@ -3905,6 +3909,7 @@ class TPT:
                     "level_idx": qlevel_idx,
                     "labels": qp_labels,
                     "symbol": r"$q^+$",
+                    "unit_symbol": "days",
                     }),
                 "leadtime": dict({
                     "levels": eta_levels,
@@ -3912,6 +3917,7 @@ class TPT:
                     "level_idx": etalevel_idx,
                     "labels": eta_labels,
                     "symbol": r"$-\eta_B^+$",
+                    "unit_symbol": "probability",
                     }),
                 })
             for key in list(keys_prof):
@@ -4078,13 +4084,17 @@ class TPT:
                             if lap_flag and (dirn in lap.keys()):
                                 h, = ax.plot(transdict["progress"][prog]["levels"],lap[dirn][key][prog]["snapshot"][:,zi]*funlib[key]["units"],color='cyan',linestyle='-',label=r"Min-action")
                                 handles += [h]
-                            ax.set_xlabel(transdict["progress"][prog]["symbol"],fontdict=font)
+                            ax.set_xlabel("%s [%s]"%(transdict["progress"][prog]["symbol"],transdict["progress"][prog]["unit_symbol"]),fontdict=font)
                             ax.set_ylabel(r"[%s]"%(funlib[key]["unit_symbol"]),fontdict=font)
                             ax.set_title(r"TPT composite %s (%i km)"%(funlib[key]["name"],alt),fontdict=ffont)
                             ax.set_ylim(ylim_prescribed)
                             ylim = ax.get_ylim()
                             fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
                             ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
+                            xlim = ax.get_xlim()
+                            fmt_x = helper.generate_sci_fmt(xlim[0],xlim[1])
+                            ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
+                            ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
                             fig.savefig(join(self.savefolder,f"trans_state_timeseries_prog{prog}_{dirn_combo_str}_{abbrv}_zi{zi}_Nx{Nx}").replace(".","p"))
                             plt.close(fig)
                         # ------------------------------------------------------------------------
