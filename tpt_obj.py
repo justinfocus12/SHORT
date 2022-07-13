@@ -562,7 +562,7 @@ class TPT:
                 print(f"num_trans = {num_trans}")
                 # Select them from across the distribution of transit times
                 # Match the maximum duration with the later plots of flux distribution
-                max_duration = int(100/(t_long[1]-t_long[0]))
+                max_duration = int(80/(t_long[1]-t_long[0]))
                 print("max_duration = {}".format(max_duration))
                 field_trans_composite = np.nan*np.ones((num_trans,max_duration))
                 for i in range(num_trans):
@@ -3802,39 +3802,45 @@ class TPT:
         n = model.q['Nz']-1
         comm_fwd = self.dam_moments['one']['xb'][0,ss,:]
         comm_bwd = self.dam_moments['one']['ax'][0,ss,:]
-        eta_B = self.dam_moments['one']['xb'][1,ss,:]*(comm_fwd > 1e-3)/(comm_fwd + 1.0*(comm_fwd <= 1e-3))
+        eta_B = -self.dam_moments['one']['xb'][1,ss,:]*(comm_fwd > 1e-1)/(comm_fwd + 1.0*(comm_fwd <= 1e-1))
+        eta_B[comm_fwd <= 1e-1] = np.nan
         chom = self.chom[ss]
         ramp = comm_fwd.reshape((Nx,Nt,1))
         tidx = np.argmin(np.abs(data.t_x - self.lag_time_current_display/2))
         dirns = ["ab","aa"]
         qp_min,qp_max = 0.0,1.0
         qp_step = 0.05
-        eta_min,eta_max = -90.0, 0.0
+        eta_min,eta_max = -80.0, 0.0
         eta_step = 5.0
         qp_levels = np.linspace(qp_min, qp_max, int((qp_max-qp_min)/qp_step)+1)
         eta_levels = np.linspace(eta_min, eta_max, int((eta_max-eta_min)/eta_step)+1)
-        qp_tol_list = 0.1*np.ones(len(qp_levels))
-        eta_tol_list = 2.5*np.ones(len(eta_levels))
+        qp_tol_list = 0.075*np.ones(len(qp_levels))
+        #qp_tol_list[-1] = 0.025
+        eta_tol_list = 7.5*np.ones(len(eta_levels))
+        #eta_tol_list[-1] = 2.5
         qp_labels = [r"$q_B^+=%.2f$"%(0.5*(
             min(1, max(0, qp_levels[i]-qp_tol_list[i])) + 
             min(1, max(0, qp_levels[i]+qp_tol_list[i])))) 
             for i in range(len(qp_levels))]
-        eta_labels = [r"$q_B^+=%.2f$"%(0.5*(
-            min(1, max(0, eta_levels[i]-eta_tol_list[i])) + 
-            min(1, max(0, eta_levels[i]+eta_tol_list[i])))) 
+        eta_labels = [r"$-\eta_B^+=%.2f$"%(0.5*(
+            eta_levels[i]-eta_tol_list[i] + 
+            eta_levels[i]+eta_tol_list[i])) 
             for i in range(len(eta_levels))]
         qlevel_idx = []
+        lag_time_max = self.lag_time_current_display
+        lag_halftime = self.lag_halftime_current_display
+        ti0 = np.argmin(np.abs(lag_halftime - data.t_x))
         for qi in range(len(qp_levels)):
             qp_tol = qp_tol_list[qi]
-            idx_qi = np.where(np.abs(comm_fwd - qp_levels[qi]) < qp_tol)[0]
+            idx_qi = np.where(np.abs(comm_fwd[:,ti0] - qp_levels[qi]) < qp_tol)[0]
             qlevel_idx += [idx_qi]
         etalevel_idx = []
         for ti in range(len(eta_levels)):
             eta_tol = eta_tol_list[ti]
-            idx_ti = np.where(np.abs(eta_B - eta_levels[ti]) < eta_tol)[0]
+            idx_ti = np.where(np.abs(eta_B[:,ti0] - eta_levels[ti]) < eta_tol)[0]
             etalevel_idx += [idx_ti]
         funlib = model.observable_function_library()
-        keys_prof = ["U","vT","gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstrophy","gramps_relax","dqdy_times_vq","diss",]
+        keys_prof = ["U","vT"] #,"gramps_enstrophy_arclength","gramps_plus_enstrophy","gramps","enstrophy","gramps_relax","dqdy_times_vq","diss",]
         dirn_index = {"aa": 0, "ab": 1, "ba": 2, "bb": 3, "??": 4}
         dirn_colors = {"aa": "dodgerblue","ab": "orange","ba": "springgreen","bb": "red","??": "black"}
         dirn_cmaps = {"ab": plt.cm.binary, "aa": plt.cm.Blues_r}
@@ -3916,6 +3922,7 @@ class TPT:
                 thdim = theta_x.shape[-1]
                 transdict[key] = dict({"leadtime": dict(), "committor": dict()})
                 for prog in ["leadtime","committor"]:
+                    print(f"Starting progress coords {prog}")
                     transdict[key][prog]["snapshot"] = dict({"stochastic": dict(), "xlim": np.zeros(2)})
                     transdict[key][prog]["tendency"] = dict({"stochastic": dict(), "deterministic": dict(), "xlim": np.zeros(2)})
                     for dirn in dirns:
@@ -3924,44 +3931,60 @@ class TPT:
                         transdict[key][prog]["tendency"]["deterministic"][dirn] = np.zeros((len(transdict["progress"][prog]["levels"]),thdim))
                     for qi in range(len(transdict["progress"][prog]["levels"])):
                         idx = np.array(transdict["progress"][prog]["level_idx"][qi]) 
-                        for dirn in dirns:
-                            qm = comm_bwd[idx,ti0]*(dirn[0]=='a') + (1-comm_bwd[idx,ti0])*(dirn[0]=='b') + np.ones(len(idx))*(dirn[0]=='?')
-                            qp = comm_fwd[idx,ti0]*(dirn[1]=='b') + (1-comm_fwd[idx,ti0])*(dirn[1]=='a') + np.ones(len(idx))*(dirn[1]=='?')
-                            weights = chom[idx]*qm*qp/np.sum(chom[idx]*qm*qp)
-                            # Snapshot, stochastic
-                            for d in range(thdim):
-                                order = np.argsort(theta_x[idx,ti0,d])
-                                cdf = np.cumsum(weights[order])
-                                for k in range(len(quantile_midranges)):
-                                    alpha = (1 - quantile_midranges[k])/2
-                                    transdict[key][prog]["snapshot"]["stochastic"][dirn][qi,2*k,d] = theta_x[idx[order[np.where(cdf >= alpha)[0][0]]],ti0,d]
-                                    transdict[key][prog]["snapshot"]["stochastic"][dirn][qi,2*k+1,d] = theta_x[idx[order[np.where(cdf >= 1-alpha)[0][0]]],ti0,d]
-                            transdict[key][prog]["snapshot"]["stochastic"][dirn][qi,-1] = np.nansum((theta_x[idx,ti0].T * weights).T, axis=0) 
-                            # Tendency, stochastic
-                            weights = chom[idx]/np.sum(chom[idx]*qm*qp) 
-                            transdict[key][prog]["tendency"]["stochastic"][dirn][qi] = np.nansum((L[dirn][idx].T * weights).T, axis=0)
-                            # Tendency, deterministic  
-                            weights = chom[idx]*qm*qp/np.sum(chom[idx]*qm*qp)
-                            transdict[key][prog]["tendency"]["deterministic"][dirn][qi] = np.nansum((L["deterministic"][idx].T * weights).T, axis=0)
-                            # Axis limits
-                            transdict[key][prog]["snapshot"]["xlim"][0] = min(
-                                    transdict[key]["snapshot"]["xlim"][0],
-                                    np.min(transdict[key]["snapshot"]["stochastic"][dirn][qi,:-3,:]), # Exclude the largest quantile envelope
-                                    )
-                            transdict[key][prog]["snapshot"]["xlim"][1] = max(
-                                    transdict[key]["snapshot"]["xlim"][1],
-                                    np.max(transdict[key]["snapshot"]["stochastic"][dirn][qi,:-3,:]),
-                                    )
-                            transdict[key][prog]["tendency"]["xlim"][0] = min(
-                                    transdict[key]["tendency"]["xlim"][0],
-                                    np.min(transdict[key]["tendency"]["stochastic"][dirn][qi]),
-                                    np.min(transdict[key]["tendency"]["deterministic"][dirn][qi])
-                                    )
-                            transdict[key][prog]["tendency"]["xlim"][1] = max(
-                                    transdict[key]["tendency"]["xlim"][1],
-                                    np.max(transdict[key]["tendency"]["stochastic"][dirn][qi]),
-                                    np.max(transdict[key]["tendency"]["deterministic"][dirn][qi])
-                                    )
+                        print(f"At progress level {qi} = {transdict['progress'][prog]['levels'][qi]}, len(idx) = {len(idx)}")
+                        if len(idx) > 0:
+                            for dirn in dirns:
+                                qm = comm_bwd[idx,ti0]*(dirn[0]=='a') + (1-comm_bwd[idx,ti0])*(dirn[0]=='b') + np.ones(len(idx))*(dirn[0]=='?')
+                                qp = comm_fwd[idx,ti0]*(dirn[1]=='b') + (1-comm_fwd[idx,ti0])*(dirn[1]=='a') + np.ones(len(idx))*(dirn[1]=='?')
+                                weights = chom[idx]*qm*qp/np.sum(chom[idx]*qm*qp)
+                                weights = np.maximum(weights,0)
+                                # --------------- Diagnosis: plot the points contributing to these idx -------------------------
+                                fig,ax = plt.subplots()
+                                idx_c0 = funlib["vTint"]["fun"](X[idx,ti0])[:,model.q['zi']]*funlib["vTint"]["units"]
+                                idx_c1 = funlib["U"]["fun"](X[idx,ti0])[:,model.q['zi']]*funlib["U"]["units"]
+                                ax.set_xlabel(funlib["vTint"]["abbrv"])
+                                ax.set_ylabel(funlib["U"]["abbrv"])
+                                idx_ss = np.random.choice(np.arange(len(idx)),size=min(len(idx),10000),replace=False)
+                                ax.scatter(idx_c0[idx_ss],idx_c1[idx_ss],color='black',alpha=weights[idx_ss]/np.max(weights[idx_ss]),marker='.')
+                                ax.set_xlim([-10e3,50e3])
+                                ax.set_ylim([-50,100])
+                                fig.savefig(join(self.savefolder,f"trans_state_diagnosis_prog{prog}_qi{qi}"))
+                                plt.close(fig)
+                                # -------------------------------------------------------
+                                # Snapshot, stochastic
+                                for d in range(thdim):
+                                    order = np.argsort(theta_x[idx,ti0,d])
+                                    cdf = np.cumsum(weights[order])
+                                    for k in range(len(quantile_midranges)):
+                                        alpha = (1 - quantile_midranges[k])/2
+                                        transdict[key][prog]["snapshot"]["stochastic"][dirn][qi,2*k,d] = theta_x[idx[order[np.where(cdf >= alpha)[0][0]]],ti0,d]
+                                        transdict[key][prog]["snapshot"]["stochastic"][dirn][qi,2*k+1,d] = theta_x[idx[order[np.where(cdf >= 1-alpha)[0][0]]],ti0,d]
+                                transdict[key][prog]["snapshot"]["stochastic"][dirn][qi,-1] = np.nansum((theta_x[idx,ti0].T * weights).T, axis=0) 
+                                # Tendency, stochastic
+                                weights = chom[idx]/np.sum(chom[idx]*qm*qp) 
+                                transdict[key][prog]["tendency"]["stochastic"][dirn][qi] = np.nansum((L[dirn][idx].T * weights).T, axis=0)
+                                # Tendency, deterministic  
+                                weights = chom[idx]*qm*qp/np.sum(chom[idx]*qm*qp)
+                                transdict[key][prog]["tendency"]["deterministic"][dirn][qi] = np.nansum((L["deterministic"][idx].T * weights).T, axis=0)
+                                # Axis limits
+                                transdict[key][prog]["snapshot"]["xlim"][0] = min(
+                                        transdict[key][prog]["snapshot"]["xlim"][0],
+                                        np.min(transdict[key][prog]["snapshot"]["stochastic"][dirn][qi,:-3,:]), # Exclude the largest quantile envelope
+                                        )
+                                transdict[key][prog]["snapshot"]["xlim"][1] = max(
+                                        transdict[key][prog]["snapshot"]["xlim"][1],
+                                        np.max(transdict[key][prog]["snapshot"]["stochastic"][dirn][qi,:-3,:]),
+                                        )
+                                transdict[key][prog]["tendency"]["xlim"][0] = min(
+                                        transdict[key][prog]["tendency"]["xlim"][0],
+                                        np.min(transdict[key][prog]["tendency"]["stochastic"][dirn][qi]),
+                                        np.min(transdict[key][prog]["tendency"]["deterministic"][dirn][qi])
+                                        )
+                                transdict[key][prog]["tendency"]["xlim"][1] = max(
+                                        transdict[key][prog]["tendency"]["xlim"][1],
+                                        np.max(transdict[key][prog]["tendency"]["stochastic"][dirn][qi]),
+                                        np.max(transdict[key][prog]["tendency"]["deterministic"][dirn][qi])
+                                        )
             # Save the transdict file 
             pickle.dump(transdict, open(join(self.savefolder,"transdict"),"wb"))
         if plot_profile_transdict_flag:
@@ -3969,7 +3992,7 @@ class TPT:
                 abbrv = funlib[key]["abbrv"]
                 for prog in ["committor","leadtime"]:
                     #  ---------------------- Plot the snapshots and tendencies ---------------
-                    for qi in range(len(transdict["progress"]["prog"]["levels"])):
+                    for qi in range(len(transdict["progress"][prog]["levels"])):
                         fig,ax = plt.subplots(ncols=2,figsize=(12,6))
                         handles = {"snapshot": [], "tendency": []}
                         # Plot A and B
@@ -4014,8 +4037,8 @@ class TPT:
                         ax[1].set_xlabel(r"$\mathcal{L}_{AB}$[%s] %s"%(funlib[key]['name'],unit_suffix),fontdict=font)
                         ax[0].set_ylabel(r"$z$ [km]",fontdict=font)
                         ax[1].set_ylabel(r"$z$ [km]",fontdict=font)
-                        ax[0].set_title(r"%s at %s"%(funlib[key]['name'],labels[qi]),fontdict=font)
-                        ax[1].set_title(r"%s tendencies at %s"%(funlib[key]['name'],labels[qi]),fontdict=font)
+                        ax[0].set_title(r"%s at %s"%(funlib[key]['name'],transdict["progress"][prog]["labels"][qi]),fontdict=font)
+                        ax[1].set_title(r"%s tendencies at %s"%(funlib[key]['name'],transdict["progress"][prog]["labels"][qi]),fontdict=font)
                         dirn_combo = np.sort([dirn_index[dirn] for dirn in dirns])
                         dirn_combo_str = "".join([str(index) for index in dirn_combo])
                         for i in range(2):
@@ -4036,52 +4059,32 @@ class TPT:
                     abbrv = funlib[key]["abbrv"]
                     for prog in ["committor","leadtime"]:
                         ylim_prescribed = ([
-                                [
-                                    np.min(transdict[key][prog]["snapshot"]["stochastic"][dirn][:,:,zi_list])*funlib[key]["units"],
-                                    np.max(transdict[key][prog]["snapshot"]["stochastic"][dirn][:,:,zi_list])*funlib[key]["units"],
-                                ],
-                                [
-                                    min([np.min(transdict[key[prog]]["tendency"][stic][dirn][:,zi_list])*funlib[key]["units"]/q["time"] for stic in ["stochastic","deterministic"]]),
-                                    max([np.max(transdict[key][prog]["tendency"][stic][dirn][:,zi_list])*funlib[key]["units"]/q["time"] for stic in ["stochastic","deterministic"]]),
-                                ],
+                            np.min(transdict[key][prog]["snapshot"]["stochastic"][dirn][:,:,zi_list])*funlib[key]["units"],
+                            np.max(transdict[key][prog]["snapshot"]["stochastic"][dirn][:,:,zi_list])*funlib[key]["units"],
                             ])
                         if key in ["U","vT"]:
-                            ylim_prescribed[0][0] = 0.0
+                            ylim_prescribed[0] = 0.0
                         for i_alt,alt in enumerate(alt_list):
                             # Big question: do we want to plot committor or lead time in the horizontal
                             zi = zi_list[i_alt]
-                            fig,ax = plt.subplots(nrows=2, figsize=(6,12)) #, sharex=True)
-                            handles = [[],[]]
+                            fig,ax = plt.subplots(figsize=(6,6)) #, sharex=True)
+                            handles = []
                             # Stochastic 
-                            h, = ax[0].plot(transdict[key][prog]["levels"],transdict[key][prog]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib[key]["units"], color=dirn_colors[dirn], linestyle='-', label=r"%s (%s)"%(funlib[key]["name"],dirn_labels[dirn]))
-                            handles[0] += [h]
+                            h, = ax.plot(transdict["progress"][prog]["levels"],transdict[key][prog]["snapshot"]["stochastic"][dirn][:,-1,zi]*funlib[key]["units"], color=dirn_colors[dirn], linestyle='-', label=r"%s (%s)"%(funlib[key]["name"],dirn_labels[dirn]))
+                            handles += [h]
                             for k in range(len(quantile_midranges)):
                                 ylohi = transdict[key][prog]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,zi] * funlib[key]["units"]
-                                ax[0].fill_between(progress,ylohi[:,0],ylohi[:,1], color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))), zorder=-k)
-                            h, = ax[1].plot(progress,transdict[key][prog]["tendency"]["stochastic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]"%(funlib[key]["name"]))
-                            handles[1] += [h]
-                            # Deterministic
-                            h, = ax[1].plot(progress,transdict[key][prog]["tendency"]["deterministic"][dirn][:,zi]*funlib[key]["units"]/model.q["time"], color=dirn_colors[dirn], linestyle='--',label=r"$\partial_t$[%s]"%(funlib[key]["name"]))
-                            handles[1] += [h]
+                                ax.fill_between(transdict["progress"][prog]["levels"],ylohi[:,0],ylohi[:,1], color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))), zorder=-k)
                             if lap_flag and (dirn in lap.keys()):
-                                h, = ax[0].plot(progress,lap[dirn][key][prog]["snapshot"][:,zi]*funlib[key]["units"],color='cyan',linestyle='-',label=r"Min-action")
-                                handles[0] += [h]
-                                h, = ax[1].plot(progress,lap[dirn][key][prog]["tendency"][:,zi]*funlib[key]["units"]/model.q["time"],color='cyan',linestyle='-',label=r"Min-action")
-                                handles[1] += [h]
-                            ax[1].axhline(y=0, color='gray', linestyle='-', linewidth=1, zorder=-10, alpha=0.4)
-                            ax[0].set_xlabel(transdict["progress"][prog]["symbol"],fontdict=font)
-                            ax[1].set_xlabel(transdict["progress"][prog]["symbol"],fontdict=font)
-                            ax[0].set_ylabel(r"[%s]"%(funlib[key]["unit_symbol"]),fontdict=font)
-                            ax[1].set_ylabel(r"[%s]"%(funlib[key]["tendency_unit_symbol"]),fontdict=font)
-                            ax[0].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)
-                            ax[1].set_title(r"Tendency (%i km)"%(alt),fontdict=ffont)
-                            for r in range(2):
-                                ax[r].set_ylim(ylim_prescribed[r])
-                                ylim = ax[r].get_ylim()
-                                fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
-                                ax[r].yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
-                            ax[0].legend(handles=handles[0],prop={"size": 13})
-                            ax[1].legend(handles=handles[1],prop={"size": 13})
+                                h, = ax.plot(transdict["progress"][prog]["levels"],lap[dirn][key][prog]["snapshot"][:,zi]*funlib[key]["units"],color='cyan',linestyle='-',label=r"Min-action")
+                                handles += [h]
+                            ax.set_xlabel(transdict["progress"][prog]["symbol"],fontdict=font)
+                            ax.set_ylabel(r"[%s]"%(funlib[key]["unit_symbol"]),fontdict=font)
+                            ax.set_title(r"TPT composite %s (%i km)"%(funlib[key]["name"],alt),fontdict=ffont)
+                            ax.set_ylim(ylim_prescribed)
+                            ylim = ax.get_ylim()
+                            fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
+                            ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
                             fig.savefig(join(self.savefolder,f"trans_state_timeseries_prog{prog}_{dirn_combo_str}_{abbrv}_zi{zi}_Nx{Nx}").replace(".","p"))
                             plt.close(fig)
                         # ------------------------------------------------------------------------
