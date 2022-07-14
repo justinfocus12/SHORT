@@ -580,10 +580,10 @@ class TPT:
                 xlab = r"Time$-\tau_B^+$"
                 ylab = r"[%s]"%(funlib[key_combo[i_key]]["unit_symbol"])
                 if time_unit_symbol is not None: xlab += " [{}]".format(time_unit_symbol)
-                ax.set_xlabel(xlab,fontdict=ffont)
+                ax.set_xlabel(xlab,fontdict=font)
                 ax.set_xlim([-max_duration*(t_long[1]-t_long[0]),0])
-                ax.set_title("Composite %s (%i km)"%(funlib[key]["name"],10*round(1/10*model.q["z_d"][1:-1][zi_combo[i_z,i_key]]/1000)),fontdict=ffont)
-                ax.set_ylabel(ylab,fontdict=ffont)
+                ax.set_title("Composite %s (%i km)"%(funlib[key]["name"],10*round(1/10*model.q["z_d"][1:-1][zi_combo[i_z,i_key]]/1000)),fontdict=font)
+                ax.set_ylabel(ylab,fontdict=font)
                 # If there is a transdict available, set the axis limits using that
                 if exists(join(self.savefolder,"transdict")):
                     transdict = pickle.load(open(join(self.savefolder,"transdict"), "rb"))
@@ -592,6 +592,9 @@ class TPT:
                                     np.min(transdict[key]["committor"]["snapshot"]["stochastic"]["ab"][:,:,zi_combo[i_z]])*funlib[key]["units"],
                                     np.max(transdict[key]["committor"]["snapshot"]["stochastic"]["ab"][:,:,zi_combo[i_z]])*funlib[key]["units"],
                                     ])
+                        if key in ["U","vT"]: 
+                           ylim_prescribed[0] = 0.0
+                           print(f"I got a key {key}")
                         ax.set_ylim(ylim_prescribed)
                 ylim = ax.get_ylim()
                 fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
@@ -601,6 +604,7 @@ class TPT:
                 ax.xaxis.set_major_formatter(ticker.FuncFormatter(fmt_x))
                 ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
                 print(f"zi_combo = {zi_combo}; zi_combo[i_z] = {zi_combo[i_z]}")
+                print(f"ylim = {ax.get_ylim()}")
                 fig.savefig(join(self.savefolder,"transitory_{}_nt{}_zi{}".format(funlib[key]["abbrv"],num_trans,zi_combo[i_z,i_key])),bbox_inches="tight",pad_inches=0.2)
                 plt.close(fig)
             # Save the composite in order to use later for comparison with the TPT composite
@@ -3796,7 +3800,7 @@ class TPT:
         compute_transdict_flag =            1
         plot_profile_transdict_flag =       1
         plot_timeseries_transdict_flag =    1
-        plot_analysis_transdict_flag =      0
+        plot_analysis_transdict_flag =      1
         # -----------------------------------------------
         # Take a subset
         ss = np.random.choice(np.arange(data.X.shape[0]),size=30000,replace=False)
@@ -3819,9 +3823,9 @@ class TPT:
         qp_levels = np.linspace(qp_min, qp_max, int((qp_max-qp_min)/qp_step)+1)
         eta_levels = np.linspace(eta_min, eta_max, int((eta_max-eta_min)/eta_step)+1)
         qp_tol_list = 0.075*np.ones(len(qp_levels))
-        #qp_tol_list[-1] = 0.025
+        qp_tol_list[-1] = 0.015
         eta_tol_list = 7.5*np.ones(len(eta_levels))
-        #eta_tol_list[-1] = 2.5
+        eta_tol_list[-1] = 1.5
         qp_labels = [r"$q_B^+=%.2f$"%(0.5*(
             min(1, max(0, qp_levels[i]-qp_tol_list[i])) + 
             min(1, max(0, qp_levels[i]+qp_tol_list[i])))) 
@@ -3909,7 +3913,7 @@ class TPT:
                     "level_idx": qlevel_idx,
                     "labels": qp_labels,
                     "symbol": r"$q^+$",
-                    "unit_symbol": "days",
+                    "unit_symbol": "probability",
                     }),
                 "leadtime": dict({
                     "levels": eta_levels,
@@ -3917,7 +3921,7 @@ class TPT:
                     "level_idx": etalevel_idx,
                     "labels": eta_labels,
                     "symbol": r"$-\eta_B^+$",
-                    "unit_symbol": "probability",
+                    "unit_symbol": "days",
                     }),
                 })
             for key in list(keys_prof):
@@ -4088,6 +4092,7 @@ class TPT:
                             ax.set_ylabel(r"[%s]"%(funlib[key]["unit_symbol"]),fontdict=font)
                             ax.set_title(r"TPT composite %s (%i km)"%(funlib[key]["name"],alt),fontdict=ffont)
                             ax.set_ylim(ylim_prescribed)
+                            ax.set_xlim(transdict["progress"][prog]["levels"][[0,-1]])
                             ylim = ax.get_ylim()
                             fmt_y = helper.generate_sci_fmt(ylim[0],ylim[1])
                             ax.yaxis.set_major_formatter(ticker.FuncFormatter(fmt_y))
@@ -4139,18 +4144,18 @@ class TPT:
                         y1 = RBe[:,i_alt]/y0 
                         y2 = D[:,i_alt]/y0 
                         y3 = BeVQ[:,i_alt]/y0 
-                        h_y0, = ax[0,i_alt].plot(qp_levels, y0, color='darkorange', label=funlib["gramps_plus_enstrophy"]["name"])
-                        h_G, = ax[0,i_alt].plot(qp_levels,G[:,-1,i_alt],color='dodgerblue', label=funlib["gramps"]["name"])
-                        h_E, = ax[0,i_alt].plot(qp_levels,E[:,-1,i_alt],color='magenta', label=funlib["enstrophy"]["name"])
+                        h_y0, = ax[0,i_alt].plot(transdict["progress"][prog]["levels"], y0, color='darkorange', label=funlib["gramps_plus_enstrophy"]["name"])
+                        h_G, = ax[0,i_alt].plot(transdict["progress"][prog]["levels"],G[:,-1,i_alt],color='dodgerblue', label=funlib["gramps"]["name"])
+                        h_E, = ax[0,i_alt].plot(transdict["progress"][prog]["levels"],E[:,-1,i_alt],color='magenta', label=funlib["enstrophy"]["name"])
                         for k in range(len(quantile_midranges)):
                             ylohi = GE[:,2*k:2*k+2,i_alt] #transdict["gramps_plus_enstrophy"]["snapshot"]["stochastic"][dirn][:,2*k:2*k+2,zi] * funlib["gramps_plus_enstrophy"]["units"]
-                            ax[0,i_alt].fill_between(qp_levels,ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
-                        h_Ly0, = ax[1,i_alt].plot(qp_levels, Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]/(%s)"%(funlib["gramps_plus_enstrophy"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
-                        h_y0dot, = ax[1,i_alt].plot(qp_levels, y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]/(%s)"%(funlib["gramps_plus_enstrophy"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
-                        h_y1, = ax[1,i_alt].plot(qp_levels, y1, color="dodgerblue", label=r"%s/(%s)"%(funlib["gramps_relax"]["name"],funlib["gramps_plus_enstrophy"]["name"])) 
-                        h_y2, = ax[1,i_alt].plot(qp_levels, y2, color='magenta', linestyle='-', label="%s/(%s)"%(funlib["diss"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
-                        h_y3, = ax[1,i_alt].plot(qp_levels, y3, color='black', linestyle='-', label=r"%s/(%s)"%(funlib["dqdy_times_vq"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
-                        ax[1,i_alt].plot(qp_levels, y1+y2-y0dot, color='gray', alpha=0.4)
+                            ax[0,i_alt].fill_between(transdict["progress"][prog]["levels"],ylohi[:,0],y2=ylohi[:,1],color=plt.cm.binary(0.75*(1-k/len(quantile_midranges))),zorder=-k)
+                        h_Ly0, = ax[1,i_alt].plot(transdict["progress"][prog]["levels"], Ly0, color='darkorange', linestyle='-', label=r"$\mathcal{L}_{AB}$[%s]/(%s)"%(funlib["gramps_plus_enstrophy"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
+                        h_y0dot, = ax[1,i_alt].plot(transdict["progress"][prog]["levels"], y0dot, color='darkorange', linestyle='--', label=r"$\partial_t$[%s]/(%s)"%(funlib["gramps_plus_enstrophy"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
+                        h_y1, = ax[1,i_alt].plot(transdict["progress"][prog]["levels"], y1, color="dodgerblue", label=r"%s/(%s)"%(funlib["gramps_relax"]["name"],funlib["gramps_plus_enstrophy"]["name"])) 
+                        h_y2, = ax[1,i_alt].plot(transdict["progress"][prog]["levels"], y2, color='magenta', linestyle='-', label="%s/(%s)"%(funlib["diss"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
+                        h_y3, = ax[1,i_alt].plot(transdict["progress"][prog]["levels"], y3, color='black', linestyle='-', label=r"%s/(%s)"%(funlib["dqdy_times_vq"]["name"],funlib["gramps_plus_enstrophy"]["name"]))
+                        ax[1,i_alt].plot(transdict["progress"][prog]["levels"], y1+y2-y0dot, color='gray', alpha=0.4)
                         ax[0,i_alt].legend(handles=[h_y0,h_G,h_E],prop={'size':13})
                         ax[1,i_alt].legend(handles=[h_Ly0,h_y0dot,h_y1,h_y2,h_y3],prop={'size':13})
                         ax[0,i_alt].set_title(r"Snapshots (%i km)"%(alt),fontdict=ffont)

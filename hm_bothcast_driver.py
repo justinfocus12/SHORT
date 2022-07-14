@@ -52,7 +52,7 @@ compute_tpt_flag =      0
 
 plot_trans_2d_flag =    0
 plot_long_2d_flag =     0
-plot_long_1d_flag =     1
+plot_long_1d_flag =     0
 trans_state_flag =      0
 trans_state_enst_flag = 1
 display_cast_flag =     0
